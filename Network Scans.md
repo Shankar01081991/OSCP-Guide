@@ -7,7 +7,7 @@
 Host scan is used by penetration tester to identify active host in a network by sending ARP request packets to all system in that network. As result it will show a message “Host is up” by receiving MAC address from each active host. -sP, it performs a "ping scan," which is used to discover live hosts on a network.
 
 ```jsx
-nmap -sP 192.168.188.1-225
+nmap -sP <Target IP>
 
 ```
 
@@ -27,7 +27,7 @@ If penetration testers want to identify open or close state of a particular port
 - Closed/Filtered: This indicates that the port was filtered or closed but Nmap couldn’t establish the state.
 
 ```jsx
-sudo nmap -p135 192.168.188.131
+sudo nmap -p135 <Target IP>
 ```
 
 ![image.png](attachment:3da86ea7-f2bd-41f1-8f5f-ec0e2cdcc0c7:image.png)
@@ -39,7 +39,7 @@ sudo nmap -p135 192.168.188.131
 If you wants to create the scan reports in Normal as well as XML form in a combination.
 
 ```
-sudo nmap -oN port_scan.txt -oX port_scan.xml 192.168.188.131
+sudo nmap -oN port_scan.txt -oX port_scan.xml <Target IP>
 
 ```
 
@@ -48,7 +48,7 @@ sudo nmap -oN port_scan.txt -oX port_scan.xml 192.168.188.131
 Getting an html stylesheet as their report as it gives much-organised scan results:
 
 ```
-sudo nmap -oX scan.xml --stylesheet=nmap.xsl 192.168.188.131
+sudo nmap -oX scan.xml --stylesheet=nmap.xsl <Target IP>
 xsltproc -o scan.html nmap.xsl scan.xml
 firefox scan.html
 ```
@@ -62,7 +62,7 @@ To increase the level of verbosity for printing more information about the scan 
 This mode is used twice or more for better verbosity: -vv, or give a verbosity level directly, like -vv, v2, v3.
 
 ```jsx
-sudo nmap -vv -oN Verbos_scan.txt 192.168.188.131
+sudo nmap -vv -oN Verbos_scan.txt <Target IP>
 
 ```
 
@@ -75,7 +75,7 @@ sudo nmap -vv -oN Verbos_scan.txt 192.168.188.131
 When doing vulnerability assessments of your companies or clients, you really want to know which mail and DNS servers and versions are running. Having an accurate version number helps dramatically in determining which exploits a server is vulnerable to. Version detection helps you obtain this information. Fingerprinting a service may also reveal additional information about a target, such as available modules and specific protocol information. Version scan is also categories as “**Banner Grabbing**” in penetration testing.
 
 ```
-nmap -sV 192.168.188.131
+nmap -sV <Target IP>
 ```
 
 ![image.png](attachment:b65b4591-6cdf-4c35-8134-8badcdf86ed8:image.png)
@@ -102,7 +102,7 @@ nmap –T4 192.168.188.131
 This option enables additional advanced and aggressive options. Presently this enables OS detection (-O), version scanning (-sV), script scanning (-sC) and traceroute (–traceroute). This option only enables features, and not timing options (such as -T4) or verbosity options (-v) that you might want as well. You can see this by using one of the following commands:
 
 ```
-nmap -A 192.168.188.131
+nmap -A <Target IP>
 ```
 
 ## **List Scan**
@@ -124,7 +124,7 @@ Ref: [Nmap for Pentester: Host Discovery - Hacking Articles](https://www.hacking
 Debugging mode is generally used when the verbose mode doesn’t provide enough details about the scan, so it digs deeper into the scanning process. The level of debug can be increased by specifying its number. Here you get details like the flags [resent in the packets, the time-to-live etc.
 
 ```
-nmap -d2 -oN scan.txt 192.168.188.131
+nmap -d2 -oN scan.txt <Target IP>
 ```
 
 ![image.png](attachment:62727a5c-9739-4559-b334-8e158b06830d:image.png)
@@ -134,7 +134,7 @@ nmap -d2 -oN scan.txt 192.168.188.131
 Apart from open port enumeration nmap is quite useful in OS fingerprinting. This scan very helpful to penetration tester in order to conclude possible security vulnerabilities and determining the available system calls to set the specific exploit payloads.
 
 ```
-nmap -O 192.168.188.131
+nmap -O <Target IP>
 ```
 
 ![image.png](attachment:30e09b80-d7be-441c-971d-193d404dcf3f:image.png)
