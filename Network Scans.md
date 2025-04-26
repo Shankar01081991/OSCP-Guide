@@ -11,7 +11,8 @@ nmap -sP <Target IP>
 
 ```
 
-![image.png](attachment:ae1fd70a-38f9-45c7-acee-e7a5a4652f98:image.png)
+![image](https://github.com/user-attachments/assets/fa35cab0-2f7c-4e89-bf78-582bda1c8dd1)
+
 
 ## **Port scan /TCP scan**
 
