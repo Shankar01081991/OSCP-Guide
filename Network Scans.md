@@ -31,11 +31,13 @@ If penetration testers want to identify open or close state of a particular port
 sudo nmap -p135 <Target IP>
 ```
 
-![image.png](attachment:3da86ea7-f2bd-41f1-8f5f-ec0e2cdcc0c7:image.png)
+![image](https://github.com/user-attachments/assets/ed01dc3a-7c21-4b76-8f93-3f0d55c67db0)
+
 
 ## **Scan Output Formats**
 
-![0.png](attachment:faf202cc-0f75-4b1d-91d4-91a1fae9df82:0.png)
+![image](https://github.com/user-attachments/assets/a147cd0f-16a5-4fa4-b507-ad43c7453126)
+
 
 If you wants to create the scan reports in Normal as well as XML form in a combination.
 
@@ -44,7 +46,8 @@ sudo nmap -oN port_scan.txt -oX port_scan.xml <Target IP>
 
 ```
 
-![image.png](attachment:dd2674e4-56f3-41b1-a2e1-998c12d1dc25:image.png)
+![image](https://github.com/user-attachments/assets/7bff01e3-5d0b-4c6f-8300-7b46b0003ebd)
+
 
 Getting an html stylesheet as their report as it gives much-organised scan results:
 
@@ -54,7 +57,8 @@ xsltproc -o scan.html nmap.xsl scan.xml
 firefox scan.html
 ```
 
-![image.png](attachment:514673e0-8867-48c8-9bc6-6d38d17bfb4e:image.png)
+![image](https://github.com/user-attachments/assets/b3e85453-35fe-4bf2-a8b5-ae787acaee82)
+
 
 ## **Verbosity mode**
 
@@ -67,9 +71,8 @@ sudo nmap -vv -oN Verbos_scan.txt <Target IP>
 
 ```
 
-![image.png](attachment:633c35d9-cd1d-4522-b00d-45c0de2521ca:image.png)
+![image](https://github.com/user-attachments/assets/b2f37c6f-ad7e-4637-8def-429997c9e79d)
 
-# **OS Detection Scan**
 
 ## **Version Scan**
 
@@ -79,7 +82,8 @@ When doing vulnerability assessments of your companies or clients, you really wa
 nmap -sV <Target IP>
 ```
 
-![image.png](attachment:b65b4591-6cdf-4c35-8134-8badcdf86ed8:image.png)
+![image](https://github.com/user-attachments/assets/0e3d9e10-9aa4-467c-ab5b-9f42dfd1fc4c)
+
 
 ## **Timing Template Scan**
 
@@ -128,7 +132,8 @@ Debugging mode is generally used when the verbose mode doesn’t provide enough 
 nmap -d2 -oN scan.txt <Target IP>
 ```
 
-![image.png](attachment:62727a5c-9739-4559-b334-8e158b06830d:image.png)
+![image](https://github.com/user-attachments/assets/5d062b34-0181-4599-a76f-aa23e2bb31b0)
+
 
 ## OS fingerprinting
 
@@ -138,7 +143,8 @@ Apart from open port enumeration nmap is quite useful in OS fingerprinting. This
 nmap -O <Target IP>
 ```
 
-![image.png](attachment:30e09b80-d7be-441c-971d-193d404dcf3f:image.png)
+![image](https://github.com/user-attachments/assets/81c68dd0-333a-4d53-a029-9f15d92d74d2)
+
 
 ## Scripts
 
