@@ -1,4 +1,4 @@
-#🚀OSCP Prep - Windows & Linux Exploitation
+#🚀PEN-200: Penetration Testing with Kali Linux
 
 
 
@@ -15,3 +15,7 @@ This repository documents my journey through labs as a preparation for the Offen
 ✅ Capture The Flag (CTF) Walkthroughs
 
 🔗 Goal: Improve my penetration testing skills and build a strong foundation for the OSCP exam.
+
+REF:
+https://help.offsec.com/hc/en-us/articles/4412170923924-OSCP-Exam-FAQ-Newly-Updated
+https://help.offsec.com/hc/en-us/articles/4412170923924-OSCP-Exam-FAQ-Newly-Updated
