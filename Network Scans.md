@@ -141,7 +141,7 @@ Nmap’s **Timing Template** option allows you to control the speed of your scan
 
 ```bash
 
-nmap -T4 192.168.188.131
+nmap -T4 <Target Ip>
 
 ```
 
