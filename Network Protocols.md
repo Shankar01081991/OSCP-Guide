@@ -675,5 +675,6 @@ Code
 - Use the `ssh` command with the `i` option:
   ```jsx
   ssh -i ~/.ssh/id_rsa user@server_ip_or_hostname
+  ssh -oHostKeyAlgorithms=+ssh-rsa TCM@10.10.81.58 -p22
   ```
   ---
