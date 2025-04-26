@@ -217,12 +217,6 @@ Note: http://lanmaster53.com/2011/05/7-linux-shells-using-built-in-tools/
 
 **Is port forwarding possible? Redirect and interact with traffic from another view**
 
-Note: http://www.boutell.com/rinetd/
-
-Note: http://www.howtoforge.com/port-forwarding-with-rinetd-on-debian-etch
-
-Note: http://downloadcenter.mcafee.com/products/tools/foundstone/fpipe2_1.zip
-
 Note: FPipe.exe -l [local port] -r [remote port] -s [local port] [local IP]
 
 .. code-block:: bash
