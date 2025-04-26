@@ -14,11 +14,11 @@ The **Host Scan** feature is used to identify which hosts in a network are activ
     
 
 ```bash
-bash
-CopyEdit
+
 nmap -sP <Target IP>
 
 ```
+
 
 This command scans for active devices on the network, and if a device responds, the message "Host is up" will be displayed.
 
@@ -42,8 +42,7 @@ A **Port Scan** or **TCP Scan** is used by penetration testers to identify which
     
 
 ```bash
-bash
-CopyEdit
+
 sudo nmap -p135 <Target IP>
 
 ```
@@ -56,8 +55,8 @@ This will display whether port 135 is open, closed, or filtered on the target sy
 
 Nmap offers various output formats for the results of a scan, allowing penetration testers to customize how they store and analyze scan data. Common formats include **Normal**, **XML**, and **HTML**.
 
-- **Normal Output**: Stores the results in plain text.
-- **XML Output**: Stores the results in an XML format, which is useful for further processing or automated analysis.
+- **Normal Output** -oN: Stores the results in plain text.
+- **XML Output** -oX: Stores the results in an XML format, which is useful for further processing or automated analysis.
 - **HTML Output**: Provides a more readable and organized report using an XSLT stylesheet.
 - **Command for Normal and XML Output**:
     
@@ -65,8 +64,7 @@ Nmap offers various output formats for the results of a scan, allowing penetrati
     
 
 ```bash
-bash
-CopyEdit
+
 sudo nmap -oN port_scan.txt -oX port_scan.xml <Target IP>
 
 ```
@@ -77,8 +75,7 @@ sudo nmap -oN port_scan.txt -oX port_scan.xml <Target IP>
     
 
 ```bash
-bash
-CopyEdit
+
 sudo nmap -oX scan.xml --stylesheet=nmap.xsl <Target IP>
 xsltproc -o scan.html nmap.xsl scan.xml
 firefox scan.html
@@ -99,8 +96,7 @@ The **Verbosity Mode** in Nmap helps to provide more detailed output during a sc
     
 
 ```bash
-bash
-CopyEdit
+
 sudo nmap -vv -oN Verbose_scan.txt <Target IP>
 
 ```
@@ -119,8 +115,7 @@ A **Version Scan** is critical for identifying the exact versions of services ru
     
 
 ```bash
-bash
-CopyEdit
+
 nmap -sV <Target IP>
 
 ```
@@ -145,8 +140,7 @@ Nmap’s **Timing Template** option allows you to control the speed of your scan
     
 
 ```bash
-bash
-CopyEdit
+
 nmap -T4 192.168.188.131
 
 ```
@@ -165,8 +159,7 @@ The **Aggressive Scan** mode enables a set of advanced options to gather compreh
     
 
 ```bash
-bash
-CopyEdit
+
 nmap -A <Target IP>
 
 ```
@@ -185,8 +178,7 @@ The **List Scan** option allows you to scan multiple hosts at once by loading IP
     
 
 ```bash
-bash
-CopyEdit
+
 nmap -iL /root/Desktop/scan.txt
 
 ```
@@ -205,8 +197,7 @@ If **Verbose Mode** doesn’t provide enough information, Nmap’s **Debugging M
     
 
 ```bash
-bash
-CopyEdit
+
 nmap -d2 -oN scan.txt <Target IP>
 
 ```
@@ -225,8 +216,7 @@ Nmap can also perform **OS Fingerprinting**, which helps penetration testers ide
     
 
 ```bash
-bash
-CopyEdit
+
 nmap -O <Target IP>
 
 ```
@@ -251,8 +241,7 @@ Nmap includes the **Nmap Scripting Engine (NSE)**, which allows users to run scr
     
 
 ```bash
-bash
-CopyEdit
+
 ls /usr/share/nmap/scripts | grep ssh
 nmap -p22 --script ssh-hostkey.nse <Target IP>
 
