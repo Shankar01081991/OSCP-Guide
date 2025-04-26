@@ -1,9 +1,9 @@
-#🚀 HTB OSCP Prep - Windows & Linux Exploitation
+#🚀OSCP Prep - Windows & Linux Exploitation
 
 
 
 ## Description:
-This repository documents my journey through Hack The Box (HTB) labs as a preparation for the Offensive Security Certified Professional (OSCP) exam. It includes structured walkthroughs of Windows & Linux machines, focusing on enumeration, privilege escalation, and exploitation techniques.
+This repository documents my journey through labs as a preparation for the Offensive Security Certified Professional (OSCP) exam. It includes structured walkthroughs of Windows & Linux machines, focusing on enumeration, privilege escalation, and exploitation techniques.
 
 ---
 
