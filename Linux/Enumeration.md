@@ -20,13 +20,17 @@ Automation
 ----------
 
 Run any of the following:
-
+--
 | `LinPeas: <https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas.sh)>`
-![image](https://github.com/user-attachments/assets/0b3fd088-31de-4ff8-a297-bd4e7acf7648)
 
+![image](https://github.com/user-attachments/assets/0b3fd088-31de-4ff8-a297-bd4e7acf7648)
+--
 | `linuxprivchecker.py <https://github.com/sleventyeleven/linuxprivchecker.git>`
+
 wget https://raw.githubusercontent.com/sleventyeleven/linuxprivchecker/master/linuxprivchecker.py
+
 python linuxprivchecker.py -w -o linuxprivchecker.log
+
 ![image](https://github.com/user-attachments/assets/16365e2f-5239-4014-92df-aab758518e1b)
 
 | `upc.sh (unix-privesc-check) <https://github.com/pentestmonkey/unix-privesc-check>`
