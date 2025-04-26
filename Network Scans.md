@@ -1,190 +1,261 @@
-## **Nmap**
+## **Nmap Overview**
 
-**Nmap** which is also known as **Network Mapper** is one of the best open-source and the handiest tool that is widely used for security auditing and network scanning by pentesters. It also provides an additional feature where the results of a network scan can be recorded in various formats.
+**Nmap** (short for **Network Mapper**) is a powerful open-source tool that plays a critical role in network security assessments, helping penetration testers and system administrators to discover network devices, open ports, and services running on a network. Nmap is widely appreciated for its versatility in security auditing, vulnerability scanning, and network discovery. In addition, Nmap can generate scan results in a variety of formats, making it easier to analyze and report findings in a structured way.
+
+---
 
 ## **Host Scan**
 
-Host scan is used by penetration tester to identify active host in a network by sending ARP request packets to all system in that network. As result it will show a message “Host is up” by receiving MAC address from each active host. -sP, it performs a "ping scan," which is used to discover live hosts on a network.
+The **Host Scan** feature is used to identify which hosts in a network are active. This is essential when penetration testers need to discover live devices within a target network. By sending ARP (Address Resolution Protocol) requests to all systems in the network, Nmap can determine if the systems are "up" by receiving MAC addresses from active hosts.
 
-```jsx
+- **Command**:
+    
+    The `-sP` option, also referred to as a **Ping Scan**, helps discover live hosts on a network. The scan works by sending ICMP echo requests (pings) to all the specified IP addresses. If a system responds, it indicates the host is live.
+    
+
+```bash
+bash
+CopyEdit
 nmap -sP <Target IP>
 
 ```
 
-![image](https://github.com/user-attachments/assets/fa35cab0-2f7c-4e89-bf78-582bda1c8dd1)
+This command scans for active devices on the network, and if a device responds, the message "Host is up" will be displayed.
 
+---
 
-## **Port scan /TCP scan**
+## **Port Scan / TCP Scan**
 
-If penetration testers want to identify open or close state of a particular port on target machine then they should go with nmap port scan.
+A **Port Scan** or **TCP Scan** is used by penetration testers to identify which ports on a target machine are open, closed, or filtered. Understanding the status of ports is essential for identifying potential vulnerabilities in the system.
 
-**Port Status:** After scanning, you may see some results with a port status like filtered, open, closed, etc. Let me explain this.
+**Port Status Indicators:**
 
-- Open: This indicates that an application is listening for connections on this port.
-- Closed: This indicates that the probes were received but there is no application listening on this port.
-- Filtered: This indicates that the probes were not received and the state could not be established. It also indicates that the probes are being dropped by some kind of filtering.
-- Unfiltered: This indicates that the probes were received but a state could not be established.
-- Open/Filtered: This indicates that the port was filtered or open but Nmap couldn’t establish the state.
-- Closed/Filtered: This indicates that the port was filtered or closed but Nmap couldn’t establish the state.
+- **Open**: An application is actively listening for connections on the port.
+- **Closed**: The probe was received, but no application is currently listening on the port.
+- **Filtered**: The probes were not received, indicating that a firewall or other filter might be dropping packets.
+- **Unfiltered**: The probes were received, but the port's status could not be determined.
+- **Open/Filtered**: Nmap cannot distinguish if the port is open or filtered, only that it is either one of them.
+- **Closed/Filtered**: The status of the port is ambiguous, potentially due to firewall filtering or other network defenses.
+- **Command**:
+    
+    To scan a specific port (e.g., port 135), use the following command:
+    
 
-```jsx
+```bash
+bash
+CopyEdit
 sudo nmap -p135 <Target IP>
+
 ```
 
-![image](https://github.com/user-attachments/assets/ed01dc3a-7c21-4b76-8f93-3f0d55c67db0)
+This will display whether port 135 is open, closed, or filtered on the target system.
 
+---
 
 ## **Scan Output Formats**
 
-![image](https://github.com/user-attachments/assets/a147cd0f-16a5-4fa4-b507-ad43c7453126)
+Nmap offers various output formats for the results of a scan, allowing penetration testers to customize how they store and analyze scan data. Common formats include **Normal**, **XML**, and **HTML**.
 
+- **Normal Output**: Stores the results in plain text.
+- **XML Output**: Stores the results in an XML format, which is useful for further processing or automated analysis.
+- **HTML Output**: Provides a more readable and organized report using an XSLT stylesheet.
+- **Command for Normal and XML Output**:
+    
+    To store the scan results in both normal and XML formats, use the following command:
+    
 
-If you wants to create the scan reports in Normal as well as XML form in a combination.
-
-```
+```bash
+bash
+CopyEdit
 sudo nmap -oN port_scan.txt -oX port_scan.xml <Target IP>
 
 ```
 
-![image](https://github.com/user-attachments/assets/7bff01e3-5d0b-4c6f-8300-7b46b0003ebd)
+- **Command for HTML Output**:
+    
+    To generate an HTML report, first perform the scan in XML format, then convert it to HTML using the `xsltproc` tool:
+    
 
-
-Getting an html stylesheet as their report as it gives much-organised scan results:
-
-```
+```bash
+bash
+CopyEdit
 sudo nmap -oX scan.xml --stylesheet=nmap.xsl <Target IP>
 xsltproc -o scan.html nmap.xsl scan.xml
 firefox scan.html
-```
-
-![image](https://github.com/user-attachments/assets/b3e85453-35fe-4bf2-a8b5-ae787acaee82)
-
-
-## **Verbosity mode**
-
-To increase the level of verbosity for printing more information about the scan . In this scan details like open ports, estimated time of completion, etc are highlighted.
-
-This mode is used twice or more for better verbosity: -vv, or give a verbosity level directly, like -vv, v2, v3.
-
-```jsx
-sudo nmap -vv -oN Verbos_scan.txt <Target IP>
 
 ```
 
-![image](https://github.com/user-attachments/assets/b2f37c6f-ad7e-4637-8def-429997c9e79d)
+This process creates a well-organized HTML report of your scan results.
 
+---
+
+## **Verbosity Mode**
+
+The **Verbosity Mode** in Nmap helps to provide more detailed output during a scan. By increasing the verbosity level, you can view extra details such as open ports, the estimated time for scan completion, and other scan-related information.
+
+- **Command for Increased Verbosity**:
+    
+    To increase verbosity, use the `-v` option. For even more detail, you can use `-vv` for a higher verbosity level. You can also specify the verbosity level directly (e.g., `-v2`).
+    
+
+```bash
+bash
+CopyEdit
+sudo nmap -vv -oN Verbose_scan.txt <Target IP>
+
+```
+
+This command provides an in-depth look at the scan's progress and status.
+
+---
 
 ## **Version Scan**
 
-When doing vulnerability assessments of your companies or clients, you really want to know which mail and DNS servers and versions are running. Having an accurate version number helps dramatically in determining which exploits a server is vulnerable to. Version detection helps you obtain this information. Fingerprinting a service may also reveal additional information about a target, such as available modules and specific protocol information. Version scan is also categories as “**Banner Grabbing**” in penetration testing.
+A **Version Scan** is critical for identifying the exact versions of services running on the target machine. This information helps penetration testers determine if a system is vulnerable to specific exploits associated with those service versions. This technique is often referred to as **Banner Grabbing** in the context of penetration testing.
 
-```
+- **Command**:
+    
+    To perform a version scan, use the `-sV` option, which attempts to identify versions of services running on open ports:
+    
+
+```bash
+bash
+CopyEdit
 nmap -sV <Target IP>
+
 ```
 
-![image](https://github.com/user-attachments/assets/0e3d9e10-9aa4-467c-ab5b-9f42dfd1fc4c)
+This scan provides detailed information about the services and their versions running on the target.
 
+---
 
 ## **Timing Template Scan**
 
-The main timing option is set through the -T parameter if you may want more control over the timing in order get the scan over and done with quicker. However, Nmap adjusts its timings automatically depending on network speed and response times of the victim.
+Nmap’s **Timing Template** option allows you to control the speed of your scan. Adjusting the timing can help balance between scan accuracy and speed, depending on the network's response time and how stealthy you want your scan to be. There are six predefined timing templates in Nmap:
 
-Nmap offers a simpler approach, with six timing templates. You can specify them with the -T option and their number (0–5) or their name as shown below:
+- **T0**: Paranoid (slow, stealthy)
+- **T1**: Sneaky
+- **T2**: Polite
+- **T3**: Normal
+- **T4**: Aggressive
+- **T5**: Insane (fast, but can be very noisy)
+- **Command**:
+    
+    For faster scans with an aggressive timing template (T4), use the following:
+    
 
-- T0: paranoid
-- T1: sneaky
-- T2: polite
-- T3: normal
-- T4: aggressive
-- T5: insane
+```bash
+bash
+CopyEdit
+nmap -T4 192.168.188.131
 
 ```
-nmap –T4 192.168.188.131
-```
+
+This command applies the **T4** timing template, which speeds up the scan without being too intrusive.
+
+---
 
 ## **Aggressive Scan**
 
-This option enables additional advanced and aggressive options. Presently this enables OS detection (-O), version scanning (-sV), script scanning (-sC) and traceroute (–traceroute). This option only enables features, and not timing options (such as -T4) or verbosity options (-v) that you might want as well. You can see this by using one of the following commands:
+The **Aggressive Scan** mode enables a set of advanced options to gather comprehensive information about the target. This includes **OS detection**, **version scanning**, **script scanning**, and **traceroute**. It is a highly effective scan for gathering detailed insights, but it is also quite noisy and can alert intrusion detection systems.
+
+- **Command**:
+    
+    To initiate an aggressive scan, use the `-A` option:
+    
+
+```bash
+bash
+CopyEdit
+nmap -A <Target IP>
 
 ```
-nmap -A <Target IP>
-```
+
+This command combines multiple advanced scans to gather extensive data about the target.
+
+---
 
 ## **List Scan**
 
-When you want to scan multiple host to perform more than one scanning then –iL option is used which support nmap to load the targets from an external file. Only you need to add all targeted IP in a text file and save it at a location.
+The **List Scan** option allows you to scan multiple hosts at once by loading IP addresses from a file. This is useful for penetration testers who need to scan large numbers of systems quickly.
 
-To load the targets from the file targets.txt, the following command can be used:
+- **Command**:
+    
+    To load IP addresses from a file (e.g., `targets.txt`) and scan them:
+    
 
-```
+```bash
+bash
+CopyEdit
 nmap -iL /root/Desktop/scan.txt
-```
-
-Ref: [Nmap for Pentester: Host Discovery - Hacking Articles](https://www.hackingarticles.in/nmap-for-pentester-host-discovery/)
-
-=================================================================
-
-## Debugging mode
-
-Debugging mode is generally used when the verbose mode doesn’t provide enough details about the scan, so it digs deeper into the scanning process. The level of debug can be increased by specifying its number. Here you get details like the flags [resent in the packets, the time-to-live etc.
 
 ```
+
+This will read the list of targets from `scan.txt` and scan each one.
+
+---
+
+## **Debugging Mode**
+
+If **Verbose Mode** doesn’t provide enough information, Nmap’s **Debugging Mode** can be used to get even more granular details about the scan process, including packet-level details, flags, and other technical aspects. Debugging mode is useful when troubleshooting a scan or when needing to perform a deep analysis of a network.
+
+- **Command**:
+    
+    To enable debugging with a specified debug level (e.g., `-d2`), use the following command:
+    
+
+```bash
+bash
+CopyEdit
 nmap -d2 -oN scan.txt <Target IP>
-```
-
-![image](https://github.com/user-attachments/assets/5d062b34-0181-4599-a76f-aa23e2bb31b0)
-
-
-## OS fingerprinting
-
-Apart from open port enumeration nmap is quite useful in OS fingerprinting. This scan very helpful to penetration tester in order to conclude possible security vulnerabilities and determining the available system calls to set the specific exploit payloads.
 
 ```
+
+This provides detailed insights into the scanning process.
+
+---
+
+## **OS Fingerprinting**
+
+Nmap can also perform **OS Fingerprinting**, which helps penetration testers identify the operating system running on a target device based on its response patterns. This information is invaluable for customizing attacks based on the target’s OS vulnerabilities.
+
+- **Command**:
+    
+    To perform an OS fingerprinting scan:
+    
+
+```bash
+bash
+CopyEdit
 nmap -O <Target IP>
+
 ```
 
-![image](https://github.com/user-attachments/assets/81c68dd0-333a-4d53-a029-9f15d92d74d2)
+This will provide insights into the target’s operating system and possible security implications.
 
+---
 
-## Scripts
+## **Nmap Scripts**
 
-Nmap scripts are part of the Nmap Scripting Engine (NSE), which allows users to write and use scripts to automate a wide range of network tasks. These scripts can be used for various purposes, such as:
+Nmap includes the **Nmap Scripting Engine (NSE)**, which allows users to run scripts for automated tasks such as vulnerability scanning, service discovery, and brute-force password testing. These scripts are categorized for various purposes, such as:
 
-**Vulnerability Detection**:
+- **Vulnerability Detection**: Identify weaknesses in services (e.g., `vuln` scripts).
+- **Network Discovery**: Gather detailed information about devices (e.g., `discovery` scripts).
+- **Brute Force Attacks**: Test password strength (e.g., `brute` scripts).
+- **Exploitation**: Exploit known vulnerabilities (e.g., `exploit` scripts).
+- **Malware Detection**: Detect malware on devices (e.g., `malware` scripts).
+- **Information Gathering**: Collect detailed information on network services (e.g., `info` scripts).
+- **Command to use specific scripts**:
+    
+    To search for and use specific scripts, such as `ssh-hostkey.nse`, the following command is used:
+    
 
-- Identify vulnerabilities in network services.
-- Example: `vuln` scripts.
-
-**Network Discovery**:
-
-- Gather information about network devices and services.
-- Example: `discovery` scripts.
-
-**Brute Force Attacks**:
-
-- Perform brute force attacks to test the strength of passwords.
-- Example: `brute` scripts.
-
-**Exploitation**:
-
-- Exploit known vulnerabilities to gain access or perform specific actions.
-- Example: `exploit` scripts.
-
-**Malware Detection**:
-
-- Detect malware or backdoors on network devices.
-- Example: `malware` scripts.
-
-**Information Gathering**:
-
-- Collect detailed information about network services and configurations.
-- Example: `info` scripts.
-
-You can list all available Nmap scripts using the `ls` command:
-```jsx
+```bash
+bash
+CopyEdit
 ls /usr/share/nmap/scripts | grep ssh
 nmap -p22 --script ssh-hostkey.nse <Target IP>
 
 ```
-![image](https://github.com/user-attachments/assets/a6db04c1-48c6-4b38-9136-315539354ec7)
 
+This allows you to execute specific scripts related to SSH key scanning.
