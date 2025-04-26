@@ -18,4 +18,5 @@ This repository documents my journey through labs as a preparation for the Offen
 
 REF:
 https://help.offsec.com/hc/en-us/articles/4412170923924-OSCP-Exam-FAQ-Newly-Updated
+
 https://help.offsec.com/hc/en-us/articles/4412170923924-OSCP-Exam-FAQ-Newly-Updated
