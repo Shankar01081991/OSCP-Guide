@@ -87,3 +87,4 @@
 - Reverse shell = = > https://www.revshells.com/
 - payload encoder = = > https://amsi.fail/
 - Unix binaries = = > https://gtfobins.github.io/
+- Diagram = = > https://app.diagrams.net/
