@@ -1,8 +1,8 @@
-## **Network Protocols**
+## **🛡️ Network Protocols**
 
 ### Network protocols allow devices to communicate and exchange data over a network. Here’s an expanded explanation of some commonly used protocols in penetration testing:
 ---
-### **1. FTP (File Transfer Protocol)**
+### **1.📂 FTP (File Transfer Protocol)**
 
 - **Port:** 21 (TCP)
 - **Function:** FTP is used for transferring files between a client and a server. FTP operates over two channels:
@@ -144,7 +144,7 @@ By exploiting this vulnerability, you can get access to the **root** account on 
 
 ---
 
-### **2. NFS (Network File System)**
+### **2.📦 NFS (Network File System)**
 
 NFS allows a system to share its files with other systems over a network. It enables the mounting of remote file systems and interaction with them as if they were local.
 
@@ -221,7 +221,7 @@ Now, try accessing the directory as `vulnix_user`:
 
 ---
 
-### **3. SMB (Server Message Block)**
+### **3.🗂️ SMB (Server Message Block)**
 
 SMB is a protocol used for file and printer sharing, as well as inter-process communication between computers.
 
@@ -293,7 +293,7 @@ cat /usr/share/exploitdb/exploits/multiple/remote/10095.txt
 
 ---
 
-### **4. RPC (Remote Procedure Call)**
+### **4.🔌 RPC (Remote Procedure Call)**
 
 RPC allows a program on one computer to execute a procedure on another computer.
 
@@ -404,7 +404,7 @@ smb: \> ls
 ```
 ---
 
-### **5. SNMP (Simple Network Management Protocol)**
+### **5.📡 SNMP (Simple Network Management Protocol)**
 
 SNMP is used to manage and monitor network devices. It can be exploited if the community string is weak or known (like **public** or **private**).
 ![image](https://github.com/user-attachments/assets/c4d02453-3331-4739-bf58-f38aea7a6133)
@@ -435,7 +435,7 @@ https://hacktricks.boitatech.com.br/pentesting/pentesting-snmp/snmp-rce
 
 ---
 
-### **6. LDAP (Lightweight Directory Access Protocol)**
+### **6.📚 LDAP (Lightweight Directory Access Protocol)**
 
 LDAP is a protocol used to access and maintain directory information. It is commonly used for managing user information and authentication.
 
@@ -600,7 +600,7 @@ hydra -l <username> -P /usr/share/wordlists/rockyou.txt -s 110 -vV <IP> pop3
 - HackTricks - POP3
 - POP3 RFC 1939
 ---
-### **9. SSH**
+### **9.🔒 SSH**
 
 **Secure Shell (SSH)** is a cryptographic network protocol designed for secure communication over an unsecured network. It is primarily used for remote login and command-line execution, replacing older, less secure protocols like Telnet and rlogin
 https://www.ssh.com/academy/ssh/public-key-authentication
