@@ -34,11 +34,9 @@ python linuxprivchecker.py -w -o linuxprivchecker.log
 ![image](https://github.com/user-attachments/assets/16365e2f-5239-4014-92df-aab758518e1b)
 
 | `upc.sh (unix-privesc-check) <https://github.com/pentestmonkey/unix-privesc-check>`
-| `LinEnum.sh <https://github.com/rebootuser/LinEnum>`__
-| linux-exploit-suggester.sh
-| https://github.com/initstring/uptux
-| https://github.com/NullArray/RootHelper
-| https://github.com/mzet-/linux-exploit-suggester/network
+
+| `LinEnum.sh <https://github.com/rebootuser/LinEnum>`
+
 ---
 Operating System
 ----------------
