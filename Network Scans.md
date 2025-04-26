@@ -181,3 +181,10 @@ Nmap scripts are part of the Nmap Scripting Engine (NSE), which allows users to 
 - Example: `info` scripts.
 
 You can list all available Nmap scripts using the `ls` command:
+```jsx
+ls /usr/share/nmap/scripts | grep ssh
+nmap -p22 --script ssh-hostkey.nse <Target IP>
+
+```
+![image](https://github.com/user-attachments/assets/a6db04c1-48c6-4b38-9136-315539354ec7)
+
