@@ -736,3 +736,26 @@ Configuration Files
 Configuration files are usually stored in /etc.
 
 Check writable files to see if we can introduce misconfigurations (e.g. if /etc/exports is writable, we can define NFS shares with root squashing turned off).
+
+##########################
+Linux Privilege Escalation
+##########################
+
+* https://github.com/mubix/post-exploitation
+* https://github.com/spencerdodd/kernelpop
+* https://github.com/SecWiki/linux-kernel-exploits
+* https://www.google.com/search?q=kernel+exploits
+* https://github.com/NullArray/RootHelper
+* https://greysec.net/showthread.php?tid=1355
+* https://github.com/DominicBreuker/pspy
+* https://touhidshaikh.com/blog/?p=790
+* http://blog.securelayer7.net/abusing-sudo-advance-linux-privilege-escalation/
+* https://gtfobins.github.io/
+* https://guif.re/linuxeop
+* https://github.com/sagishahar/lpeworkshop
+* https://github.com/codingo/OSCP-2
+* https://infamoussyn.wordpress.com/2014/07/11/gaining-a-root-shell-using-mysql-user-defined-functions-and-setuid-binaries/
+* https://www.hackingarticles.in/linux-privilege-escalation-using-suid-binaries/
+* https://docs.ansible.com/ansible/latest/user_guide/become.html
+* https://payatu.com/guide-linux-privilege-escalation/
+* https://github.com/Arrexel/phpbash
