@@ -19,17 +19,23 @@ Information Gathering
 Automation
 ----------
 
-Run any number of the following:
+Run any of the following:
 
-| linuxprivchecker.py
-| upc.sh (unix-privesc-check)
+| `LinPeas: <https://github.com/peass-ng/PEASS-ng/releases/latest/download/linpeas.sh)>`
+![image](https://github.com/user-attachments/assets/0b3fd088-31de-4ff8-a297-bd4e7acf7648)
+
+| `linuxprivchecker.py <https://github.com/sleventyeleven/linuxprivchecker.git>`
+wget https://raw.githubusercontent.com/sleventyeleven/linuxprivchecker/master/linuxprivchecker.py
+python linuxprivchecker.py -w -o linuxprivchecker.log
+![image](https://github.com/user-attachments/assets/16365e2f-5239-4014-92df-aab758518e1b)
+
+| `upc.sh (unix-privesc-check) <https://github.com/pentestmonkey/unix-privesc-check>`
 | `LinEnum.sh <https://github.com/rebootuser/LinEnum>`__
 | linux-exploit-suggester.sh
 | https://github.com/initstring/uptux
 | https://github.com/NullArray/RootHelper
-
-https://github.com/mzet-/linux-exploit-suggester/network
-
+| https://github.com/mzet-/linux-exploit-suggester/network
+---
 Operating System
 ----------------
 
@@ -41,6 +47,7 @@ Operating System
     cat /etc/*-release
     cat /etc/lsb-release      # Debian based
     cat /etc/redhat-release   # Redhat based
+   ![image](https://github.com/user-attachments/assets/0a645cc1-00a6-461d-b84c-07e4b2c49c28)
 
 **What's the kernel version? Is it 64-bit?**
 
@@ -52,6 +59,7 @@ Operating System
     rpm -q kernel
     dmesg | grep Linux
     ls /boot | grep vmlinuz-
+   ![image](https://github.com/user-attachments/assets/3daae9ff-7b95-4600-b953-b72e22de0078)
 
 **What can be learnt from the environmental variables?**
 
@@ -89,6 +97,7 @@ Applications & Services
 
     ps aux | grep root
     ps -ef | grep root
+   ![image](https://github.com/user-attachments/assets/e7ed0018-915d-41ea-bb27-54088926472e)
 
 **What applications are installed? What version are they? Are they currently running?**
 
