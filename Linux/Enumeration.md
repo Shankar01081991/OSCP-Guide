@@ -496,26 +496,12 @@ Preparation & Finding Exploit Code
 
 http://www.exploit-db.com
 
-http://1337day.com
-
-http://www.securiteam.com
-
-http://www.securityfocus.com
-
-http://www.exploitsearch.net
-
-http://metasploit.com/modules/
-
-http://securityreason.com
-
 http://seclists.org/fulldisclosure/
 
-http://www.google.com
 
 **Finding more information regarding the exploit**
 
-http://www.cvedetails.com
-http://packetstormsecurity.org/files/cve/[CVE]
+[https://www.cvedetails.com](https://www.cvedetails.com/)
 
 http://cve.mitre.org/cgi-bin/cvename.cgi?name=[CVE]
 
@@ -525,6 +511,4 @@ http://www.vulnview.com/cve-details.php?cvename=[CVE]
 
 http://web.archive.org/web/20111118031158/
 
-http://tarantula.by.ru/localroot/
 
-http://www.kecepatan.66ghz.com/file/local-root-exploit-priv9/
