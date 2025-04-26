@@ -1,6 +1,6 @@
-###############
-Binary Analysis
-###############
+
+## **Binary Analysis**
+
 
 strings
 =======
