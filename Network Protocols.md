@@ -2,9 +2,9 @@
 
 ### Network protocols allow devices to communicate and exchange data over a network. Here’s an expanded explanation of some commonly used protocols in penetration testing:
 ---
-### **1.📂 FTP (File Transfer Protocol)**
+
 <details>
-<summary><em>📝 Click to expand FTP Information</em>em></summary>
+<summary>### **1.📂 FTP (File Transfer Protocol)**</summary>
  <br>   
 - **Port:** 21 (TCP)
 - **Function:** FTP is used for transferring files between a client and a server. FTP operates over two channels:
