@@ -541,7 +541,6 @@ This is a test email.
 ```
 </details>
 
-### ****
 <details>
 <summary>8. POP3 (Post Office Protocol Version 3)</summary>
  <br>
