@@ -3,7 +3,7 @@
 
 Check to see if we have a TTY:
 
-.. code-block:: bash
+ 
 
     if [ -t 1 ] ; then echo terminal; else echo "not a terminal"; fi
 
@@ -47,7 +47,7 @@ If socat isn't installed, you can try and download a static binary and run that:
 netcat "magic"
 --------------
 
-.. code-block:: bash
+ 
 
     # In reverse shell
     python -c 'import pty; pty.spawn("/bin/bash")'
