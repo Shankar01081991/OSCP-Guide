@@ -187,8 +187,7 @@ Finding the Flag: Once you have root access, locate the flag and/or crack passwo
 <summary>CORN JOB</summary>
  <br> 
 
-Path
-----
+**Cron jobs**
 Cron jobs are scheduled tasks that run scripts or binaries at specified times. By default, they execute with the privileges of their owner, not the user who triggers them. If a cron job is owned by root but writable by an unprivileged user, that user can inject code to run as root.
 
 1. Understand Where Cron Jobs Live
