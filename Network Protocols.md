@@ -166,7 +166,9 @@ By exploiting this vulnerability, you can get access to the **root** account on 
 </details> 
 
 ### **2.📦 NFS (Network File System)**
-
+<details>
+<summary>📝 Click to expand NFS Information</summary>
+ <br>
 NFS allows a system to share its files with other systems over a network. It enables the mounting of remote file systems and interaction with them as if they were local.
 
 **Example Nmap command to scan for NFS services:**
@@ -240,10 +242,12 @@ sudo useradd --uid 2008 --gid 2008 --groups vulnix_group vulnix
 Now, try accessing the directory as `vulnix_user`:
 ![image](https://github.com/user-attachments/assets/90546368-1291-4e7a-b7c9-52a148eef779)
 
----
+</details>
 
 ### **3.🗂️ SMB (Server Message Block)**
-
+<details>
+<summary>📝 Click to expand  SMB Information</summary>
+ <br>
 SMB is a protocol used for file and printer sharing, as well as inter-process communication between computers.
 
 **Example Nmap command to scan for SMB services:**
@@ -338,11 +342,12 @@ cat /usr/share/exploitdb/exploits/multiple/remote/10095.txt
 ```
 ![image](https://github.com/user-attachments/assets/6603e3bd-03ea-4424-8d4c-f3aac3acdd52)
 
-
----
+</details>
 
 ### **4.🔌 RPC (Remote Procedure Call)**
-
+<details>
+<summary>📝 Click to expand RPC Information</summary>
+ <br>
 RPC allows a program on one computer to execute a procedure on another computer.
 
 **Enumerating with RPCClient:**
@@ -446,10 +451,12 @@ snmpwalk -v1 -c public 192.168.146.156 NET-SNMP-EXTEND-MIB :: nsExtendObjects
 ```
 https://hacktricks.boitatech.com.br/pentesting/pentesting-snmp/snmp-rce
 
----
+</details>
 
 ### **6.📚 LDAP (Lightweight Directory Access Protocol)**
-
+<details>
+<summary>📝 Click to expand LDAP Information</summary>
+ <br>
 LDAP is a protocol used to access and maintain directory information. It is commonly used for managing user information and authentication.
 
 **Enumerating LDAP:**
@@ -532,9 +539,12 @@ This is a test email.
 .
 
 ```
----
-### **8. POP3**
+</details>
 
+### **8. POP3**
+<details>
+<summary>📝 Click to expand POP3 Information</summary>
+ <br>
 **Post Office Protocol** \(**POP**\) is a type of computer networking and Internet standard **protocol** that extracts and retrieves email from a remote mail server for access by the host machine. **POP** is an application layer **protocol** in the OSI model that provides end users the ability to fetch and receive email \(from [here](https://www.techopedia.com/definition/5383/post-office-protocol-pop)\).
 
 The POP clients generally connect, retrieve all messages, store them on the client system, and delete them from the server. There are 3 versions of POP, but POP3 is the most used one.
@@ -640,9 +650,12 @@ hydra -l <username> -P /usr/share/wordlists/rockyou.txt -s 110 -vV <IP> pop3
 
 - HackTricks - POP3
 - POP3 RFC 1939
----
-### **9.🔒 SSH**
+</details>
 
+### **9.🔒 SSH**
+<details>
+<summary>📝 Click to expand SSH Information</summary>
+ <br>
 **Secure Shell (SSH)** is a cryptographic network protocol designed for secure communication over an unsecured network. It is primarily used for remote login and command-line execution, replacing older, less secure protocols like Telnet and rlogin
 https://www.ssh.com/academy/ssh/public-key-authentication
 
@@ -712,10 +725,12 @@ Code
   ssh -oHostKeyAlgorithms=+ssh-rsa TCM@10.10.81.58 -p22
   ```
   ![image](https://github.com/user-attachments/assets/bdb18c28-6296-4013-bd28-4d6edafd81e9)
-
-  ---
+</details>
+  
 **10. HTTP/S enumeration**
-
+<details>
+<summary>📝 Click to expand HTTP Information</summary>
+ <br>
 - View the source code and identify any hidden content. If an image looks suspicious, download it and try to find hidden data in it.
 - Identify the version or CMS and check for active exploits. This can be done using Nmap and Wappalyzer.
 - check /robots.txt folder
@@ -910,9 +925,12 @@ sqlmap -u http://192.168.50.19/blindsqli.php?user=1 -p user --dump #Dumping data
 sqlmap -r post.txt -p item  --os-shell  --web-root "/var/www/html/tmp" #/var/www/html/tmp is the writable folder on target, hence we're writing there
 
 ```
---
-**11. DNS enumeration**
+</details>
 
+**11. DNS enumeration**
+<details>
+<summary>📝 Click to expand DNS Information</summary>
+ <br>
 - Better use `Seclists` wordlists for better enumeration. https://github.com/danielmiessler/SecLists/tree/master/Discovery/DNS
 
 ```
@@ -934,3 +952,4 @@ dnsenum megacorpone.com
 nslookup mail.megacorptwo.com
 nslookup -type=TXT info.megacorptwo.com 192.168.50.151 #We are querying the information from a specific IP, here it is 192.168.50.151. This can be very useful
 ```
+</details>
