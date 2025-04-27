@@ -78,9 +78,9 @@ Find and Read Flag: After gaining root privileges, locate the flag file to compl
 
 
 </details>
-===
-NFS
-===
+<details>
+<summary>NFS</summary>
+ <br> 
 
 NFS allows a host to share file system resources over a network. Access Control is based on the server's file system, and on the uid/gid provided by the connecting client.
 
@@ -152,9 +152,11 @@ Now, back on the remote host, run the file. For bash / sh, use the -p command li
 
     $ /tmp/bash -p
     #
+</details>
 
-Sudo
-====
+<details>
+<summary>SUDO</summary>
+ <br> 
 
 Shell Escape Sequences
 ----------------------
@@ -294,9 +296,11 @@ Abusing Intended Functionality
     Syntax error on line 1 of /etc/shadow:
     Invalid command 'root:$6$Tb/euwmK$OXA.dwMeOAcopwBl68boTG5zi65wIHsc84OWAIye5VITLLtVlaXvRDJXET..it8r.jbrlpfZeMdwD3B0fGxJI0:17298:0:99999:7:::', perhaps misspelled or defined by a module not included in the server configuration
 
-LD_PRELOAD / LD_LIBRARY_PATH
-----------------------------
+</details>
 
+<details>
+<summary>LD_PRELOAD</summary>
+ <br> 
 Environment variables:
 
 * LD_LIBRARY_PATH - A list of directories in which to search for RLF libraries at execution time.
@@ -331,9 +335,11 @@ Set the environment variable as part of the sudo command. The full path to the .
 
     $ sudo LD_PRELOAD=/full/path/tp/preload.so apache2
     #
+</details>
 
-Cron Jobs
-=========
+<details>
+<summary>CORN JOB</summary>
+ <br> 
 
 Path
 ----
@@ -457,9 +463,12 @@ Now use su to switch user:
     $ su newroot
     #
 
-SUID Binaries
--------------
 
+</details>
+
+<details>
+<summary>SUID Binaries</summary>
+ <br> 
 Shared Object Injection
 ^^^^^^^^^^^^^^^^^^^^^^^
 
