@@ -7,7 +7,6 @@ NFS allows a host to share file system resources over a network. Access Control 
 
 Root squashing maps files owned by root (uid 0) to a different ID (e.g. anonymous or nobody). If the "no_root_squash" option is enabled, files owned by root will not get mapped. This means that as long as you access the NFS share as a root (uid 0) user, you can write to the host file system as root.
 
-.. code-block:: none
 
     $ cat /etc/exports
 
