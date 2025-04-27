@@ -3,6 +3,8 @@
 <details>
 <summary>Kernel Exploits</summary>
  <br> 
+ Kernel Exploits
+ ----------------------
 Step 1: Identify & Search for Exploits
 The first step is to identify potential exploits for the target system. You can use Searchsploit to find known vulnerabilities for the specific kernel version.
     
@@ -96,7 +98,7 @@ Find and Read Flag: After gaining root privileges, locate the flag file to compl
 <summary>SUDO</summary>
  <br> 
 
-Shell Escape Sequences
+Sudo Privileges
 ----------------------
 Check Current Sudo Privileges
 To check your current permissions related to sudo, you can use the following command:
@@ -187,7 +189,8 @@ Finding the Flag: Once you have root access, locate the flag and/or crack passwo
 <summary>CORN JOB</summary>
  <br> 
 
-**Cron jobs**
+Cron jobs
+----------------------
 Cron jobs are scheduled tasks that run scripts or binaries at specified times. By default, they execute with the privileges of their owner, not the user who triggers them. If a cron job is owned by root but writable by an unprivileged user, that user can inject code to run as root.
 
 1. Understand Where Cron Jobs Live
@@ -376,7 +379,9 @@ Permanent Access: The new root user will persist across reboots until /etc/passw
 <details>
 <summary>SUID Binaries</summary>
  <br> 
-Shared Object Injection: Much of Linux privilege controls rely on controlling the users and files interactions. This is done with permissions. By now, you know that files can have read, write, and execute permissions. These are given to users within their privilege levels. This changes with SUID (Set-user Identification) and SGID (Set-group Identification). These allow files to be executed with the permission level of the file owner or the group owner, respectively.
+Shared Object Injection
+ ----------------------
+Much of Linux privilege controls rely on controlling the users and files interactions. This is done with permissions. By now, you know that files can have read, write, and execute permissions. These are given to users within their privilege levels. This changes with SUID (Set-user Identification) and SGID (Set-group Identification). These allow files to be executed with the permission level of the file owner or the group owner, respectively.
 ^^^^^^^^^^^^^^^^^^^^^^^
 
 Shared Objects (.so) are the \*nix equivalent of Windows DLLs. If a program references a shared object that we can write to (even if it doesn't exist) we can run commands with the user context of the application.
@@ -655,7 +660,8 @@ We can get an instance root shell:
 <details>
 <summary>Capabilities</summary>
  <br> 
- What Are Capabilities?
+What Are Capabilities?
+----------------------
 In Unix-like systems, capabilities are used to provide more granular control over the privileges of processes or binaries, rather than granting full root access. This method allows administrators to assign specific privileges to processes that would typically require higher-level permissions.
 
 For example:
@@ -717,6 +723,7 @@ This method highlights the importance of reviewing and controlling which capabil
 <summary>PATH Hijacking</summary>
  <br> 
  What is the PATH Environment Variable?
+ ----------------------
 In Linux, PATH is an environmental variable that tells the operating system where to look for executable files. When you run a command in the shell (such as ls, cat, or any custom script), Linux searches for that command in the directories listed in the PATH variable.
 
 For example:
@@ -795,31 +802,9 @@ Now restart the remote host, and once the host is restarted, spawn a root shell:
  <br> 
 
 Configuration files are usually stored in /etc.
-
+----------------------
 Check writable files to see if we can introduce misconfigurations (e.g. if /etc/exports is writable, we can define NFS shares with root squashing turned off).
-
-##########################
-Linux Privilege Escalation
-##########################
-
-* https://github.com/mubix/post-exploitation
-* https://github.com/spencerdodd/kernelpop
-* https://github.com/SecWiki/linux-kernel-exploits
-* https://www.google.com/search?q=kernel+exploits
-* https://github.com/NullArray/RootHelper
-* https://greysec.net/showthread.php?tid=1355
-* https://github.com/DominicBreuker/pspy
-* https://touhidshaikh.com/blog/?p=790
-* http://blog.securelayer7.net/abusing-sudo-advance-linux-privilege-escalation/
-* https://gtfobins.github.io/
-* https://guif.re/linuxeop
-* https://github.com/sagishahar/lpeworkshop
-* https://github.com/codingo/OSCP-2
-* https://infamoussyn.wordpress.com/2014/07/11/gaining-a-root-shell-using-mysql-user-defined-functions-and-setuid-binaries/
-* https://www.hackingarticles.in/linux-privilege-escalation-using-suid-binaries/
-* https://docs.ansible.com/ansible/latest/user_guide/become.html
-* https://payatu.com/guide-linux-privilege-escalation/
-* https://github.com/Arrexel/phpbash
+</details>
 </details>
 <details>
 <summary>LD_PRELOAD</summary>
@@ -934,3 +919,26 @@ Now, back on the remote host, run the file. For bash / sh, use the -p command li
     $ /tmp/bash -p
     #
 </details>
+
+##########################
+Linux Privilege Escalation
+##########################
+
+* https://github.com/mubix/post-exploitation
+* https://github.com/spencerdodd/kernelpop
+* https://github.com/SecWiki/linux-kernel-exploits
+* https://www.google.com/search?q=kernel+exploits
+* https://github.com/NullArray/RootHelper
+* https://greysec.net/showthread.php?tid=1355
+* https://github.com/DominicBreuker/pspy
+* https://touhidshaikh.com/blog/?p=790
+* http://blog.securelayer7.net/abusing-sudo-advance-linux-privilege-escalation/
+* https://gtfobins.github.io/
+* https://guif.re/linuxeop
+* https://github.com/sagishahar/lpeworkshop
+* https://github.com/codingo/OSCP-2
+* https://infamoussyn.wordpress.com/2014/07/11/gaining-a-root-shell-using-mysql-user-defined-functions-and-setuid-binaries/
+* https://www.hackingarticles.in/linux-privilege-escalation-using-suid-binaries/
+* https://docs.ansible.com/ansible/latest/user_guide/become.html
+* https://payatu.com/guide-linux-privilege-escalation/
+* https://github.com/Arrexel/phpbash
