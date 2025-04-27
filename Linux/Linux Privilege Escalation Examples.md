@@ -173,6 +173,7 @@ Assuming you can execute find with sudo, you can use the following command to sp
 
     sudo find . -exec /bin/sh \; -quit
 ![image](https://github.com/user-attachments/assets/1d174aff-f610-476e-bb4e-bb3d723280f9)
+
 This command forces find to run a shell (/bin/sh) as root by using sudo. The -quit flag ensures that the find command stops executing immediately after spawning the shell.
 
 Find Common Exploitable Binaries
