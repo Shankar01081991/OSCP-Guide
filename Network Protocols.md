@@ -165,9 +165,8 @@ By exploiting this vulnerability, you can get access to the **root** account on 
 
 </details> 
 
-### **2.📦 NFS (Network File System)**
 <details>
-<summary>📝 Click to expand NFS Information</summary>
+<summary>2.📦 NFS (Network File System)</summary>
  <br>
 NFS allows a system to share its files with other systems over a network. It enables the mounting of remote file systems and interaction with them as if they were local.
 
@@ -244,9 +243,8 @@ Now, try accessing the directory as `vulnix_user`:
 
 </details>
 
-### **3.🗂️ SMB (Server Message Block)**
 <details>
-<summary>📝 Click to expand  SMB Information</summary>
+<summary>3.🗂️ SMB (Server Message Block)</summary>
  <br>
 SMB is a protocol used for file and printer sharing, as well as inter-process communication between computers.
 
@@ -344,9 +342,8 @@ cat /usr/share/exploitdb/exploits/multiple/remote/10095.txt
 
 </details>
 
-### **4.🔌 RPC (Remote Procedure Call)**
 <details>
-<summary>📝 Click to expand RPC Information</summary>
+<summary>4.🔌 RPC (Remote Procedure Call)</summary>
  <br>
 RPC allows a program on one computer to execute a procedure on another computer.
 
@@ -405,8 +402,11 @@ smb: \> ls
 ...
 ```
 ---
+</details>
 
-### **5.📡 SNMP (Simple Network Management Protocol)**
+<details>
+<summary>5.📡 SNMP (Simple Network Management Protocol)</summary>
+ <br>
 
 SNMP is used to manage and monitor network devices. It can be exploited if the community string is weak or known (like **public** or **private**).
 ![image](https://github.com/user-attachments/assets/c4d02453-3331-4739-bf58-f38aea7a6133)
@@ -453,9 +453,8 @@ https://hacktricks.boitatech.com.br/pentesting/pentesting-snmp/snmp-rce
 
 </details>
 
-### **6.📚 LDAP (Lightweight Directory Access Protocol)**
 <details>
-<summary>📝 Click to expand LDAP Information</summary>
+<summary>6.📚 LDAP (Lightweight Directory Access Protocol)</summary>
  <br>
 LDAP is a protocol used to access and maintain directory information. It is commonly used for managing user information and authentication.
 
@@ -508,9 +507,8 @@ run
 
 </details>
 
-### **7. SMTP (Simple Mail Transfer Protocol)**
 <details>
- <summary>📝 Click to expand SMTP Information</summary>
+ <summary>7. SMTP (Simple Mail Transfer Protocol)</summary>
  <br>
 SMTP is used for sending and receiving emails. It can be exploited in cases of misconfiguration, such as **open relay** or **user enumeration**.
 
@@ -543,9 +541,9 @@ This is a test email.
 ```
 </details>
 
-### **8. POP3**
+### ****
 <details>
-<summary>📝 Click to expand POP3 Information</summary>
+<summary>8. POP3 (Post Office Protocol Version 3)</summary>
  <br>
 **Post Office Protocol** \(**POP**\) is a type of computer networking and Internet standard **protocol** that extracts and retrieves email from a remote mail server for access by the host machine. **POP** is an application layer **protocol** in the OSI model that provides end users the ability to fetch and receive email \(from [here](https://www.techopedia.com/definition/5383/post-office-protocol-pop)\).
 
@@ -654,9 +652,8 @@ hydra -l <username> -P /usr/share/wordlists/rockyou.txt -s 110 -vV <IP> pop3
 - POP3 RFC 1939
 </details>
 
-### **9.🔒 SSH**
 <details>
-<summary>📝 Click to expand SSH Information</summary>
+<summary>9.🔒 SSH (Secure Shell) </summary>
  <br>
 **Secure Shell (SSH)** is a cryptographic network protocol designed for secure communication over an unsecured network. It is primarily used for remote login and command-line execution, replacing older, less secure protocols like Telnet and rlogin
 https://www.ssh.com/academy/ssh/public-key-authentication
@@ -729,9 +726,8 @@ Code
   ![image](https://github.com/user-attachments/assets/bdb18c28-6296-4013-bd28-4d6edafd81e9)
 </details>
   
-### **10. HTTP/S enumeration**
 <details>
-<summary>📝 Click to expand HTTP Information</summary>
+<summary>10. HTTP/S (Hypertext Transfer Protocol)</summary>
  <br>
 - View the source code and identify any hidden content. If an image looks suspicious, download it and try to find hidden data in it.
 - Identify the version or CMS and check for active exploits. This can be done using Nmap and Wappalyzer.
@@ -929,9 +925,8 @@ sqlmap -r post.txt -p item  --os-shell  --web-root "/var/www/html/tmp" #/var/www
 ```
 </details>
 
-### **11. DNS enumeration**
 <details>
-<summary>📝 Click to expand DNS Information</summary>
+<summary>11. DNS (Domain Name System)</summary>
  <br>
 - Better use `Seclists` wordlists for better enumeration. https://github.com/danielmiessler/SecLists/tree/master/Discovery/DNS
 
