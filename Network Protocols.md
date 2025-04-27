@@ -506,10 +506,12 @@ run
 
 ```
 
----
+</details>
 
 ### **7. SMTP (Simple Mail Transfer Protocol)**
-
+<details>
+ <summary>📝 Click to expand SMTP Information</summary>
+ <br>
 SMTP is used for sending and receiving emails. It can be exploited in cases of misconfiguration, such as **open relay** or **user enumeration**.
 
 **Enumerating SMTP:**
@@ -727,7 +729,7 @@ Code
   ![image](https://github.com/user-attachments/assets/bdb18c28-6296-4013-bd28-4d6edafd81e9)
 </details>
   
-**10. HTTP/S enumeration**
+### **10. HTTP/S enumeration**
 <details>
 <summary>📝 Click to expand HTTP Information</summary>
  <br>
@@ -801,7 +803,7 @@ droopescan scan drupal -u http://site
 droopescan scan joomla --url http://site
 sudo python3 joomla-brute.py -u http://site/ -w passwords.txt -usr username #https://github.com/ajnik/joomla-bruteforce
 ```
-**Web Attacks**
+### **Web Attacks**
 
 💡 Cross-platform PHP revershell: [
 
@@ -927,7 +929,7 @@ sqlmap -r post.txt -p item  --os-shell  --web-root "/var/www/html/tmp" #/var/www
 ```
 </details>
 
-**11. DNS enumeration**
+### **11. DNS enumeration**
 <details>
 <summary>📝 Click to expand DNS Information</summary>
  <br>
