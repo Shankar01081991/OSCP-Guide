@@ -163,8 +163,7 @@ Metasploit is another powerful tool used for exploiting vulnerabilities in syste
 By exploiting this vulnerability, you can get access to the **root** account on the target machine.
 ![image](https://github.com/user-attachments/assets/2c266ec1-e757-4442-970e-cc713e589347)
 
-</details> ```
----
+</details> 
 
 ### **2.📦 NFS (Network File System)**
 
