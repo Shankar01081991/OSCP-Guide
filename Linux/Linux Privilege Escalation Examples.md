@@ -218,7 +218,8 @@ In the example above, /home/karen is in the PATH and our user can write to it.
 Confirm What’s Running and When
 You can observe cron in action using a tool like pspy on the target:
 
-# Transfer and run pspy to monitor cron executions
+Transfer and run pspy to monitor cron executions
+[PSPY](https://github.com/DominicBreuker/pspy?tab=readme-ov-file)
 
     ./pspy64
 You’ll see lines like:
