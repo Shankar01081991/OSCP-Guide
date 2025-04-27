@@ -204,6 +204,7 @@ Once you find the hash, you can try cracking it using tools like John the Ripper
 
 
 Overwriting Files (Risky)
+
 Warning: This command will overwrite important system files like /etc/passwd — don’t use this in production systems! This is useful only for Capture the Flag (CTF) scenarios or safe environments.
 
 Here’s how you can potentially overwrite the /etc/passwd file to give yourself root access:
