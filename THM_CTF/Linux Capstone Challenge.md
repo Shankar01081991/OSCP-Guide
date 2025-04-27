@@ -21,7 +21,8 @@ sudo -l
 
 ```
 
-[](https://github.com/user-attachments/assets/0d9e9da3-e1ec-41c2-a78d-1482eaf09fc9)
+![image](https://github.com/user-attachments/assets/19cb771a-39db-4723-9b2e-7298be3f4a37)
+
 
 ---
 
@@ -38,7 +39,8 @@ find / -type f -perm -u=s -ls 2>/dev/null
 
 ```
 
-[](https://github.com/user-attachments/assets/c1563691-76ef-44f5-bd2a-55e3f7b5759f)
+![image](https://github.com/user-attachments/assets/17b7043e-fd6d-4e56-aea4-5f562f784c15)
+
 
 ---
 
@@ -90,7 +92,8 @@ john --wordlist=/usr/share/wordlists/rockyou.txt passwords.txt
 | missy | Password1 |
 | leonard | Penny123 |
 
-[](https://github.com/user-attachments/assets/188f95e6-8865-4562-bc86-9afc3e280557)
+![image](https://github.com/user-attachments/assets/389c916e-ee5e-4698-807b-9218b38fab13)
+
 
 ---
 
@@ -105,7 +108,8 @@ cat flag1.txt
 
 ```
 
-[](https://github.com/user-attachments/assets/5d3a6a57-4a02-4bfe-923d-4a25c10f8dfe)
+![image](https://github.com/user-attachments/assets/85c6ffcc-6532-4066-96e0-bc3a5625cdf2)
+
 
 ---
 
@@ -139,7 +143,8 @@ cat flag2.txt
 
 ```
 
-[](https://github.com/user-attachments/assets/1002eda2-ead5-450c-8248-0460b91e535b)
+![image](https://github.com/user-attachments/assets/d9d0ed5f-4eca-469b-b3d0-48838b464a35)
+
 
 ---
 
@@ -147,7 +152,8 @@ cat flag2.txt
 
 Another way to get a root shell via `find`:
 
-[](https://github.com/user-attachments/assets/9a113d36-4cdc-4e1d-97ad-7c0fbdb62dbc)
+![image](https://github.com/user-attachments/assets/7b3f9c62-9629-4e14-a159-085a4a84559b)
+
 
 ---
 
