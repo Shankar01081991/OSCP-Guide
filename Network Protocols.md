@@ -557,7 +557,7 @@ sqlmap -r post.txt -p item  --os-shell  --web-root "/var/www/html/tmp" #/var/www
 </details>
 
 <details>
-<summary>5. POP3 (Post Office Protocol Version 3) port 110</summary>
+<summary>6. POP3 (Post Office Protocol Version 3) port 110</summary>
  <br>
 **Post Office Protocol** \(**POP**\) is a type of computer networking and Internet standard **protocol** that extracts and retrieves email from a remote mail server for access by the host machine. **POP** is an application layer **protocol** in the OSI model that provides end users the ability to fetch and receive email \(from [here](https://www.techopedia.com/definition/5383/post-office-protocol-pop)\).
 
@@ -669,7 +669,7 @@ hydra -l <username> -P /usr/share/wordlists/rockyou.txt -s 110 -vV <IP> pop3
 
 
 <details>
-<summary>6.🔌 RPC (Remote Procedure Call) port 111 </summary>
+<summary>7.🔌 RPC (Remote Procedure Call) port 111 </summary>
  <br>
 RPC allows a program on one computer to execute a procedure on another computer.
 
@@ -731,7 +731,7 @@ smb: \> ls
 </details>
 
 <details>
-<summary>7.🗂️ SMB (Server Message Block) port 139,445</summary>
+<summary>8.🗂️ SMB (Server Message Block) port 139,445</summary>
  <br>
 SMB is a protocol used for file and printer sharing, as well as inter-process communication between computers.
 
@@ -829,7 +829,7 @@ cat /usr/share/exploitdb/exploits/multiple/remote/10095.txt
 
 </details>
 <details>
-<summary>8.📡 SNMP (Simple Network Management Protocol) port 25</summary>
+<summary>9.📡 SNMP (Simple Network Management Protocol) port 25</summary>
  <br>
 
 SNMP is used to manage and monitor network devices. It can be exploited if the community string is weak or known (like **public** or **private**).
@@ -878,7 +878,7 @@ https://hacktricks.boitatech.com.br/pentesting/pentesting-snmp/snmp-rce
 </details>
 
 <details>
-<summary>9.📚 LDAP (Lightweight Directory Access Protocol)389,636</summary>
+<summary>10.📚 LDAP (Lightweight Directory Access Protocol)389,636</summary>
  <br>
 LDAP is a protocol used to access and maintain directory information. It is commonly used for managing user information and authentication.
 
@@ -931,7 +931,7 @@ run
 
 </details>
 <details>
-<summary>10.📦 NFS (Network File System) port 2049</summary>
+<summary>11.📦 NFS (Network File System) port 2049</summary>
  <br>
 NFS allows a system to share its files with other systems over a network. It enables the mounting of remote file systems and interaction with them as if they were local.
 
@@ -1010,7 +1010,7 @@ Now, try accessing the directory as `vulnix_user`:
 
 
 <details>
-<summary>11. mysql  port 3306</summary>
+<summary>12. mysql  port 3306</summary>
  <br>
 
 
