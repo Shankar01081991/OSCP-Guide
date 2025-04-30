@@ -777,6 +777,7 @@ Now the script should execute without interpreter errors:
 ![image](https://github.com/user-attachments/assets/e1e593d4-99f6-43cd-af6e-a231c1fcfb9d)
 
 Result: Got the SSH shell
+
 ![image](https://github.com/user-attachments/assets/31ed8b76-ded9-427e-9850-9d19cf7f7ee7)
 
 
