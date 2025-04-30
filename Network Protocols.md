@@ -725,6 +725,7 @@ Code
   ![image](https://github.com/user-attachments/assets/bdb18c28-6296-4013-bd28-4d6edafd81e9)
 
 **LAB**
+
 🔍 1. Scan the Target with Nmap
 You used Nmap to detect open ports, services, and versions on the target machine:
 
