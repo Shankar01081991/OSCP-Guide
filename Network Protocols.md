@@ -723,6 +723,62 @@ Code
   ssh -oHostKeyAlgorithms=+ssh-rsa TCM@10.10.81.58 -p22
   ```
   ![image](https://github.com/user-attachments/assets/bdb18c28-6296-4013-bd28-4d6edafd81e9)
+
+**LAB**
+🔍 1. Scan the Target with Nmap
+You used Nmap to detect open ports, services, and versions on the target machine:
+
+       nmap -sV -A -Pn -p22 192.168.188.131
+![image](https://github.com/user-attachments/assets/0c302403-7c3a-43ba-8ae1-07e071f8290d)
+identified OpenSSH 4.7p1
+
+🌐 2. Search for Exploits
+A quick Google search led to a publicly available exploit on GitHub.
+![image](https://github.com/user-attachments/assets/5c3d0256-140d-496c-9a9d-659eee20cc72)
+
+📥 3. Download the Exploit
+You cloned the exploit repository using:
+
+    git clone https://github.com/sec-jarial/OpenSSH_4.7p1-Exploit.git
+    cd OpenSSH_4.7p1-Exploit
+
+ 
+🐍 4. Fix Script Error: Bad Interpreter
+When running the script:
+ 
+    ./openssh_4.7p1.py                
+    zsh: ./openssh_4.7p1.py: bad interpreter: /usr/bin/python3^M: no such file or directory
+
+ ![image](https://github.com/user-attachments/assets/665777b1-d68e-4932-a420-ee61d5bd2a19)
+
+✅ Fix: Convert Line Endings
+The error indicates Windows-style line endings (CRLF). Fix it using:
+
+    dos2unix openssh_4.7p1.py
+Or, use a text editor (e.g., VS Code, Vim) to convert to LF.
+
+🐍 5. Set the Correct Python Interpreter
+Ensure the shebang (#!) at the top of the script points to your actual Python binary:
+
+    #!/usr/bin/env python3
+Replace the shebang accordingly.
+Specify Correct Python Path: 
+
+    #!/home/kali/path/to/venv/bin/python
+
+![image](https://github.com/user-attachments/assets/19748c1f-cdd1-4297-88b6-e87a7104d17b)
+
+▶️ 6. Run the Exploit
+Now the script should execute without interpreter errors:
+
+    ./openssh_4.7p1.py
+
+![image](https://github.com/user-attachments/assets/e1e593d4-99f6-43cd-af6e-a231c1fcfb9d)
+
+Result: Got the SSH shell
+![image](https://github.com/user-attachments/assets/31ed8b76-ded9-427e-9850-9d19cf7f7ee7)
+
+
 </details>
   
 <details>
