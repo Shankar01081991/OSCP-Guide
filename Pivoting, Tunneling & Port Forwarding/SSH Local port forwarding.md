@@ -1,6 +1,6 @@
-##### ****SSH port forwarding (pivoting) to RDP into a Windows machine ****
+### ****SSH port forwarding (pivoting) to RDP into a Windows machine ****
 
-### **Setup Summary**
+## **Setup Summary**
 
 - **Your Machine** (Attacker): `144.54.163.17`
 - **Pivot Machine** (Ubuntu with SSH access): `130.141.168.70`
