@@ -29,7 +29,8 @@ ssh -L 3389:192.168.176.254:3389 user@130.141.168.70
 - This forwards port `3389` on **your local machine** to `192.168.176.254:3389` **via** `130.141.168.70`.
 - After logging in, leave the SSH session running.
 
-![image.png](attachment:0b51d120-1467-476f-adb1-d720fa1ec045:image.png)
+![image](https://github.com/user-attachments/assets/14b96d67-dab9-487e-9941-b801b15c20ac)
+
 
 ### 🎯 **Now**, open your **RDP client** (like Remmina, xfreerdp, or Microsoft Remote Desktop) and connect to:
 
@@ -40,11 +41,13 @@ NOTE: use 3390 or other port if 3389 is already in use.
 
 You should now reach the internal Windows box (`192.168.176.254`) via the tunnel.
 
-![image.png](attachment:01571533-4b17-44fc-ba65-468c60203483:image.png)
+![image](https://github.com/user-attachments/assets/d3ced9cd-f17c-48bb-9267-69baccaf05d1)
+
 
 ---
 
-![image.png](attachment:c614c75f-2c94-4014-8671-6b3709ec1e50:image.png)
+![image](https://github.com/user-attachments/assets/921a2dcd-5c46-44b3-a624-b1ce8694a684)
+
 
 ## 📌 If You're Using Windows on the Attacker Machine
 
