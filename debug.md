@@ -5,7 +5,9 @@ You can verify the type of IP your system is using by running the following comm
 
     curl ifconfig.me
 If this command returns an IPv6 address (e.g., something like 2001:0db8:85a3:0000:0000:8a2e:0370:7334), and your VPN or lab environment primarily supports IPv4, this mismatch can cause connectivity issues.
+
 🛠️ How to Fix:
+
 To disable IPv6 and force your system to use IPv4, run the following command:
 
     sudo sysctl -w net.ipv6.conf.all.disable_ipv6=1
