@@ -42,3 +42,18 @@ Set its value to:
     0xFF
 Restart your computer.
 ⚠️ Caution: Editing the registry can affect system stability. Always back up the registry before making changes.
+
+🔧 Here's how to modify Firfox on Kali Linux:
+Open Firefox.
+In the address bar, type:
+
+    about:config
+Click “Accept the Risk and Continue” if prompted.
+In the search bar, type:
+
+    network.stricttransportsecurity.preloadlist
+When it appears, double-click it to toggle the value to false.
+This disables Firefox’s use of the preloaded HSTS list, which can force HTTPS even if the site doesn’t request it.
+
+![image](https://github.com/user-attachments/assets/3f02962c-7df3-4dad-85d7-f8c8dc660098)
+
