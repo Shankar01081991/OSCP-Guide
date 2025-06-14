@@ -7,6 +7,35 @@ MTU Issues You tried MTU adjustments (1200, 1000, 900), but ACT broadband might 
         
         sudo ip link set dev eth0 mtu 850
 
+You can make the MTU change persistent across reboots by configuring it in your network settings.
+
+Permanent Solution:
+1. Use a Systemd Service (Recommended)
+Create a systemd service that applies the MTU setting at startup:
+
+        sudo nano /etc/systemd/system/set-mtu.service
+Add the following:
+
+
+        [Unit]
+        Description=Set MTU for tun0
+        After=network.target
+
+        [Service]
+        ExecStart=/sbin/ip link set dev tun0 mtu 1000
+        Restart=always
+        User=root
+
+        [Install]
+        WantedBy=multi-user.target
+
+Save the file and enable the service:
+
+        sudo systemctl daemon-reload
+        sudo systemctl enable set-mtu.service
+        sudo systemctl start set-mtu.service
+This ensures the MTU is set automatically on every boot.
+
 one possible reason could be related to how your public IP address is being handled—specifically, whether it's using IPv6 instead of IPv4.
 
 🔍 How to Check:
