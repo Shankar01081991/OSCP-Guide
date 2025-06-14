@@ -3,7 +3,7 @@ After launching Kali Linux in a virtual machine, update and upgrade the system u
 
 If your virtual machine (VM) or system is unable to connect to OffSec labs, 
 
-MTU Issues You tried MTU adjustments (1200, 1000, 900), but ACT broadband might require a different size. Try further lowering:
+MTU Issues You tried MTU adjustments (1200, 1000, 900), but ACT broadband might require a different size. Try further lowering: NOTE if conneted to VPN the Adapter will be tun0
         
         sudo ip link set dev eth0 mtu 850
 
