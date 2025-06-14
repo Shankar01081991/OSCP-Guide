@@ -1,3 +1,6 @@
+After launching Kali Linux in a virtual machine, update and upgrade the system using sudo apt-get update && apt-get upgrade -y. Then, disable the lock screen in power management settings and set terminal application transparency to 0%. Finally, use PimpMyKali to install all essential tools. You can find the setup details here[https://github.com/Dewalt-arch/pimpmykali]. 🚀
+
+
 If your virtual machine (VM) or system is unable to connect to OffSec labs, one possible reason could be related to how your public IP address is being handled—specifically, whether it's using IPv6 instead of IPv4.
 
 🔍 How to Check:
