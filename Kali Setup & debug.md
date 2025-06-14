@@ -35,6 +35,9 @@ Save the file and enable the service:
         sudo systemctl enable set-mtu.service
         sudo systemctl start set-mtu.service
 This ensures the MTU is set automatically on every boot.
+check if its enabled:
+
+        systemctl is-enabled set-mtu.service
 
 one possible reason could be related to how your public IP address is being handled—specifically, whether it's using IPv6 instead of IPv4.
 
