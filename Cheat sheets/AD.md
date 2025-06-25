@@ -1,6 +1,7 @@
 [*Active Directory Domain Services*](https://learn.microsoft.com/en-us/windows-server/identity/ad-ds/get-started/virtual-dc/active-directory-domain-services-overview), often referred to as Active Directory (AD), is a service that allows system administrators to update and manage operating systems, applications, users, and data access on a large scale. Active Directory is installed with a standard configuration; however, system administrators often customize it to fit the needs of the organization.
 
-![image.png](attachment:176b1c53-3bb2-40ba-a944-802e4f99cfeb:image.png)
+![image](https://github.com/user-attachments/assets/a6cfe0f3-5edf-42f3-8f10-5edbac0ede6a)
+
 
 ## 🧭 **Active Directory - Enumeration**
 
