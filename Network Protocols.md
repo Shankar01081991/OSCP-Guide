@@ -171,7 +171,9 @@ By exploiting this vulnerability, you can get access to the **root** account on 
  <br>
 **Secure Shell (SSH)** is a cryptographic network protocol designed for secure communication over an unsecured network. It is primarily used for remote login and command-line execution, replacing older, less secure protocols like Telnet and rlogin
 https://www.ssh.com/academy/ssh/public-key-authentication
+
 https://docs.github.com/en/authentication/connecting-to-github-with-ssh/about-ssh
+
 ## SSH enumeration
 
 ```
