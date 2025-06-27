@@ -53,6 +53,8 @@ msiexec /quiet /qn /i evil.msi
 
 🔍 Use `whoami /priv` to check what you have.
 
+if youre NT/System use `lusrmgr.msc` to change user passwords
+
 ---
 
 ### 🧪 **Maintaining Access – Meterpreter Examples**
