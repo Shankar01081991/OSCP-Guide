@@ -98,3 +98,23 @@ This disables Firefox’s use of the preloaded HSTS list, which can force HTTPS 
 
 ![image](https://github.com/user-attachments/assets/3f02962c-7df3-4dad-85d7-f8c8dc660098)
 
+### If your VM fail to start Kali or somtimes nothing happens after clicking “Take Ownership,” here’s what might be going on—and how we can troubleshoot it:
+
+VMware Workstation uses lock files (.lck) to prevent multiple processes from accessing the same virtual machine simultaneously. If it wasn’t shut down properly or another process (or user) is holding the lock, VMware won’t let you proceed—even after clicking “Take Ownership.”
+
+✅ Step-by-Step Fix
+
+1. Make Sure the VM Is Really Not Running• Double-check that no other VMware process or system is using this VM.
+* If you’re on Windows, open Task Manager and look for any vmware-vmx.exe or other VMware-related processes. End them if necessary.
+
+2. Delete the Lock Files Manually• Navigate to this folder:
+D:\VM\kali-linux-2025.2-vmware-amd64.vmwarevm\
+* Look for any folders or files with .lck in the name (e.g., kali.vmx.lck).
+* Close VMware first, then delete these .lck files and folders.
+* Reopen VMware Workstation and try launching the VM again.
+
+3. Check File Permissions• Make sure your user account has full read/write access to the VM folder.
+* Sometimes ownership conflicts arise from permission issues, especially if the VM was moved between systems or user accounts.
+
+4. Reboot as a Reset• If all else fails, reboot your machine and try again. Some lingering lock or temp files may clear on restart.
+
