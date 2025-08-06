@@ -976,7 +976,7 @@ cat /usr/share/exploitdb/exploits/multiple/remote/10095.txt
 
 </details>
 <details>
-<summary>9.📡 SNMP (Simple Network Management Protocol) port 25</summary>
+<summary>9.📡 SNMP (Simple Network Management Protocol) port UDP 161</summary>
  <br>
 
 SNMP is used to manage and monitor network devices. It can be exploited if the community string is weak or known (like **public** or **private**).
