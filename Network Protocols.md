@@ -1559,7 +1559,7 @@ sql
 </details>
 
 <details>
-<summary>14. WinRM 3306</summary>
+<summary>14. WinRM 5985</summary>
  <br>
 📌 What is WinRM?
 Windows Remote Management (WinRM) is Microsoft’s implementation of the WS-Management protocol based on SOAP. It allows remote management of Windows systems and is enabled by default in some environments.
