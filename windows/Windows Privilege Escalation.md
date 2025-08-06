@@ -6,6 +6,7 @@ Windows Privilege Escalation Examples
 <summary>Weak Service Permissions</summary>
  <br> 
 ========================
+ 
 In Windows, services running as LocalSystem (highest privilege) with non-default or writable executable paths and weak permissions can be exploited for privilege escalation. This document provides detection, exploitation, and remediation steps.
 
 🔍 1. Enumerate Services Running as LocalSystem with Non-Standard Paths
@@ -271,6 +272,8 @@ Step	Action
  <details>
 <summary>SeImpersonatePrivilege</summary>
  <br>
+  =====================
+  
 🔍 What is SeImpersonatePrivilege?
 The SeImpersonatePrivilege is a powerful permission in Windows that allows a user to impersonate the security context of another user. This is typically used by services to act on behalf of a client.
 
@@ -390,6 +393,8 @@ If the unquoted service path is :code:`C:\Program Files\path to\service.exe`, yo
 <details>
 <summary>Scheduled Task/Job</summary>
  <br> 
+ =======================
+ 
 An attacker can exploit Windows Task Scheduler to schedule malicious programs for initial or recurrent execution. For persistence, the attacker typically uses Windows Task Scheduler to launch applications at system startup or at predefined intervals. Furthermore, the attacker executes remote code under the context of a specified account to achieve Privilege Escalation.
 
 Task Scheduler
