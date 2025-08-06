@@ -1020,6 +1020,136 @@ or
 snmpwalk -v1 -c public 192.168.146.156 NET-SNMP-EXTEND-MIB :: nsExtendObjects
 
 ```
+What is SNMP?
+Simple Network Management Protocol (SNMP) is used to manage and monitor networked devices (routers, switches, printers, servers, etc.). It typically runs over UDP port 161 for general communication and UDP port 162 for traps.
+
+Devices expose information using MIBs (Management Information Base).
+
+SNMP is stateless and supports versions v1, v2c, and v3:
+
+v1/v2c are widely used but insecure (community strings are in plaintext).
+
+v3 adds encryption and authentication.
+
+🧭 Enumeration Techniques
+1. Port Scanning
+bash
+
+       nmap -sU -p 161,162 <target-ip>
+-sU: Scan UDP ports
+-p: Specify SNMP ports (161 for queries, 162 for traps)
+
+2. snmpwalk
+bash
+
+       snmpwalk -v1 -c public <target-ip>
+Use -v2c or -v3 as needed.
+
+Common community strings: public, private, manager.
+
+Useful OIDs:
+1.3.6.1.2.1.1.5.0 – Hostname
+
+1.3.6.1.2.1.25.1.6.0 – System processes
+
+1.3.6.1.2.1.25.4.2.1.2 – Running processes
+
+1.3.6.1.4.1 – Vendor-specific MIBs
+
+3. snmpset (Active interaction)
+bash
+
+       snmpset -v1 -c private <target-ip> iso.3.6.1.2.1.1.5.0 s "hacked"
+Requires write access (via private community string).
+
+4. Dump Output to File
+bash
+
+       snmpwalk -v1 -c public <target-ip> > snmpout.txt
+gedit snmpout.txt
+5. SNMP-check
+bash
+
+     snmp-check -p 161 -c public <target-ip>
+Provides a human-readable summary of SNMP results.
+
+6. Braa (High-speed SNMP scanner)
+bash
+
+       braa public@<target-ip>:.1.3.6.*
+Mass SNMP scanning tool, lightweight, does not rely on Net-SNMP libs.
+
+🧨 Exploitation & Brute Force
+7. Metasploit - snmp_enum
+bash
+
+    use auxiliary/scanner/snmp/snmp_enum
+    set RHOSTS <target-ip>
+    set community public
+    run
+8. Hydra
+bash
+
+       hydra -P pass.txt <target-ip> snmp
+-P: Password list (community strings)
+
+9. Metasploit - snmp_login
+bash
+
+       use auxiliary/scanner/snmp/snmp_login
+       set RHOSTS <target-ip>
+       set PASS_FILE pass.txt
+       run
+10. Medusa
+bash
+
+        medusa -h <target-ip> -P pass.txt -M snmp
+11. Patator
+bash
+
+        patator SNMP_login host=<target-ip> community=FILE0 0=pass.txt
+12. Nmap NSE Script
+bash
+
+        nmap -sU -p 161 <target-ip> --script snmp-brute --script-args snmp-brute.communitiesdb=pass.txt
+13. Onesixtyone
+bash
+
+        onesixtyone -c pass.txt <target-ip>
+Simple and efficient brute-force tool.
+
+🧾 Useful Resources
+Common SNMP Community Strings Wordlist:
+fuzzdb SNMP wordlist[https://raw.githubusercontent.com/fuzzdb-project/fuzzdb/master/wordlists-misc/wordlist-common-snmp-community-strings.txt]
+
+Extended MIB Enumeration:
+Explore additional SNMP fields via extended MIBs
+NET-SNMP-EXTEND-MIB[https://circitor.fr/]
+
+🛠️ Tips for Red Teamers & Pentesters
+SNMP Read-Only (RO) can leak:
+
+Usernames and services
+
+System details
+
+Running processes
+
+Network interfaces
+
+Potential credentials (sometimes encoded or plaintext)
+
+SNMP Read-Write (RW) access is highly critical:
+
+Can change configurations
+
+Reboot devices
+
+Inject malicious configuration (e.g., redirect logs, change SNMP traps)
+
+Use snmp-check and braa for fast reconnaissance, then deep dive with snmpwalk or Metasploit.
+
+SNMP often reveals network topology and firewall rules via MIBs.
 https://hacktricks.boitatech.com.br/pentesting/pentesting-snmp/snmp-rce
 
 </details>
@@ -1590,138 +1720,4 @@ pywinrm	Python-based WinRM library
 Metasploit	Brute-force, auth check
 
 </details>
- <details>
-<summary>15. SNMP  UDP-161</summary>
- <br> 
-What is SNMP?
-Simple Network Management Protocol (SNMP) is used to manage and monitor networked devices (routers, switches, printers, servers, etc.). It typically runs over UDP port 161 for general communication and UDP port 162 for traps.
 
-Devices expose information using MIBs (Management Information Base).
-
-SNMP is stateless and supports versions v1, v2c, and v3:
-
-v1/v2c are widely used but insecure (community strings are in plaintext).
-
-v3 adds encryption and authentication.
-
-🧭 Enumeration Techniques
-1. Port Scanning
-bash
-
-       nmap -sU -p 161,162 <target-ip>
--sU: Scan UDP ports
--p: Specify SNMP ports (161 for queries, 162 for traps)
-
-2. snmpwalk
-bash
-
-       snmpwalk -v1 -c public <target-ip>
-Use -v2c or -v3 as needed.
-
-Common community strings: public, private, manager.
-
-Useful OIDs:
-1.3.6.1.2.1.1.5.0 – Hostname
-
-1.3.6.1.2.1.25.1.6.0 – System processes
-
-1.3.6.1.2.1.25.4.2.1.2 – Running processes
-
-1.3.6.1.4.1 – Vendor-specific MIBs
-
-3. snmpset (Active interaction)
-bash
-
-       snmpset -v1 -c private <target-ip> iso.3.6.1.2.1.1.5.0 s "hacked"
-Requires write access (via private community string).
-
-4. Dump Output to File
-bash
-
-       snmpwalk -v1 -c public <target-ip> > snmpout.txt
-gedit snmpout.txt
-5. SNMP-check
-bash
-
-     snmp-check -p 161 -c public <target-ip>
-Provides a human-readable summary of SNMP results.
-
-6. Braa (High-speed SNMP scanner)
-bash
-
-       braa public@<target-ip>:.1.3.6.*
-Mass SNMP scanning tool, lightweight, does not rely on Net-SNMP libs.
-
-🧨 Exploitation & Brute Force
-7. Metasploit - snmp_enum
-bash
-
-    use auxiliary/scanner/snmp/snmp_enum
-    set RHOSTS <target-ip>
-    set community public
-    run
-8. Hydra
-bash
-
-       hydra -P pass.txt <target-ip> snmp
--P: Password list (community strings)
-
-9. Metasploit - snmp_login
-bash
-
-       use auxiliary/scanner/snmp/snmp_login
-       set RHOSTS <target-ip>
-       set PASS_FILE pass.txt
-       run
-10. Medusa
-bash
-
-        medusa -h <target-ip> -P pass.txt -M snmp
-11. Patator
-bash
-
-        patator SNMP_login host=<target-ip> community=FILE0 0=pass.txt
-12. Nmap NSE Script
-bash
-
-        nmap -sU -p 161 <target-ip> --script snmp-brute --script-args snmp-brute.communitiesdb=pass.txt
-13. Onesixtyone
-bash
-
-        onesixtyone -c pass.txt <target-ip>
-Simple and efficient brute-force tool.
-
-🧾 Useful Resources
-Common SNMP Community Strings Wordlist:
-fuzzdb SNMP wordlist[https://raw.githubusercontent.com/fuzzdb-project/fuzzdb/master/wordlists-misc/wordlist-common-snmp-community-strings.txt]
-
-Extended MIB Enumeration:
-Explore additional SNMP fields via extended MIBs
-NET-SNMP-EXTEND-MIB[https://circitor.fr/]
-
-🛠️ Tips for Red Teamers & Pentesters
-SNMP Read-Only (RO) can leak:
-
-Usernames and services
-
-System details
-
-Running processes
-
-Network interfaces
-
-Potential credentials (sometimes encoded or plaintext)
-
-SNMP Read-Write (RW) access is highly critical:
-
-Can change configurations
-
-Reboot devices
-
-Inject malicious configuration (e.g., redirect logs, change SNMP traps)
-
-Use snmp-check and braa for fast reconnaissance, then deep dive with snmpwalk or Metasploit.
-
-SNMP often reveals network topology and firewall rules via MIBs.
-  
- </details>
