@@ -1138,6 +1138,7 @@ UDF Execution	CREATE FUNCTION ... with .so/.dll
 SQLi RCE	Inject COPY command via vulnerable web app
 
 📎 Reference
+https://medium.com/greenwolf-security/authenticated-arbitrary-command-execution-on-postgresql-9-3-latest-cd18945914d5
 Greenwolf Security – PostgreSQL RCE via COPY
 
 Metasploit Modules
