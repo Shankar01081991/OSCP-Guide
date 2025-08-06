@@ -460,7 +460,7 @@ Monitor DCSync and TGT creation anomalies.
 <details>
 <summary>Certificate Services Abuse (e.g., ESC1–ESC8)</summary>
 <br>
-</details>
+
 Abusing Certificate Templates or CA permissions can allow low-privilege users to enroll certs for high-risk purposes (e.g. escrow, domain authentication), leading to full domain compromise 
 
 🔍 Detection
@@ -486,4 +486,4 @@ Secure template ACLs (use principle of least privilege).
 Require CA manager approval for templates.
 
 Monitor certificate issuance logs.
-
+</details>
