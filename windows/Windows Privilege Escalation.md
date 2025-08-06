@@ -2,7 +2,9 @@
 Windows Privilege Escalation Examples
 #####################################
 
-Weak Service Permissions
+<details>
+<summary>Weak Service Permissions</summary>
+ <br> 
 ========================
 
 Writable Service Executables
@@ -99,8 +101,11 @@ All-in-one comnand:
 .. code-block:: none
 
     sc config <service> binPath= "<command>" depend= "" start= demand obj= ".\LocalSystem" password= ""
+</details>
+<details>
+<summary>Unquoted Service Pathss</summary>
+ <br> 
 
-Unquoted Service Paths
 ----------------------
 
 Find unquoted service paths:
