@@ -1666,7 +1666,7 @@ Process Monitor (to trace DLL loading).
 PEVerify or DLL export readers (e.g. pexports).
 
 Testing environments: Place DLL as foo.dll or loadlib.dll.
-
+</details>
  <details>
 <summary>Token Impersonation (SeImpersonatePrivilege)</summary>
  <br>
