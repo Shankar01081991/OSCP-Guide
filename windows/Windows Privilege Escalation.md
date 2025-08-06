@@ -1630,7 +1630,6 @@ Step	Action
 <details>
 <summary>DLL Hijacking</summary>
  <br>
- </details>
 Exploits applications that load DLLs from directories writable by non-admin users. By placing a malicious DLL with the same name as one the app loads, you can achieve code execution as the application account (often SYSTEM).
 
 ✅ Detection & Enumeration
