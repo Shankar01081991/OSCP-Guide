@@ -553,6 +553,7 @@ Use plink.exe to forward the loopback port to a port on our attacking host (via 
 <summary>AlwaysInstallElevated</summary>
  <br> 
 =====================
+ 
 🔍 Overview
 AlwaysInstallElevated is a Windows policy setting that, when enabled, allows non-privileged users to install Microsoft Installer Packages (.msi files) with elevated (SYSTEM) privileges. This feature, originally intended for administrative convenience, becomes a serious security misconfiguration if both user-level and machine-level policies are enabled simultaneously.
 
