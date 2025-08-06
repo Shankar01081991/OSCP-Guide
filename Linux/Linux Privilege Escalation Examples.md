@@ -920,7 +920,77 @@ Now, back on the remote host, run the file. For bash / sh, use the -p command li
     $ /tmp/bash -p
     #
 </details>
+<details>
+<summary>Additional Techniques</summary>
+ <br> 
+1. Environment Variables
+Techniques using:
 
+LD_LIBRARY_PATH
+
+LD_AUDIT
+
+LD_DEBUG
+
+Similar to LD_PRELOAD but often overlooked.
+
+2. Scheduled Tasks / at Command
+Like cron, but via atd (one-time jobs).
+
+If a user can create at jobs, they can escalate.
+
+3. Docker / LXC Breakouts
+If user is in docker group:
+
+bash
+
+    docker run -v /:/mnt --rm -it alpine chroot /mnt sh
+Also applies to lxc containers if misconfigured.
+
+4. Exposed Sensitive Files
+World-readable private keys:
+
+/etc/shadow
+
+.ssh/id_rsa
+
+.bash_history with creds
+
+5. SetUID Scripts
+Dangerous if interpreted by /bin/bash or Python.
+
+Can be bypassed using race conditions or custom interpreters.
+
+6. Abusing passwd / /etc/sudoers
+Writable /etc/passwd, /etc/shadow, or /etc/sudoers.
+
+Add a root user or give self sudo.
+
+7. dbus / polkit Exploits
+Real-world example: CVE-2021-4034 (PwnKit).
+
+Can escalate from low-priv to root if exploitable version is present.
+
+8. Kernel Modules (if in kmod, insmod, etc.)
+If user can load kernel modules:
+
+Write a rootkit or malicious kernel module for privilege escalation.
+
+9. Services Running as Root
+If user can edit config or scripts executed by a service (e.g., web server, backup agent), they may hijack execution.
+
+10. User Namespace Escapes (Namespace PrivEsc)
+Exploiting the way Linux handles namespaces in containers.
+
+Useful in CTFs and container breakouts.
+
+11. PAM Misconfiguration
+Abusing PAM to run arbitrary code on login or via screen savers.
+
+12. Mount Tricks
+Mounting system folders over writable mount points.
+Example: mount --bind to tamper with /etc/passwd.
+ </details>
 ##########################
 Linux Privilege Escalation
 ##########################
