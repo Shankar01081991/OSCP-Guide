@@ -191,6 +191,7 @@ john --wordlist=/home/sathvik/Wordlists/rockyou.txt hash
 
 #bruteforce
 hydra -l uname -P passwords.txt <IP> ssh #'-L' for usernames list, '-l' for username and vice versa
+hydra -l <user> -P /usr/share/wordlists/rockyou.txt ssh://<ip>
 
 # Check for vulnerabilities associated with the identified version.
 ```
