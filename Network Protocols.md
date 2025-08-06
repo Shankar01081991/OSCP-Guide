@@ -515,6 +515,7 @@ nslookup -type=TXT info.megacorptwo.com 192.168.50.151 #We are querying the info
 
 ```
 dirbuster
+dirb http://<ip> /usr/share/seclists/Discovery/Web-Content/raft-medium-words -R
 gobuster dir -u http://example.com -w /path/to/wordlist.txt
 python3 dirsearch.py -u http://example.com -w /path/to/wordlist.txt
 ```
