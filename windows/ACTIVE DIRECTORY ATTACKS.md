@@ -377,9 +377,90 @@ Periodically reset KRBTGT twice.
 Monitor DCSync and TGT creation anomalies.
 </details>
 <details>
-<summary> ADCS Misconfiguration / ESC Attacks</summary>
- <br>
+<summary>Kerberoasting</summary>
+<br>
+</details>
 
+<details>
+<summary>AS-REP Roasting</summary>
+<br>
+</details>
+
+<details>
+<summary>Silver Ticket (Forged TGS)</summary>
+<br>
+</details>
+
+
+<details>
+<summary>DCSync / Replication Attacks</summary>
+<br>
+</details>
+
+<details>
+<summary>Unconstrained Delegation Abuse</summary>
+<br>
+</details>
+
+<details>
+<summary>Constrained Delegation Abuse</summary>
+<br>
+</details>
+
+
+
+
+
+<details>
+<summary>DACL/ACL-Based Escalation via DCOM / WMI / RDP</summary>
+<br>
+</details>
+
+<details>
+<summary>Group Policy Preferences (GPP) Passwords</summary>
+<br>
+</details>
+
+
+<details>
+<summary>Printer Bug / NTLM Relay via Print Spooler</summary>
+<br>
+</details>
+
+<details>
+<summary>Pass-the-Hash</summary>
+<br>
+</details>
+
+<details>
+<summary>Pass-the-Ticket</summary>
+<br>
+</details>
+
+<details>
+<summary>Overpass-the-Hash</summary>
+<br>
+</details>
+
+<details>
+<summary>DCShadow Attack</summary>
+<br>
+</details>
+
+<details>
+<summary>LAPS Password Disclosure</summary>
+<br>
+</details>
+
+<details>
+<summary>Kerberos Key Distribution Center (KDC) Spoofing</summary>
+<br>
+</details>
+
+<details>
+<summary>Certificate Services Abuse (e.g., ESC1–ESC8)</summary>
+<br>
+</details>
 Abusing Certificate Templates or CA permissions can allow low-privilege users to enroll certs for high-risk purposes (e.g. escrow, domain authentication), leading to full domain compromise 
 
 🔍 Detection
