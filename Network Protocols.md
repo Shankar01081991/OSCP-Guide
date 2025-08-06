@@ -978,9 +978,43 @@ cat /usr/share/exploitdb/exploits/multiple/remote/10095.txt
 <details>
 <summary>9.📡 SNMP (Simple Network Management Protocol) port UDP 161</summary>
  <br>
-
+What is SNMP?
+Simple Network Management Protocol (SNMP) is used to manage and monitor networked devices (routers, switches, printers, servers, etc.). It typically runs over UDP port 161 for general communication and UDP port 162 for traps.
 SNMP is used to manage and monitor network devices. It can be exploited if the community string is weak or known (like **public** or **private**).
 ![image](https://github.com/user-attachments/assets/c4d02453-3331-4739-bf58-f38aea7a6133)
+Devices expose information using MIBs (Management Information Base).
+
+SNMP is stateless and supports versions v1, v2c, and v3:
+
+v1/v2c are widely used but insecure (community strings are in plaintext).
+
+v3 adds encryption and authentication.
+
+🧭 Enumeration Techniques
+1. Port Scanning
+bash
+
+       nmap -sU -p 161,162 <target-ip>
+-sU: Scan UDP ports
+-p: Specify SNMP ports (161 for queries, 162 for traps)
+
+2. snmpwalk
+bash
+
+       snmpwalk -v1 -c public <target-ip>
+Use -v2c or -v3 as needed.
+
+Common community strings: public, private, manager.
+
+Useful OIDs:
+1.3.6.1.2.1.1.5.0 – Hostname
+
+1.3.6.1.2.1.25.1.6.0 – System processes
+
+1.3.6.1.2.1.25.4.2.1.2 – Running processes
+
+1.3.6.1.4.1 – Vendor-specific MIBs
+
 
 **Example SNMP enumeration with `snmpcheck`:**
 
@@ -1020,41 +1054,6 @@ or
 snmpwalk -v1 -c public 192.168.146.156 NET-SNMP-EXTEND-MIB :: nsExtendObjects
 
 ```
-What is SNMP?
-Simple Network Management Protocol (SNMP) is used to manage and monitor networked devices (routers, switches, printers, servers, etc.). It typically runs over UDP port 161 for general communication and UDP port 162 for traps.
-
-Devices expose information using MIBs (Management Information Base).
-
-SNMP is stateless and supports versions v1, v2c, and v3:
-
-v1/v2c are widely used but insecure (community strings are in plaintext).
-
-v3 adds encryption and authentication.
-
-🧭 Enumeration Techniques
-1. Port Scanning
-bash
-
-       nmap -sU -p 161,162 <target-ip>
--sU: Scan UDP ports
--p: Specify SNMP ports (161 for queries, 162 for traps)
-
-2. snmpwalk
-bash
-
-       snmpwalk -v1 -c public <target-ip>
-Use -v2c or -v3 as needed.
-
-Common community strings: public, private, manager.
-
-Useful OIDs:
-1.3.6.1.2.1.1.5.0 – Hostname
-
-1.3.6.1.2.1.25.1.6.0 – System processes
-
-1.3.6.1.2.1.25.4.2.1.2 – Running processes
-
-1.3.6.1.4.1 – Vendor-specific MIBs
 
 3. snmpset (Active interaction)
 bash
