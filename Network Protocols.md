@@ -97,6 +97,7 @@ frame contains "PASS"
 hydra -L user -P pass 192.168.188.131 ftp
 hydra -L wordlist.txt -P wordlist.txt 192.168.188.131 ftp
 use: /usr/share/seclists/Passwords/Leaked-Databases/rockyou.txt
+hydra -C /usr/share/seclists/Passwords/Default-Credentials/ftp-betterdefaultpasslist.txt <ip> ftp
 
 ```
 
