@@ -1795,6 +1795,10 @@ add the following
     #include <arpa/inet.h>  // For inet_addr
 
 or use alternat payload: https://github.com/Ridter/redis-rce
+ </details>
+ <details>
+<summary>Debug </summary>
+ <br>
  step-by-step cleanup-and-retry procedure for the redis-rogue-server exploit so you can re-run it reliably without getting stuck in the “taking too long” state.
 
 Step 1 – Connect to Redis
