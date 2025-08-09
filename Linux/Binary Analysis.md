@@ -38,6 +38,13 @@ Trace system calls and signals in a process:
 
     strace ./path/to/binary --argument arg
 
+Fix Radis Debug:
+add the following 
+#include <string.h>     // For strlen, strcat
+#include <arpa/inet.h>  // For inet_addr
+
+or use alternat payload: https://github.com/Ridter/redis-rce
+
 ltrace
 ======
 
