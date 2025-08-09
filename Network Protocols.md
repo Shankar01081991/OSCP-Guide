@@ -1720,4 +1720,80 @@ pywinrm	Python-based WinRM library
 Metasploit	Brute-force, auth check
 
 </details>
+<details>
+<summary>15. redis</summary>
+ <br>
+Redis Basics
+Default Port: 6379/TCP (but can also run on other ports)
 
+Default Auth: None (older versions) → Newer versions require password if configured in redis.conf
+
+Service Purpose: In-memory key-value database, often used for caching.
+
+Danger: If exposed to the internet without authentication, it can be used for:
+
+Data theft
+
+RCE via module loading
+
+Persistence (cron jobs, SSH keys)
+
+Privilege escalation (local)
+
+2️⃣ Enumeration
+Check if Redis is open
+bash
+
+nmap -p 6379 --script redis-info <target>
+Example output will show:
+
+Redis version
+
+Role (master/slave)
+
+OS info
+
+Config parameters
+
+Connect to Redis
+bash
+
+redis-cli -h <IP> -p 6379
+If password required:
+
+bash
+
+redis-cli -h <IP> -p 6379 -a <password>
+Gather Information
+Inside redis-cli:
+
+redis
+
+INFO           # Shows server, clients, memory, persistence, stats, replication, CPU, cluster, keyspace
+CONFIG GET *   # View all configuration parameters
+KEYS *         # List all keys
+GET <keyname>  # Get value for a key
+Bruteforce Password
+bash
+
+medusa -h <IP> -u "" -P /usr/share/wordlists/rockyou.txt -M redis
+or
+
+bash
+
+hydra -P rockyou.txt redis://<IP>
+
+for exploit try :
+
+    https://github.com/n0b0dyCN/redis-rogue-server?tab=readme-ov-file
+founf few issues and added few thing to get the .so file
+
+Fix Radis Debug:
+add the following 
+
+    #include <string.h>     // For strlen, strcat
+    #include <arpa/inet.h>  // For inet_addr
+
+or use alternat payload: https://github.com/Ridter/redis-rce
+
+</details>
