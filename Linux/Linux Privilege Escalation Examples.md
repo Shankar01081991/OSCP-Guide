@@ -34,9 +34,9 @@ You must have user-level access (shell or Meterpreter session) on the target.
 
 Metasploit Framework is installed and running.
  Step-by-Step Exploitation Flow
+ 
 Step 1: Gain Initial Access to Target
 You can use any method to get a shell or Meterpreter session. For example:
-
 
 If successful, this will give you a shell session.
 
@@ -71,8 +71,6 @@ If SESSION is not set, Metasploit will throw:
 Msf::OptionValidateError One or more options failed to validate: SESSION.
 Ensure the target is vulnerable to Dirty Pipe.
 Use sysinfo or uname -r in the session to check kernel version.
-
-
 
 ***Locate the Exploit**
 
