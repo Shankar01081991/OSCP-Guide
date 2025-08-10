@@ -25,8 +25,56 @@ Tools that could help searching for kernel exploits are:
 [linuxprivchecker](http://www.securitysift.com/download/linuxprivchecker.py)
 
 Always search the kernel version in Google, maybe your kernel version is wrote in some kernel exploit and then you will be sure that this exploit is valid.
+Prerequisites
 
-Step 2: Locate the Exploit
+***Kernel Exploit using metasploit**
+
+Target system must be Linux kernel 5.8 to 5.10.102 or 5.15.0 to 5.15.25 (vulnerable to Dirty Pipe).
+You must have user-level access (shell or Meterpreter session) on the target.
+Metasploit Framework is installed and running.
+ Step-by-Step Exploitation Flow
+Step 1: Gain Initial Access to Target
+You can use any method to get a shell or Meterpreter session. For example:
+
+
+If successful, this will give you a shell session.
+
+Step 2: List Active Sessions
+
+Example output:
+
+Active sessions
+===============
+
+  Id  Name  Type            Information         Connection
+  --  ----  ----            -----------         ----------
+  1         shell linux     kali@target         192.168.0.123:4444 -> 192.168.0.121:5555
+Step 3: Use the Dirty Pipe Exploit Module
+
+Step 4: Set Required Options
+
+You can also set the payload if needed:
+
+
+Step 5: Run the Exploit
+
+If successful, you’ll get a root-level Meterpreter session.
+
+Step 6: Verify Privilege Escalation
+
+Expected output:
+
+Server username: root
+ Troubleshooting Tips
+If SESSION is not set, Metasploit will throw:
+Msf::OptionValidateError One or more options failed to validate: SESSION.
+Ensure the target is vulnerable to Dirty Pipe.
+Use sysinfo or uname -r in the session to check kernel version.
+
+
+
+***Locate the Exploit**
+
 Once you’ve identified a suitable exploit, use the locate command to find its full path and inspect the code.
 
     locate linux/local/37292.c
