@@ -15,6 +15,7 @@ Python
     python -c 'import pty; pty.spawn("/bin/sh")'
     python -c 'import pty; pty.spawn("/bin/bash")'
     python3 -c 'import pty; pty.spawn("/bin/bash")'
+    script -qc /bin/bash /dev/null
 
     export PATH=/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/usr/games:/tmp
     export TERM=xterm-256color
