@@ -31,6 +31,7 @@ Prerequisites
 
 Target system must be Linux kernel 5.8 to 5.10.102 or 5.15.0 to 5.15.25 (vulnerable to Dirty Pipe).
 You must have user-level access (shell or Meterpreter session) on the target.
+
 Metasploit Framework is installed and running.
  Step-by-Step Exploitation Flow
 Step 1: Gain Initial Access to Target
