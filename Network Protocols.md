@@ -1725,7 +1725,8 @@ Metasploit	Brute-force, auth check
  <br>
 Redis Basics
 Default Port: 6379/TCP (but can also run on other ports)
-
+ 
+    https://github.com/n0b0dyCN/redis-rogue-server
 Default Auth: None (older versions) → Newer versions require password if configured in redis.conf
 
 Service Purpose: In-memory key-value database, often used for caching.
