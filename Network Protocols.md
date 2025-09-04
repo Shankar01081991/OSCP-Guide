@@ -1310,7 +1310,7 @@ bash
 📥 Step 2: Log in with psql or Metasploit module
 bash
 
-    psql -h <target-ip> -U postgres -W
+    psql -h <target-ip> -U postgres
 or via Metasploit:
 
 bash
