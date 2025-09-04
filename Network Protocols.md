@@ -1335,6 +1335,7 @@ pgsql
     postgres | Superuser, Create role, Create DB, Replication, Bypass RLS
 or:
 
+      https://medium.com/r3d-buck3t/command-execution-with-postgresql-copy-command-a79aef9c2767
 sql
 
     SELECT usesuper, usename FROM pg_user;
