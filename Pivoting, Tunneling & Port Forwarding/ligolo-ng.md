@@ -102,3 +102,4 @@ error: unable to start tunnel: file exists
     sudo ip link delete <Interface name>
 
 Delete the adapters created by ligilo and while conneting user create new interface. 
+Restart agent once again
