@@ -89,3 +89,14 @@ remmina -c rdp://john@192.168.11.131
 ```
 
 ![image](https://github.com/user-attachments/assets/1e54e495-83b1-4df5-9763-8a762b9d9083)
+
+issue : 
+
+error: unable to start tunnel: file exists
+
+<img width="972" height="574" alt="image" src="https://github.com/user-attachments/assets/2e69bf38-e568-4751-b2b9-5150ef19c386" />
+
+
+    ip link show
+
+    sudo ip link delete <Interface name>
