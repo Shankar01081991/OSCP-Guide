@@ -100,3 +100,5 @@ error: unable to start tunnel: file exists
     ip link show
 
     sudo ip link delete <Interface name>
+
+Delete the adapters created by ligilo and while conneting user create new interface. 
