@@ -906,6 +906,10 @@ smbclient -L 192.168.188.131 -N
 smbmap -H 192.168.188.131
 #If you got user name and password:
 smbmap -H 192.168.188.131 -u "msfadmin" -p "msfadmin" -r tmp -A '.*' -q
+if  Anonymous allowed try:
+Impacket-smbclinet Anonymous@Anonymous@<MIP>
+if user found try to connect:
+smbclient //<MIP>/”USER”
 
 ```
 
