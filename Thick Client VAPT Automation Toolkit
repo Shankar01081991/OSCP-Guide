@@ -1,104 +1,141 @@
-🛡️ Thick Client VAPT Automation Toolkit
+# Thick client testing
 
-Safe, Read‑Only, Automated Misconfiguration Detection for Windows Thick‑Client Applications
-This PowerShell toolkit performs non‑intrusive, read‑only, and safe security checks on Windows thick‑client applications.
-It is designed to help security testers quickly identify misconfigurations, weak security controls, and potential vulnerabilities without performing any exploitation.
+# 🛡️ Thick Client VAPT Automation Toolkit
 
-All results are stored in a structured folder called VAPT_TEST inside the application directory.
+### Safe, Read‑Only Misconfiguration Detection for Windows Thick‑Client Applications
 
-📂 What This Script Does
-The toolkit automatically performs the following assessments:
+This toolkit is a **PowerShell‑based automation framework** designed to help security testers quickly identify **misconfigurations**, **weak security controls**, and **potential vulnerabilities** in Windows thick‑client applications — **without performing any exploitation**.
 
-🔍 1. Binary & DLL Analysis
-Lists all .exe and .dll files
+It is completely **read‑only**, **non‑intrusive**, and safe to run on production systems.
 
-Validates Authenticode signatures
+All results are stored inside a structured folder named:
 
-Flags unsigned or tampered binaries
+Code
 
-Extracts and filters “interesting” strings (URLs, secrets, paths, SQL, etc.)
+`VAPT_TEST/`
 
-🗂 2. File System Security Checks
-Checks if the application directory is writable
+## 📌 Features at a Glance
 
-Scans all subdirectories for write permissions
+### 🔍 1. Binary & DLL Analysis
 
-Flags DLL hijacking risks
+- Lists all `.exe` and `.dll` files
+- Validates Authenticode signatures
+- Flags unsigned or tampered binaries
+- Extracts and filters “interesting” strings:
+    - URLs
+    - Secrets
+    - SQL queries
+    - Registry paths
+    - File paths
 
-🧩 3. Configuration & Secrets Discovery
-Scans .config, .xml, .json, .ini, .properties, .yaml
+### 🗂 2. File System Security Checks
+
+- Detects writable application directories
+- Detects writable subdirectories
+- Flags DLL hijacking risks
+
+### 🧩 3. Configuration & Secrets Discovery
+
+Scans multiple config formats:
+
+Code
+
+`.config, .xml, .json, .ini, .properties, .yaml, .yml`
 
 Detects:
 
-passwords
+- Passwords
+- Tokens
+- API keys
+- Connection strings
+- Debug/verbose flags
 
-tokens
+### 🔐 4. Crypto & Key Material Checks
 
-API keys
+- Detects weak crypto usage (MD5, SHA1, DES, RC4)
+- Detects embedded private keys (PEM/RSA/EC)
 
-connection strings
+### 📝 5. Log File Analysis
 
-debug/verbose flags
-
-🔐 4. Crypto & Key Material Checks
-Detects weak crypto usage (MD5, SHA1, DES, RC4)
-
-Detects embedded private keys (PEM/RSA/EC)
-
-📝 5. Log File Analysis
 Searches logs for:
 
-errors
+- Errors
+- Stack traces
+- Sensitive data
 
-stack traces
+### 🧱 6. Registry Security Checks
 
-sensitive data
+- Auto‑detects registry keys related to the application
+- Checks ACL permissions
+- Flags weak or writable registry keys
 
-🧱 6. Registry Security Checks
-Auto‑detects registry keys related to the application
+### 🧠 7. Process & DLL Load Enumeration
 
-Checks ACL permissions
+- Lists all running processes
+- Allows selection by index or PID
+- Enumerates loaded DLLs
+- Flags DLLs loaded from user‑writable directories
 
-Flags weak or writable registry keys
+### 🧪 8. Additional Security Checks
 
-🧠 7. Process & DLL Load Enumeration
-Lists all running processes
+- Insecure protocol usage (`http://`, `ftp://`, `ldap://`)
+- Temp/AppData usage
+- Hardcoded paths
+- Hardcoded SQL queries
 
-Lets the user select by index or PID
+## 📊 Vulnerability Summary
 
-Enumerates loaded DLLs
+At the end of execution, the script generates:
 
-Flags DLLs loaded from user‑writable directories
+Code
 
-🧪 8. Additional Security Checks
-Insecure protocol usage (http://, ftp://, ldap://)
+`VAPT_TEST/VulnerabilitySummary.txt`
 
-Temp/AppData usage
+This file contains a severity‑based summary such as:
 
-Hardcoded paths
+Code
 
-Hardcoded SQL queries
-------------------------------------------------------------------------------
-▶️ How to Use the Script
-1. Place the script in the application installation directory
+`[HIGH] Invalid or unsigned binary: helper.dll
+[HIGH] Writable subdirectories detected (DLL hijacking risk)
+[MEDIUM] Weak cryptographic algorithms detected
+[MEDIUM] Hardcoded connection strings detected
+[LOW] Debug/verbose flags detected`
+
+Perfect for reporting and triage.
+
+## ▶️ How to Use
+
+### 1. Place the script in the application installation directory
+
 Example:
-    C:\Program Files\TEST_APP\
-2. Run PowerShell as Administrator
+
+Code
+
+`C:\Program Files\TEST_APP\`
+
+### 2. Run PowerShell as Administrator
+
 (Not required for all checks, but recommended for registry access.)
 
-3. Execute the script
-.\thickclient.ps1
+### 3. Execute the script
 
-4. Follow on‑screen prompts
-Select process for DLL enumeration
+Code
 
-Choose registry key (optional)
+`.\thickclient.ps1`
 
-Everything else runs automatically
+### 4. Follow on‑screen prompts
 
-5. Review results in the VAPT_TEST folder
+- Select process for DLL enumeration
+- Choose registry key (optional)
+- Everything else runs automatically
+
+### 5. Review results in the `VAPT_TEST` folder
+
 You will find:
-VAPT_TEST\
+
+Code
+
+`VAPT_TEST/
    ├── dll_list.txt
    ├── SignatureReport.csv
    ├── InterestingStrings.txt
@@ -114,17 +151,15 @@ VAPT_TEST\
    ├── TempUsage.txt
    ├── LoadedDLLs.txt
    ├── RegistryPermissions.txt
-   └── VulnerabilitySummary.txt
-⚠️ Important Notes
-This toolkit is read‑only and non‑intrusive
+   └── VulnerabilitySummary.txt`
 
-It does not exploit vulnerabilities
+## ⚠️ Important Notes
 
-It is safe for production systems
+- The toolkit is **read‑only** and **non‑intrusive**
+- It does **not** exploit vulnerabilities
+- It is safe for production systems
+- Use only for **authorized** security assessments
 
-It is intended for authorized security assessments only
-
-------------------------------------------
 # ================================
 # Thick Client VAPT Automation Script (Safe)
 # ================================
@@ -672,4 +707,3 @@ if ($Findings.Count -eq 0) {
 Write-Host "VulnerabilitySummary.txt created" -ForegroundColor Green
 
 
------------------------------------------------------------
