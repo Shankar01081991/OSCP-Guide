@@ -200,6 +200,7 @@ This toolkit is useful during:
 
 # 📄 Script
 ---
+```
 # ================================
 # Thick Client VAPT Automation Script (Safe)
 # ================================
@@ -745,5 +746,6 @@ if ($Findings.Count -eq 0) {
 }
 
 Write-Host "VulnerabilitySummary.txt created" -ForegroundColor Green
+```
 ---
 Use responsibly and only for **authorized security testing**.
