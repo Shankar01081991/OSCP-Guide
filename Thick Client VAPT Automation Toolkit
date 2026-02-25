@@ -1,165 +1,105 @@
-*** Thick client testing ***
+### Safe, read‑only misconfiguration detection for Windows thick‑client applications
 
-# 🛡️ Thick Client VAPT Automation Toolkit
+A **PowerShell automation toolkit** to quickly spot **misconfigurations**, **weak security controls**, and **potential vulnerabilities** in Windows thick‑client apps — **without exploitation**.
 
-### Safe, Read‑Only Misconfiguration Detection for Windows Thick‑Client Applications
+<aside>
+🧯
 
-This toolkit is a **PowerShell‑based automation framework** designed to help security testers quickly identify **misconfigurations**, **weak security controls**, and **potential vulnerabilities** in Windows thick‑client applications — **without performing any exploitation**.
+**Non-intrusive by design**
 
-It is completely **read‑only**, **non‑intrusive**, and safe to run on production systems.
+- Read-only checks only
+- Safe to run on production (authorized) environments
+- No exploitation or payload execution
+</aside>
 
-All results are stored inside a structured folder named:
+## ✨ Highlights
 
-Code
+- **Binary & DLL analysis** (inventory, signature checks, interesting strings)
+- **File system ACL checks** (writable dirs, DLL hijack indicators)
+- **Secrets discovery** (configs and common formats)
+- **Crypto & key material checks** (weak algorithms, embedded keys)
+- **Log & registry checks** (sensitive content, weak ACLs)
+- **Process module enumeration** (loaded DLLs + suspicious load paths)
 
-`VAPT_TEST/`
+## 📁 Output
 
-## 📌 Features at a Glance
+All findings are written to:
 
-### 🔍 1. Binary & DLL Analysis
+```
+VAPT_TEST/
+```
 
-- Lists all `.exe` and `.dll` files
-- Validates Authenticode signatures
-- Flags unsigned or tampered binaries
-- Extracts and filters “interesting” strings:
-    - URLs
-    - Secrets
-    - SQL queries
-    - Registry paths
-    - File paths
+Key files:
 
-### 🗂 2. File System Security Checks
+```
+VAPT_TEST/
+├── dll_list.txt
+├── SignatureReport.csv
+├── InterestingStrings.txt
+├── FolderPermissions.txt
+├── WritableSubdirectories.txt
+├── ConfigSensitiveData.txt
+├── ConfigExtendedSensitiveData.txt
+├── WeakCrypto.txt
+├── InsecureProtocols.txt
+├── EmbeddedPrivateKeys.txt
+├── ConnectionStrings.txt
+├── DebugSettings.txt
+├── TempUsage.txt
+├── LoadedDLLs.txt
+├── RegistryPermissions.txt
+└── VulnerabilitySummary.txt
+```
 
-- Detects writable application directories
-- Detects writable subdirectories
-- Flags DLL hijacking risks
-
-### 🧩 3. Configuration & Secrets Discovery
-
-Scans multiple config formats:
-
-Code
-
-`.config, .xml, .json, .ini, .properties, .yaml, .yml`
-
-Detects:
-
-- Passwords
-- Tokens
-- API keys
-- Connection strings
-- Debug/verbose flags
-
-### 🔐 4. Crypto & Key Material Checks
-
-- Detects weak crypto usage (MD5, SHA1, DES, RC4)
-- Detects embedded private keys (PEM/RSA/EC)
-
-### 📝 5. Log File Analysis
-
-Searches logs for:
-
-- Errors
-- Stack traces
-- Sensitive data
-
-### 🧱 6. Registry Security Checks
-
-- Auto‑detects registry keys related to the application
-- Checks ACL permissions
-- Flags weak or writable registry keys
-
-### 🧠 7. Process & DLL Load Enumeration
-
-- Lists all running processes
-- Allows selection by index or PID
-- Enumerates loaded DLLs
-- Flags DLLs loaded from user‑writable directories
-
-### 🧪 8. Additional Security Checks
-
-- Insecure protocol usage (`http://`, `ftp://`, `ldap://`)
-- Temp/AppData usage
-- Hardcoded paths
-- Hardcoded SQL queries
-
-## 📊 Vulnerability Summary
+## 📊 Vulnerability summary
 
 At the end of execution, the script generates:
 
-Code
+```
+VAPT_TEST/VulnerabilitySummary.txt
+```
 
-`VAPT_TEST/VulnerabilitySummary.txt`
+Example output:
 
-This file contains a severity‑based summary such as:
-
-Code
-
-`[HIGH] Invalid or unsigned binary: helper.dll
+```
+[HIGH] Invalid or unsigned binary: helper.dll
 [HIGH] Writable subdirectories detected (DLL hijacking risk)
 [MEDIUM] Weak cryptographic algorithms detected
 [MEDIUM] Hardcoded connection strings detected
-[LOW] Debug/verbose flags detected`
+[LOW] Debug/verbose flags detected
+```
 
-Perfect for reporting and triage.
+## 🚀 Quick start
 
-## ▶️ How to Use
+1. Copy the script into the application install directory
 
-### 1. Place the script in the application installation directory
+```
+C:\Program Files\TEST_APP\
+```
 
-Example:
+1. Open PowerShell
+- Admin is recommended for registry checks.
+1. Run the script
 
-Code
+```powershell
+.\thickclient.ps1
+```
 
-`C:\Program Files\TEST_APP\`
+1. Follow prompts (only when needed)
+- Pick a process (index or PID) for DLL enumeration
+- Optionally select a discovered registry key
+1. Review results inside `VAPT_TEST/`
 
-### 2. Run PowerShell as Administrator
+## ⚠️ Notes
 
-(Not required for all checks, but recommended for registry access.)
+- Use only for **authorized** assessments.
+- The toolkit is **read-only** and **does not exploit** vulnerabilities.
 
-### 3. Execute the script
+---
 
-Code
+## 🧩 Script
 
-`.\thickclient.ps1`
-
-### 4. Follow on‑screen prompts
-
-- Select process for DLL enumeration
-- Choose registry key (optional)
-- Everything else runs automatically
-
-### 5. Review results in the `VAPT_TEST` folder
-
-You will find:
-
-Code
-
-`VAPT_TEST/
-   ├── dll_list.txt
-   ├── SignatureReport.csv
-   ├── InterestingStrings.txt
-   ├── FolderPermissions.txt
-   ├── WritableSubdirectories.txt
-   ├── ConfigSensitiveData.txt
-   ├── ConfigExtendedSensitiveData.txt
-   ├── WeakCrypto.txt
-   ├── InsecureProtocols.txt
-   ├── EmbeddedPrivateKeys.txt
-   ├── ConnectionStrings.txt
-   ├── DebugSettings.txt
-   ├── TempUsage.txt
-   ├── LoadedDLLs.txt
-   ├── RegistryPermissions.txt
-   └── VulnerabilitySummary.txt`
-
-## ⚠️ Important Notes
-
-- The toolkit is **read‑only** and **non‑intrusive**
-- It does **not** exploit vulnerabilities
-- It is safe for production systems
-- Use only for **authorized** security assessments
-
+```powershell
 # ================================
 # Thick Client VAPT Automation Script (Safe)
 # ================================
@@ -279,7 +219,6 @@ $Interesting = foreach ($line in $AllStrings) {
 $Interesting | Sort-Object -Unique | Out-File $InterestingOut
 
 Write-Host "InterestingStrings.txt created with filtered results" -ForegroundColor Green
-
 
 # ================================
 # 4. Folder Permission Analysis
@@ -705,5 +644,4 @@ if ($Findings.Count -eq 0) {
 }
 
 Write-Host "VulnerabilitySummary.txt created" -ForegroundColor Green
-
-
+```
