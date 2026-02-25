@@ -1,3 +1,4 @@
+# **🛡️ Thick Client VAPT Automation Toolkit **
 ### Safe, read‑only misconfiguration detection for Windows thick‑client applications
 
 A **PowerShell automation toolkit** to quickly spot **misconfigurations**, **weak security controls**, and **potential vulnerabilities** in Windows thick‑client apps — **without exploitation**.
