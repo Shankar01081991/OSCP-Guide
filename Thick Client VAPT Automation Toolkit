@@ -1,19 +1,19 @@
-# **🛡️ Thick Client VAPT Automation Toolkit **
-### Safe, read‑only misconfiguration detection for Windows thick‑client applications
+# 🛡️ ***Thick Client VAPT Automation Toolkit***
+# Safe, read‑only misconfiguration detection for Windows thick‑client applications
 
 A **PowerShell automation toolkit** to quickly spot **misconfigurations**, **weak security controls**, and **potential vulnerabilities** in Windows thick‑client apps — **without exploitation**.
 
 <aside>
 🧯
 
-**Non-intrusive by design**
+# **Non-intrusive by design**
 
 - Read-only checks only
 - Safe to run on production (authorized) environments
 - No exploitation or payload execution
 </aside>
 
-## ✨ Highlights
+## ✨ **Highlights**
 
 - **Binary & DLL analysis** (inventory, signature checks, interesting strings)
 - **File system ACL checks** (writable dirs, DLL hijack indicators)
@@ -22,7 +22,7 @@ A **PowerShell automation toolkit** to quickly spot **misconfigurations**, **wea
 - **Log & registry checks** (sensitive content, weak ACLs)
 - **Process module enumeration** (loaded DLLs + suspicious load paths)
 
-## 📁 Output
+# **📁 Output**
 
 All findings are written to:
 
@@ -52,7 +52,7 @@ VAPT_TEST/
 └── VulnerabilitySummary.txt
 ```
 
-## 📊 Vulnerability summary
+# 📊 **Vulnerability summary**
 
 At the end of execution, the script generates:
 
