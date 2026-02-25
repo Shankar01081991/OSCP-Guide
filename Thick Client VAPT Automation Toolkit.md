@@ -511,19 +511,28 @@ if ($DebugHits.Count -gt 0) {
     "No obvious debug/verbose flags detected." | Out-File $DebugOut
     Write-Host "No debug flags detected." -ForegroundColor Green
 }
-# ================================
-# 16. Temp/AppData Usage Scan
+#  ================================
+# 16. Temp/AppData Usage Scan (Safe & Fixed)
 # ================================
 $TempUsageOut = Join-Path $OutDir "TempUsage.txt"
 
-$TempPatterns = "%TEMP%","C:\Temp","AppData\Local\Temp","AppData\Roaming","%APPDATA%","%LOCALAPPDATA%"
-$TempTargets  = Get-ChildItem -Recurse -Include *.dll, *.exe, *.config, *.xml, *.json, *.ini, *.txt -ErrorAction SilentlyContinue
+# Use escaped backslashes + SimpleMatch to avoid regex errors
+$TempPatterns = @(
+    "%TEMP%",
+    "C:\\Temp",
+    "AppData\\Local\\Temp",
+    "AppData\\Roaming",
+    "%APPDATA%",
+    "%LOCALAPPDATA%"
+)
+
+$TempTargets = Get-ChildItem -Recurse -Include *.dll, *.exe, *.config, *.xml, *.json, *.ini, *.txt -ErrorAction SilentlyContinue
 
 $TempHits = @()
 
 foreach ($file in $TempTargets) {
     foreach ($pattern in $TempPatterns) {
-        $res = Select-String -Path $file.FullName -Pattern $pattern -ErrorAction SilentlyContinue
+        $res = Select-String -Path $file.FullName -Pattern $pattern -SimpleMatch -ErrorAction SilentlyContinue
         if ($res) { $TempHits += $res }
     }
 }
@@ -537,18 +546,22 @@ if ($TempHits.Count -gt 0) {
 }
 
 # ================================
-# 11. Vulnerability Summary (Safe)
+# 17. Vulnerability Summary (Safe & Fixed)
 # ================================
-
 $Summary = Join-Path $OutDir "VulnerabilitySummary.txt"
 $Findings = @()
 
 Write-Host "`nGenerating vulnerability summary..." -ForegroundColor Cyan
 
-# Helper function to safely check file content
+# Safe helper function
 function Safe-HasContent {
     param($path)
-    return (Test-Path $path -and (Get-Content $path -ErrorAction SilentlyContinue).Count -gt 0)
+
+    if (Test-Path $path) {
+        $content = Get-Content $path -ErrorAction SilentlyContinue
+        return ($content.Count -gt 0)
+    }
+    return $false
 }
 
 # 1. Unsigned or invalid signatures
@@ -645,4 +658,5 @@ if ($Findings.Count -eq 0) {
 }
 
 Write-Host "VulnerabilitySummary.txt created" -ForegroundColor Green
+
 ```
