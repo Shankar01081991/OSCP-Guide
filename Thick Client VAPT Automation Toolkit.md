@@ -1535,3 +1535,4 @@ if ($Findings.Count -eq 0) {
 
 Write-Host "VulnerabilitySummary.txt created" -ForegroundColor Green
 ```
+<img width="803" height="1180" alt="image" src="https://github.com/user-attachments/assets/09096d51-95bd-4e79-b153-919f80814107" />
