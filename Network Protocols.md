@@ -1237,8 +1237,13 @@ Try installing NFS using Server Manager / PowerShell
 Run as Administrator:
 ```
 Install-WindowsFeature NFS-Client
-and then
+and then check Client for NFS Installed
+Get-WindowsFeature *NFS*
+once done check
 showmount -e <IP>
+if available try mounting them
+mkdir C:/nfs
+mount.exe -o vers=3,nolock <IP>:/path/ Z:
 ```
 This allows you to access shared files from the remote NFS server.
 ![image](https://github.com/user-attachments/assets/34ad4003-778a-4011-b5ee-1c63e17adf4a)
