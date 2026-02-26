@@ -1233,7 +1233,13 @@ If NFS is exposed publicly, it can be mounted to the local machine and files can
 sudo mount 192.168.188.131:/ /home/kali/Downloads/nfs -nolock
 
 ```
-
+Try installing NFS using Server Manager / PowerShell
+Run as Administrator:
+```
+Install-WindowsFeature NFS-Client
+and then
+showmount -e <IP>
+```
 This allows you to access shared files from the remote NFS server.
 ![image](https://github.com/user-attachments/assets/34ad4003-778a-4011-b5ee-1c63e17adf4a)
 
