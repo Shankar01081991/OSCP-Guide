@@ -124,19 +124,24 @@ Each test case is independent and contributes to the final summary.
 ### 1️⃣ Place the script inside the application directory
 
 Example:
-C:\Program Files\YourApp\
-
+```
+cd C:\Program Files\YourApp\
+```
 ---
 
 ### 2️⃣ Open PowerShell
 
-Running as **Administrator** is recommended for registry and service checks.
+Running as **Administrator** is recommended for registry and service checks and run PowerShell Execution Policy Bypass.
+```
+powershell -ep bypass
+```
 
 ---
 
 ### 3️⃣ Execute the script
+```
 .\Thickclient-Test.ps1
-
+```
 ---
 
 ### 4️⃣ Follow prompts
@@ -153,7 +158,6 @@ VAPT_TEST/
 
 The most important file is:
 VAPT_TEST\VulnerabilitySummary.txt
-
 
 ---
 
@@ -199,17 +203,9 @@ Click the link below to download the latest version of **Thickclient-Test.ps1**:
 - Suitable for audit documentation and compliance workflows
 
 ---
-
-If needed, this README can be enhanced further with:
-
-- GitHub badges  
-- MIT/Apache license section  
-- Contribution guidelines  
-- Screenshot examples  
-- Sample output snippets  
-- CI integration instructions  
-
----
 POC:
+---
+
 <img width="832" height="1126" alt="image" src="https://github.com/user-attachments/assets/394b52cd-cb25-476a-9652-0ac97ade6394" />
+---
 
