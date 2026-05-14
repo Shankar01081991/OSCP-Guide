@@ -241,7 +241,260 @@ Nmap includes the **Nmap Scripting Engine (NSE)**, which allows users to run scr
     
 
 ```bash
+## **Nmap Scan automate for all subnet**
 
+```
+# List all subnets you want to scan
+$subnets = @(
+	"<Subnet>",
+	"<Subnet>",
+	"<Subnet>",
+	"<Subnet>"
+)
+
+# ============================
+# Nmap Multi-Subnet Deep Scanner
+# Host Identity + Services + Classification
+# Safe NSE scripts + Parallel per-host scans
+# Output: Excel-ready CSV
+# ============================
+
+# Assumes: $subnets is already defined as an array of CIDR strings
+# Example:
+# $subnets = @("xx.x1.x30.0/24","xx.1x.x31.0/24")
+
+$output  = "Nmap-Asset-Inventory.csv"
+$results = @()
+
+foreach ($subnet in $subnets) {
+
+    Write-Host "Scanning (host discovery) $subnet ..."
+
+    # Host discovery
+    $scan = nmap -n -sn $subnet 2>&1
+
+    if ($scan -and ($scan | Select-String "Nmap scan report for")) {
+        $upHosts = ($scan | Select-String "Nmap scan report for").Line |
+                   ForEach-Object { ($_ -split " ")[-1] }
+    } else {
+        $upHosts = @()
+    }
+
+    # Generate full IP list for the subnet (assumes /24)
+    $ips = (0..255 | ForEach-Object {
+        $base   = $subnet.Split("/")[0]
+        $octets = $base.Split(".")
+        "$($octets[0]).$($octets[1]).$($octets[2]).$_"
+    })
+
+    # Parallel deep scan for UP hosts
+    $jobs = @()
+    foreach ($ip in $upHosts) {
+        $jobs += Start-Job -ArgumentList $ip, $subnet -ScriptBlock {
+            param($ip, $subnet)
+
+            $detail = nmap -n -Pn -O -sV --script safe $ip 2>&1
+
+            # Hostname / FQDN
+            $hostname = ""
+            $fqdn     = ""
+            try {
+                $dns = Resolve-DnsName -Name $ip -ErrorAction Stop
+                $ptr = $dns | Where-Object { $_.QueryType -eq "PTR" }
+                if ($ptr) {
+                    $fqdn     = $ptr.NameHost
+                    $hostname = $fqdn.Split(".")[0]
+                }
+            } catch { }
+
+            # MAC + Vendor
+            $mac       = ""
+            $macVendor = ""
+            $macLine = $detail | Select-String "MAC Address"
+            if ($macLine) {
+                $m = $macLine.Line -replace "MAC Address:\s*", ""
+                if ($m -match "([0-9A-Fa-f:]{17})\s+\((.+)\)") {
+                    $mac       = $matches[1]
+                    $macVendor = $matches[2]
+                } elseif ($m -match "([0-9A-Fa-f:]{17})") {
+                    $mac = $matches[1]
+                }
+            }
+
+            # Device type
+            $deviceType = ""
+            $devLine = $detail | Select-String "Device type:"
+            if ($devLine) {
+                $deviceType = ($devLine.Line -replace "Device type:\s*", "").Trim()
+            }
+
+            # OS details + accuracy
+            $osDetails  = ""
+            $osAccuracy = ""
+            $osLine = $detail | Select-String "OS details:"
+            if ($osLine) {
+                $osDetails = ($osLine.Line -replace "OS details:\s*", "").Trim()
+            }
+            $accLine = $detail | Select-String "OS detection performed"
+            if ($accLine -and $accLine.Line -match "Accuracy: (\d+)%") {
+                $osAccuracy = $matches[1] + "%"
+            }
+
+            # Ports table (open/closed/filtered + service summary)
+            $portLines = @()
+            $openPorts = @()
+            $closedPorts = @()
+            $filteredPorts = @()
+            $serviceSummary = @()
+
+            $inPorts = $false
+            foreach ($line in $detail) {
+                if ($line -match "PORT\s+STATE\s+SERVICE") {
+                    $inPorts = $true
+                    continue
+                }
+                if ($inPorts) {
+                    if ([string]::IsNullOrWhiteSpace($line)) { break }
+                    $portLines += $line
+                }
+            }
+
+            foreach ($line in $portLines) {
+                if ($line -match "^\d+\/\w+\s+open") {
+                    $openPorts += $line.Trim()
+                } elseif ($line -match "^\d+\/\w+\s+closed") {
+                    $closedPorts += $line.Trim()
+                } elseif ($line -match "^\d+\/\w+\s+filtered") {
+                    $filteredPorts += $line.Trim()
+                }
+                $serviceSummary += $line.Trim()
+            }
+
+            $openPortsStr     = $openPorts -join "; "
+            $closedPortsStr   = $closedPorts -join "; "
+            $filteredPortsStr = $filteredPorts -join "; "
+            $serviceSummaryStr = $serviceSummary -join " | "
+
+            # HTTP title
+            $httpTitle = ""
+            $httpLine = $detail | Select-String "http-title"
+            if ($httpLine) {
+                $httpTitle = ($httpLine | ForEach-Object { $_.Line }) -join " | "
+            }
+
+            # SSL/TLS info
+            $sslInfo = ""
+            $sslLines = $detail | Select-String "ssl-cert|ssl-enum-ciphers"
+            if ($sslLines) {
+                $sslInfo = ($sslLines | ForEach-Object { $_.Line.Trim() }) -join " | "
+            }
+
+            # SSH host key
+            $sshHostKey = ""
+            $sshLines = $detail | Select-String "ssh-hostkey"
+            if ($sshLines) {
+                $sshHostKey = ($sshLines | ForEach-Object { $_.Line.Trim() }) -join " | "
+            }
+
+            # Basic asset classification
+            $assetRole    = "Unknown"
+            $isVirtual    = "Unknown"
+            $cloudProvider = "Unknown"
+
+            $lowerDetail = ($detail -join "`n").ToLower()
+
+            if ($deviceType.ToLower() -match "router|switch|firewall|wap|bridge") {
+                $assetRole = "Network Device"
+            } elseif ($osDetails -match "Windows" -or $serviceSummaryStr -match "msrpc|ms-wbt-server|microsoft-ds") {
+                $assetRole = "Windows Host"
+            } elseif ($osDetails -match "Linux|Unix|BSD") {
+                $assetRole = "Unix/Linux Host"
+            }
+
+            if ($lowerDetail -match "vmware|virtualbox|kvm|hyper-v") {
+                $isVirtual = "Yes"
+            } elseif ($lowerDetail -match "amazon|aws|azure|google cloud|gcp") {
+                $isVirtual = "Yes"
+                $cloudProvider = "Cloud"
+            }
+
+            [PSCustomObject]@{
+                IPAddress       = $ip
+                Hostname        = $hostname
+                FQDN            = $fqdn
+                Status          = "UP"
+                Subnet          = $subnet
+                MACAddress      = $mac
+                MACVendor       = $macVendor
+                DeviceType      = $deviceType
+                OSDetails       = $osDetails
+                OSAccuracy      = $osAccuracy
+                OpenPorts       = $openPortsStr
+                ClosedPorts     = $closedPortsStr
+                FilteredPorts   = $filteredPortsStr
+                ServiceSummary  = $serviceSummaryStr
+                HttpTitle       = $httpTitle
+                SslInfo         = $sslInfo
+                SshHostKey      = $sshHostKey
+                AssetRole       = $assetRole
+                IsVirtual       = $isVirtual
+                CloudProvider   = $cloudProvider
+            }
+        }
+    }
+
+    # Wait for all jobs for this subnet
+    if ($jobs.Count -gt 0) {
+        Write-Host "Waiting for detailed scans to complete for $subnet ..."
+        Wait-Job -Job $jobs | Out-Null
+        $upResults = Receive-Job -Job $jobs
+        Remove-Job -Job $jobs
+    } else {
+        $upResults = @()
+    }
+
+    # Index UP results by IP
+    $upIndex = @{}
+    foreach ($r in $upResults) {
+        $upIndex[$r.IPAddress] = $r
+    }
+
+    # Build final results for all IPs in subnet
+    foreach ($ip in $ips) {
+        if ($upIndex.ContainsKey($ip)) {
+            $results += $upIndex[$ip]
+        } else {
+            $results += [PSCustomObject]@{
+                IPAddress       = $ip
+                Hostname        = ""
+                FQDN            = ""
+                Status          = "DOWN"
+                Subnet          = $subnet
+                MACAddress      = ""
+                MACVendor       = ""
+                DeviceType      = ""
+                OSDetails       = ""
+                OSAccuracy      = ""
+                OpenPorts       = ""
+                ClosedPorts     = ""
+                FilteredPorts   = ""
+                ServiceSummary  = ""
+                HttpTitle       = ""
+                SslInfo         = ""
+                SshHostKey      = ""
+                AssetRole       = "Unknown"
+                IsVirtual       = "Unknown"
+                CloudProvider   = "Unknown"
+            }
+        }
+    }
+}
+
+$results | Export-Csv -NoTypeInformation -Path $output -Encoding UTF8
+Write-Host "Scan completed. Results saved to $output"
+
+
+---
 ls /usr/share/nmap/scripts | grep ssh
 nmap -p22 --script ssh-hostkey.nse <Target IP>
 
