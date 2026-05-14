@@ -241,6 +241,13 @@ Nmap includes the **Nmap Scripting Engine (NSE)**, which allows users to run scr
     
 
 ```bash
+ls /usr/share/nmap/scripts | grep ssh
+nmap -p22 --script ssh-hostkey.nse <Target IP>
+
+```
+
+This allows you to execute specific scripts related to SSH key scanning.
+---
 ## **Nmap Scan automate for all subnet**
 
 ```
@@ -495,9 +502,4 @@ Write-Host "Scan completed. Results saved to $output"
 
 
 ---
-ls /usr/share/nmap/scripts | grep ssh
-nmap -p22 --script ssh-hostkey.nse <Target IP>
 
-```
-
-This allows you to execute specific scripts related to SSH key scanning.
